@@ -1,6 +1,6 @@
-# liberty
+# Liberty
 
-An Electron application with React and TypeScript
+E-Books Management App
 
 ## Recommended IDE Setup
 
