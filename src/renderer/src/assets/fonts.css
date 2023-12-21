@@ -1,0 +1,23 @@
+@font-face {
+  font-family: 'RedHat';
+  src: url('./fonts/RedHatDisplay-Regular.ttf');
+}
+
+@font-face {
+  font-family: 'RedHat';
+  font-weight: bold;
+  src: url('./fonts/RedHatDisplay-Bold.ttf');
+}
+
+@font-face {
+  font-family: 'RedHat';
+  font-style: italic;
+  src: url('./fonts/RedHatDisplay-Italic.ttf');
+}
+
+@font-face {
+  font-family: 'RedHat';
+  font-style: italic;
+  font-weight: bold;
+  src: url('./fonts/RedHatDisplay-BoldItalic.ttf');
+}
