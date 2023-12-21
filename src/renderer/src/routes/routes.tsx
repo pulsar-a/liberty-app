@@ -1,7 +1,9 @@
 import { Router, Route, RootRoute } from '@tanstack/react-router'
-import { EmptyLayout } from '../layouts/EmptyLayout'
-import { MainLayout } from '../layouts/MainLayout'
-import { LibraryView } from '../views/LibraryView'
+import { EmptyLayout } from '@/layouts/EmptyLayout'
+import { MainLayout } from '@/layouts/MainLayout'
+import { LibraryLayout } from '@/layouts/LibraryLayout'
+import { LibraryView } from '@/views/LibraryView'
+import { SettingsView } from '@/views/SettingsView'
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -25,6 +27,11 @@ const mainLayoutRoute = new Route({
   component: () => <MainLayout />,
   id: 'main-layout',
 })
+const libraryLayoutRoute = new Route({
+  getParentRoute: () => rootRoute,
+  component: () => <LibraryLayout />,
+  id: 'library-layout',
+})
 
 const emptyLayoutRoute = new Route({
   getParentRoute: () => rootRoute,
@@ -33,22 +40,21 @@ const emptyLayoutRoute = new Route({
 })
 
 const indexRoute = new Route({
-  getParentRoute: () => mainLayoutRoute,
+  getParentRoute: () => libraryLayoutRoute,
   path: '/',
   component: () => <LibraryView />,
 })
 
-const aboutRoute = new Route({
-  getParentRoute: () => emptyLayoutRoute,
-  path: '/about',
-  component: () => {
-    return <div className="p-2">Hello from About!</div>
-  },
+const settingsRoute = new Route({
+  getParentRoute: () => mainLayoutRoute,
+  path: '/settings',
+  component: () => <SettingsView />,
 })
 
 const routeTree = rootRoute.addChildren([
-  mainLayoutRoute.addChildren([indexRoute]),
-  emptyLayoutRoute.addChildren([aboutRoute]),
+  libraryLayoutRoute.addChildren([indexRoute]),
+  mainLayoutRoute.addChildren([settingsRoute]),
+  emptyLayoutRoute.addChildren([]),
 ])
 
 export const router = new Router({ routeTree })

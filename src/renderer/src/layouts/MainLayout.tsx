@@ -1,5 +1,6 @@
-import { Link, Outlet } from '@tanstack/react-router'
+import { Outlet } from '@tanstack/react-router'
 import React from 'react'
+import { Header } from './parts/Header'
 
 type Props = {
   children?: React.ReactNode
@@ -8,15 +9,7 @@ type Props = {
 export const MainLayout: React.FC<Props> = () => {
   return (
     <div>
-      <div>Liberty E-Book App</div>
-      <div>
-        <Link to="/" className="[&.active]:font-bold">
-          Home
-        </Link>{' '}
-        <Link to="/about" className="[&.active]:font-bold">
-          About
-        </Link>
-      </div>
+      <Header />
       <div>
         <Outlet />
       </div>
