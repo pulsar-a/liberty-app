@@ -1,6 +1,7 @@
 import { Router, Route, RootRoute } from '@tanstack/react-router'
 import { EmptyLayout } from '../layouts/EmptyLayout'
 import { MainLayout } from '../layouts/MainLayout'
+import { LibraryView } from '../views/LibraryView'
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -34,13 +35,7 @@ const emptyLayoutRoute = new Route({
 const indexRoute = new Route({
   getParentRoute: () => mainLayoutRoute,
   path: '/',
-  component: () => {
-    return (
-      <div className="p-2">
-        <h3>Welcome Home!</h3>
-      </div>
-    )
-  },
+  component: () => <LibraryView />,
 })
 
 const aboutRoute = new Route({

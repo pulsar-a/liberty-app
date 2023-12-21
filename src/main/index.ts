@@ -2,10 +2,19 @@ import installExtension, {
   REDUX_DEVTOOLS,
   REACT_DEVELOPER_TOOLS,
 } from 'electron-devtools-installer'
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+const handleFileOpen = (window: BrowserWindow) => async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(window)
+  if (!canceled) {
+    return filePaths[0]
+  }
+
+  return null
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -13,13 +22,42 @@ function createWindow(): void {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
     },
   })
+
+  // IPC: main -> Renderer
+  const menu = Menu.buildFromTemplate([
+    {
+      label: app.name,
+      submenu: [
+        {
+          click: () => mainWindow.webContents.send('update-counter', 1),
+          label: 'Increment',
+        },
+        {
+          click: () => mainWindow.webContents.send('update-counter', -1),
+          label: 'Decrement',
+        },
+      ],
+    },
+  ])
+
+  Menu.setApplicationMenu(menu)
+
+  // IPC: Call Renderer -> main
+  ipcMain.on('window:set-title', (event, title) => {
+    const webContents = event.sender
+    const mainWindow = BrowserWindow.fromWebContents(webContents)
+    mainWindow?.setTitle(title)
+  })
+
+  // IPC: Call Renderer -> main + data return
+  ipcMain.handle('dialog:open-file', handleFileOpen(mainWindow))
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -50,6 +88,11 @@ app.whenReady().then(async () => {
   })
     .then((name) => console.log(`Added Extension:  ${name}`))
     .catch((err) => console.log('An error occurred: ', err))
+
+  // IPC: Call Renderer -> main
+  ipcMain.on('counter-value', (_event, value) => {
+    console.log(value) // will print value to Node console
+  })
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
