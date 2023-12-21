@@ -34,7 +34,7 @@ const emptyLayoutRoute = new Route({
 const indexRoute = new Route({
   getParentRoute: () => mainLayoutRoute,
   path: '/',
-  component: function Index() {
+  component: () => {
     return (
       <div className="p-2">
         <h3>Welcome Home!</h3>
@@ -46,7 +46,7 @@ const indexRoute = new Route({
 const aboutRoute = new Route({
   getParentRoute: () => emptyLayoutRoute,
   path: '/about',
-  component: function About() {
+  component: () => {
     return <div className="p-2">Hello from About!</div>
   },
 })
@@ -59,7 +59,7 @@ const routeTree = rootRoute.addChildren([
 export const router = new Router({ routeTree })
 
 declare module '@tanstack/react-router' {
-  interface Register {
+  interface AppRoutes {
     router: typeof router
   }
 }
