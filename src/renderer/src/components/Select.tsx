@@ -13,6 +13,7 @@ export type SelectOption = {
 }
 
 export type SelectProps = {
+  label?: string
   options: SelectOption[]
   value: string | undefined
   placeholder?: string
@@ -20,7 +21,13 @@ export type SelectProps = {
   onChange?: (value: string | undefined) => void
 }
 
-export const Select: React.FC<SelectProps> = ({ options = [], value, onChange, disabled }) => {
+export const Select: React.FC<SelectProps> = ({
+  label,
+  options = [],
+  value,
+  onChange,
+  disabled,
+}) => {
   const [selected, setSelected] = useState(
     options.find((item) => item.value === value) || options[0] || ({} as SelectOption)
   )
@@ -34,9 +41,11 @@ export const Select: React.FC<SelectProps> = ({ options = [], value, onChange, d
     <Listbox value={selected} onChange={handleChange} disabled={disabled}>
       {({ open }) => (
         <>
-          <Listbox.Label className="block text-sm font-medium leading-6 text-gray-900">
-            Assigned to
-          </Listbox.Label>
+          {label && (
+            <Listbox.Label className="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
+              {label}
+            </Listbox.Label>
+          )}
           <div className="relative mt-2">
             <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6">
               <span className="flex items-center">

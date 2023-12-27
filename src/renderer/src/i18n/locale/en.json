@@ -2,7 +2,12 @@
   "translation": {
     "libraryView_title": "Library",
     "settingsView_title": "Settings",
-    "mainMenu_library_title": "Library",
-    "mainMenu_settings_title": "Settings"
+    "settingsView_config_language_title": "Language",
+    "searchbar_placeholder": "Search...",
+    "mainMenu_all_title": "All Books",
+    "mainMenu_authors_title": "Authors",
+    "mainMenu_myCollections_title": "My Collections",
+    "mainMenu_settings_title": "Settings",
+    "mainMenu_quit_title": "Quit"
   }
 }

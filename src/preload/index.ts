@@ -18,6 +18,9 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('api', {
       // IPC: Renderer -> main
       setTitle: (title: string) => ipcRenderer.send('window:set-title', title),
+      getAllSettings: () => ipcRenderer.invoke('app:get-all-settings'),
+      setAllSettings: () => ipcRenderer.invoke('app:set-all-settings'),
+
       // IPC: Renderer -> main + data return
       openFile: () => ipcRenderer.invoke('dialog:open-file'),
 

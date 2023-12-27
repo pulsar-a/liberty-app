@@ -2,10 +2,12 @@ import installExtension, {
   REDUX_DEVTOOLS,
   REACT_DEVELOPER_TOOLS,
 } from 'electron-devtools-installer'
+import storage from 'electron-json-storage'
 import { app, shell, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { SettingsTypes } from '../../types/settings.types'
 
 const handleFileOpen = (window: BrowserWindow) => async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(window)
@@ -14,6 +16,16 @@ const handleFileOpen = (window: BrowserWindow) => async () => {
   }
 
   return null
+}
+
+const onAppGetAllSettings = async (): Promise<SettingsTypes> => {
+  return storage.get('settings') as Promise<SettingsTypes>
+}
+
+const onAppSetAllSettings = async (data: SettingsTypes): Promise<SettingsTypes> => {
+  storage.set('settings', data)
+
+  return storage.get('settings') as Promise<SettingsTypes>
 }
 
 function createWindow(): void {
@@ -59,6 +71,10 @@ function createWindow(): void {
   // IPC: Call Renderer -> main + data return
   ipcMain.handle('dialog:open-file', handleFileOpen(mainWindow))
 
+  ipcMain.handle('app:get-all-settings', onAppGetAllSettings)
+  ipcMain.handle('app:set-all-settings', (_, data) => {
+    return onAppSetAllSettings(data)
+  })
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })

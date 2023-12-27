@@ -32,8 +32,11 @@
     "@tanstack/react-router": "^0.0.1-beta.285",
     "@tanstack/router-devtools": "^0.0.1-alpha.0",
     "clsx": "^2.0.0",
+    "electron-json-storage": "^4.6.0",
     "electron-updater": "^6.1.1",
     "i18next": "^23.7.11",
+    "immer": "^10.0.3",
+    "radash": "^11.0.0",
     "react-i18next": "^14.0.0",
     "zustand": "^4.4.7"
   },
