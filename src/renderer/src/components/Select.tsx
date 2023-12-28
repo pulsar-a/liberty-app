@@ -79,6 +79,7 @@ export const Select: React.FC<SelectProps> = ({
                       )
                     }
                     value={option}
+                    disabled={option.disabled}
                   >
                     {({ selected, active }) => (
                       <>
@@ -93,7 +94,6 @@ export const Select: React.FC<SelectProps> = ({
                             {option.label}
                           </span>
                         </div>
-
                         {selected ? (
                           <span
                             className={clsx(

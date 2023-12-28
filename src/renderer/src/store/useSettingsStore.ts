@@ -9,21 +9,20 @@ export interface SettingsState {
 }
 
 export interface SettingsMethods {
-  getAll: () => Promise<SettingsTypes>
-  get: (
+  getAllSettings: () => Promise<SettingsTypes>
+  setInitialSettings: (settings: SettingsTypes) => void
+  getSettingValue: (
     key: string,
     defaultValue: string | number | null | object
   ) => Promise<string | number | null | object>
-  set: (key: string, value: string | number | null | object) => Promise<void>
-  flush: () => Promise<void>
+  setSettingValue: (key: string, value: string | number | null | object) => Promise<void>
+  flushSettings: () => Promise<void>
 }
 
 const getInitialState = (): SettingsState => {
-  window.api.getAllSettings().then((settings) => {})
-
   return {
     settings: {
-      language: null,
+      language: 'en',
       theme: 'system',
       autoUpdate: false,
     },
@@ -38,23 +37,35 @@ export const useSettingsStore = create<SettingsStoreState>()(
     ...getInitialState(),
 
     // Methods
-    getAll: async () => {
+    getAllSettings: async () => {
       return window.api.getAllSettings()
     },
-    get: async (key: string, defaultValue: string | number | null | object = null) => {
+    // Methods
+    setInitialSettings: async (settings) => {
+      set({ settings })
+    },
+    getSettingValue: async (key: string, defaultValue: string | number | null | object = null) => {
       const settings = await window.api.getAllSettings()
+      console.log('settings:', settings)
 
       return getField(settings, key, defaultValue)
     },
-    set: async (key: string, value: string | number | null | object) => {
+    setSettingValue: async (key: string, value: string | number | null | object) => {
+      set((state) => {
+        window.api.setAllSettings(state.settings)
+        return state
+      })
+      // window.api.setAllSettings(state.settings)
       set(
         produce((state: SettingsState) => {
-          state[key] = value
+          state.settings[key] = value
         })
       )
     },
-    flush: async () => {
-      set(getInitialState())
+    flushSettings: async () => {
+      const initialState = getInitialState()
+      set(initialState)
+      window.api.setAllSettings(initialState.settings)
     },
   }))
 )
