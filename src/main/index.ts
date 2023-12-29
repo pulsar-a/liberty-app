@@ -5,10 +5,10 @@ import installExtension, {
   REDUX_DEVTOOLS,
 } from 'electron-devtools-installer'
 // import storage from 'electron-json-storage'
-import settings from 'electron-settings'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { SettingsType } from '../../types/settings.types'
+import { SettingKeys, SettingValues } from '../../types/settings.types'
+import { store } from '../store/store'
 
 const handleFileOpen = (window: BrowserWindow) => async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(window)
@@ -19,24 +19,8 @@ const handleFileOpen = (window: BrowserWindow) => async () => {
   return null
 }
 
-const onAppGetAllSettings = async (): Promise<SettingsType> => {
-  return await new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        language: 'de',
-        theme: 'light',
-        autoUpdate: false,
-      })
-    }, 5000)
-  })
-  // return (await settings.get('settings')) as unknown as Promise<SettingsType>
-}
-
-const onAppSetAllSettings = async (data: SettingsType): Promise<SettingsType> => {
-  console.log('===== STORAGE:', data)
-  await settings.set('settings', data)
-
-  return settings.get('settings') as Promise<SettingsType>
+const onAppSetSettingValue = (key: SettingKeys, value: SettingValues): Promise<SettingValues> => {
+  return store.set(key, value)
 }
 
 function createWindow(): void {
@@ -44,12 +28,14 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    fullscreen: true,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
+      nodeIntegration: true,
     },
   })
 
@@ -82,11 +68,24 @@ function createWindow(): void {
   // IPC: Call Renderer -> main + data return
   ipcMain.handle('dialog:open-file', handleFileOpen(mainWindow))
 
-  ipcMain.handle('app:get-all-settings', onAppGetAllSettings)
-  ipcMain.handle('app:set-all-settings', (_, data) => {
-    console.log('===== DATA:', data)
-    return onAppSetAllSettings(data)
+  ipcMain.handle('settings:setValue', (_, key, value) => {
+    onAppSetSettingValue(key, value)
   })
+
+  ipcMain.on('settings:get', async (event, val) => {
+    event.returnValue = store.get(val)
+  })
+
+  ipcMain.on('settings:getAll', async (event, key, val) => {
+    event.returnValue = store.store
+  })
+  ipcMain.on('settings:set', async (_, key, val) => {
+    store.set(key, val)
+  })
+  ipcMain.on('settings:reset', async () => {
+    store.reset()
+  })
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })

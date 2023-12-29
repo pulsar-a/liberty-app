@@ -2,9 +2,9 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS, } from 'electron-devtools-installer';
 // import storage from 'electron-json-storage'
-import settings from 'electron-settings';
 import { join } from 'path';
 import icon from '../../resources/icon.png?asset';
+import { store } from '../store/store';
 const handleFileOpen = (window) => async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog(window);
     if (!canceled) {
@@ -12,34 +12,22 @@ const handleFileOpen = (window) => async () => {
     }
     return null;
 };
-const onAppGetAllSettings = async () => {
-    return await new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                language: 'de',
-                theme: 'light',
-                autoUpdate: false,
-            });
-        }, 5000);
-    });
-    // return (await settings.get('settings')) as unknown as Promise<SettingsType>
-};
-const onAppSetAllSettings = async (data) => {
-    console.log('===== STORAGE:', data);
-    await settings.set('settings', data);
-    return settings.get('settings');
+const onAppSetSettingValue = (key, value) => {
+    return store.set(key, value);
 };
 function createWindow() {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
         width: 900,
         height: 670,
+        fullscreen: true,
         show: false,
         autoHideMenuBar: true,
         ...(process.platform === 'linux' ? { icon } : {}),
         webPreferences: {
             preload: join(__dirname, '../preload/index.js'),
             sandbox: false,
+            nodeIntegration: true,
         },
     });
     // IPC: main -> Renderer
@@ -67,10 +55,20 @@ function createWindow() {
     });
     // IPC: Call Renderer -> main + data return
     ipcMain.handle('dialog:open-file', handleFileOpen(mainWindow));
-    ipcMain.handle('app:get-all-settings', onAppGetAllSettings);
-    ipcMain.handle('app:set-all-settings', (_, data) => {
-        console.log('===== DATA:', data);
-        return onAppSetAllSettings(data);
+    ipcMain.handle('settings:setValue', (_, key, value) => {
+        onAppSetSettingValue(key, value);
+    });
+    ipcMain.on('settings:get', async (event, val) => {
+        event.returnValue = store.get(val);
+    });
+    ipcMain.on('settings:getAll', async (event, key, val) => {
+        event.returnValue = store.store;
+    });
+    ipcMain.on('settings:set', async (_, key, val) => {
+        store.set(key, val);
+    });
+    ipcMain.on('settings:reset', async () => {
+        store.reset();
     });
     mainWindow.on('ready-to-show', () => {
         mainWindow.show();

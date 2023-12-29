@@ -15,6 +15,7 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src'),
         '@': resolve('src/renderer/src'),
         '@app-types': resolve('types'),
+        '@store': resolve('src/store'),
       },
     },
     plugins: [react()],

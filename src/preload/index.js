@@ -3,9 +3,6 @@ import { electronAPI } from '@electron-toolkit/preload';
 // Custom APIs for renderer
 const api = {
     desktop: true,
-    test: (medd) => {
-        console.log('test:', medd);
-    },
 };
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
@@ -14,10 +11,23 @@ if (process.contextIsolated) {
     try {
         contextBridge.exposeInMainWorld('electron', electronAPI);
         contextBridge.exposeInMainWorld('api', {
+            settings: {
+                get(key, defaultValue) {
+                    return ipcRenderer.sendSync('settings:get', key, defaultValue);
+                },
+                getAll() {
+                    return ipcRenderer.sendSync('settings:getAll');
+                },
+                set(property, val) {
+                    ipcRenderer.send('settings:set', property, val);
+                },
+                reset() {
+                    ipcRenderer.send('settings:reset');
+                },
+                // Other method you want to add like has(), reset(), etc.
+            },
             // IPC: Renderer -> main
             setTitle: (title) => ipcRenderer.send('window:set-title', title),
-            getAllSettings: () => ipcRenderer.invoke('app:get-all-settings'),
-            setAllSettings: (settings) => ipcRenderer.invoke('app:set-all-settings', settings),
             // IPC: Renderer -> main + data return
             openFile: () => ipcRenderer.invoke('dialog:open-file'),
             // IPC: main -> Renderer
