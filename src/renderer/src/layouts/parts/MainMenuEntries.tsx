@@ -1,5 +1,6 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 
@@ -18,8 +19,8 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
     <ul role="list" className="-mx-2 space-y-1">
       {items.map((item) => (
         <li key={item.name}>
-          <a
-            href={item?.to || '#'}
+          <Link
+            to={item?.to || '#'}
             onClick={item.fn}
             className={clsx(
               item.current
@@ -34,7 +35,7 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
               aria-hidden="true"
             />
             <span className="text-grey-700 dark:text-white">{item.name}</span>
-          </a>
+          </Link>
         </li>
       ))}
     </ul>

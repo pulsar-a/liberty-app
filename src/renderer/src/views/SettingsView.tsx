@@ -1,8 +1,8 @@
-// import { LanguageSelector } from '@/components/LanguageSelector'
-// import { useTranslation } from 'react-i18next'
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUser, faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { clsx } from 'clsx'
 import { LanguageSelector } from '../components/LanguageSelector'
+import { TextInput } from '../components/TextInput'
 import { LayoutThreeSections } from '../layouts/parts/LayoutThreeSections'
 
 export const SettingsView: React.FC = () => {
@@ -27,81 +27,50 @@ export const SettingsView: React.FC = () => {
                 <form className="col-span-2">
                   <div className="grid gap-x-6 gap-y-8 grid-cols-6">
                     <div className="col-span-3">
-                      <label
-                        htmlFor="first-name"
-                        className="block text-sm font-medium leading-6 text-white"
-                      >
-                        First name
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          type="text"
-                          name="first-name"
-                          id="first-name"
-                          autoComplete="given-name"
-                          className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
-                        />
-                      </div>
+                      <TextInput
+                        id="first-name"
+                        name="first-name"
+                        label="First Name"
+                        placeholder="Manne"
+                        prefix={<FontAwesomeIcon icon={faUser} className="w-4 h-4" />}
+                        value=""
+                        onChange={() => {}}
+                      />
                     </div>
 
                     <div className="col-span-3">
-                      <label
-                        htmlFor="last-name"
-                        className="block text-sm font-medium leading-6 text-white"
-                      >
-                        Last name
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          type="text"
-                          name="last-name"
-                          id="last-name"
-                          autoComplete="family-name"
-                          className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
-                        />
-                      </div>
+                      <TextInput
+                        id="last-name"
+                        name="last-name"
+                        label="Last Name"
+                        placeholder="Quinn"
+                        value=""
+                        onChange={() => {}}
+                      />
                     </div>
 
                     <div className="col-span-full">
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-medium leading-6 text-white"
-                      >
-                        Email address
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          id="email"
-                          name="email"
-                          type="email"
-                          autoComplete="email"
-                          className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
-                        />
-                      </div>
+                      <TextInput
+                        id="email"
+                        name="email"
+                        label="Email address"
+                        prefix={<FontAwesomeIcon icon={faEnvelope} className="w-4 h-4" />}
+                        placeholder="janesmith"
+                        value="info@example.com"
+                        onChange={() => {}}
+                      />
                     </div>
 
                     <div className="col-span-full">
-                      <label
-                        htmlFor="username"
-                        className="block text-sm font-medium leading-6 text-white"
-                      >
-                        Username
-                      </label>
-                      <div className="mt-2">
-                        <div className="flex rounded-md bg-white/5 ring-1 ring-inset ring-white/10 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500">
-                          <span className="flex select-none items-center pl-3 text-gray-400 sm:text-sm">
-                            example.com/
-                          </span>
-                          <input
-                            type="text"
-                            name="username"
-                            id="username"
-                            autoComplete="username"
-                            className="flex-1 border-0 bg-transparent py-1.5 pl-1 text-white focus:ring-0 sm:text-sm sm:leading-6"
-                            placeholder="janesmith"
-                          />
-                        </div>
-                      </div>
+                      <TextInput
+                        id="username"
+                        name="username"
+                        label="Username"
+                        prefix="$"
+                        placeholder="janesmith"
+                        value="HELLO"
+                        onChange={() => {}}
+                      />
                     </div>
 
                     <div className="col-span-full">
