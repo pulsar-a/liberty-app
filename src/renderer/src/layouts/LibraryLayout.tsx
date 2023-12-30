@@ -16,7 +16,7 @@ export const LibraryLayout = () => {
   const { t } = useTranslation()
 
   const navigation = [
-    { name: t('mainMenu_all_title'), to: '/', icon: faHome, current: true },
+    { name: t('mainMenu_allBooks_title'), to: '/', icon: faHome, current: true },
     {
       name: t('mainMenu_myCollections_title'),
       to: '/my-collections',

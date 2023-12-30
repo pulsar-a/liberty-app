@@ -14,8 +14,10 @@ export const LanguageSelector: React.FC = () => {
 
   const items = [
     { label: 'English', value: 'en' },
-    { label: 'Русский', value: 'ru' },
     { label: 'Deutsch', value: 'de' },
+    { label: 'Русский', value: 'ru' },
+    { label: 'Татарча', value: 'tt' },
+    { label: 'Українська', value: 'ua' },
   ]
 
   useEffect(() => {
