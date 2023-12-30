@@ -133,13 +133,4 @@ export const SettingsView: React.FC = () => {
       />
     </>
   )
-
-  // return (
-  //   <div>
-  //     <div className="text-3xl">{t('settingsView_title')}</div>
-  //     <div>
-  //       <LanguageSelector />
-  //     </div>
-  //   </div>
-  // )
 }

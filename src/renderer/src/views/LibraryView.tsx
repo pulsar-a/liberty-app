@@ -8,7 +8,7 @@ export const LibraryView: React.FC = () => {
   const [filePath, setFilePath] = useState<string | null>(null)
   const [count, setCount] = useState<number>(0)
 
-  const [authors, setAuthors] = useState([
+  const [authors] = useState([
     { id: 1, name: 'Stephen King' },
     { id: 2, name: 'Sir Arthur Conan Doyle' },
   ])

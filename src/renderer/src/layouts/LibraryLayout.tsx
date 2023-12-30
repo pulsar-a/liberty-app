@@ -10,7 +10,6 @@ import {
   faMagnifyingGlass,
   faPowerOff,
 } from '@fortawesome/free-solid-svg-icons'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 const navigation = [
@@ -47,12 +46,6 @@ const systemNavigation = [
 
 export const LibraryLayout = () => {
   const { t } = useTranslation()
-  // const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const [authors, setAuthors] = useState([
-    { id: 1, name: 'Stephen King' },
-    { id: 2, name: 'Sir Arthur Conan Doyle' },
-  ])
 
   return (
     <>
