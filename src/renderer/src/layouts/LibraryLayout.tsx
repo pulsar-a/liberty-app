@@ -46,7 +46,7 @@ export const LibraryLayout = () => {
     <>
       <div>
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
-          <div className="flex grow flex-col gap-y-8 overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 px-6 pt-3">
+          <div className="flex grow flex-col gap-y-8 overflow-y-auto border-r border-gray-200 dark:border-gray-700 px-4 pt-3">
             {/* LOGO */}
             <div className="flex h-16 pt-4 shrink-0 items-center gap-2 dark:text-indigo-300 text-indigo-700 justify-center font-semibold text-2xl">
               <FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-600" />
@@ -63,7 +63,7 @@ export const LibraryLayout = () => {
                 <li>
                   <MainMenuEntries items={systemNavigation} />
                 </li>
-                <li className="mt-auto mb-8 flex items-center justify-center">
+                <li className="mt-auto flex items-center justify-center h-24 -mx-4 border-t border-indigo-100 dark:border-gray-800">
                   <DarkModeToggle />
                 </li>
               </ul>
@@ -73,8 +73,8 @@ export const LibraryLayout = () => {
         </div>
 
         {/* SEARCH BAR */}
-        <div className="pl-56">
-          <div className="sticky ml-60 top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white shadow-sm sm:gap-x-6 px-8 dark:bg-slate-900">
+        <div className="pl-60">
+          <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white shadow-sm sm:gap-x-6 px-8 dark:bg-slate-900">
             <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
               <form className="relative flex flex-1" action="#" method="GET">
                 <FontAwesomeIcon

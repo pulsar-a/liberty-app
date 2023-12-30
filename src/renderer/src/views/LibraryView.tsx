@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LayoutThreeSections } from '../layouts/parts/LayoutThreeSections'
+import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
 
 export const LibraryView: React.FC = () => {
   const { t } = useTranslation()
@@ -9,8 +10,8 @@ export const LibraryView: React.FC = () => {
   const [count, setCount] = useState<number>(0)
 
   const [authors] = useState([
-    { id: 1, name: 'Stephen King' },
-    { id: 2, name: 'Sir Arthur Conan Doyle' },
+    { id: 1, name: 'Stephen King', current: true },
+    { id: 2, name: 'Sir Arthur Conan Doyle', current: false },
   ])
 
   const uploadFile = async () => {
@@ -34,11 +35,7 @@ export const LibraryView: React.FC = () => {
             <button onClick={uploadFile}>Upload File</button>
           </div>
         }
-        sidebar={authors.map((author) => (
-          <div key={author.id} className="flex items-center gap-x-4">
-            <span className="text-sm font-medium text-gray-900 dark:text-white">{author.name}</span>
-          </div>
-        ))}
+        sidebar={<SubmenuEntries items={authors} />}
       />
     </>
   )

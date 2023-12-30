@@ -26,7 +26,7 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
               item.current
                 ? 'bg-indigo-600 dark:bg-gray-800 dark:text-indigo-50 text-white hover:bg-gray-700'
                 : 'text-gray-700 hover:text-indigo-500 hover:bg-gray-300 dark:hover:bg-gray-600',
-              'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+              'group flex gap-x-3 rounded-md py-3 pr-2 pl-3 text-sm leading-6 font-semibold'
             )}
           >
             <FontAwesomeIcon

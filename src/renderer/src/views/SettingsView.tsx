@@ -1,20 +1,20 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUser, faEnvelope } from '@fortawesome/free-solid-svg-icons'
-import { clsx } from 'clsx'
 import { LanguageSelector } from '../components/LanguageSelector'
 import { TextInput } from '../components/TextInput'
 import { LayoutThreeSections } from '../layouts/parts/LayoutThreeSections'
+import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
 
 export const SettingsView: React.FC = () => {
   // const { t } = useTranslation()
 
   const sections = [
-    { name: 'General', href: '#', current: true },
-    { name: 'Appearance', href: '#', current: false },
-    { name: 'Reading', href: '#', current: false },
-    { name: 'Formats', href: '#', current: false },
-    { name: 'Plugins', href: '#', current: false },
-    { name: 'About', href: '#', current: false },
+    { name: 'General', to: '#', current: true, id: 'general' },
+    { name: 'Appearance', to: '#', current: false, id: 'appearance' },
+    { name: 'Reading', to: '#', current: false, id: 'reading' },
+    { name: 'Formats', to: '#', current: false, id: 'formats' },
+    { name: 'Plugins', to: '#', current: false, id: 'plugins' },
+    { name: 'About', to: '#', current: false, id: 'about' },
   ]
 
   return (
@@ -84,21 +84,7 @@ export const SettingsView: React.FC = () => {
             </div>
           </main>
         }
-        sidebar={
-          <ul>
-            {sections.map((section) => (
-              <li
-                key={section.name}
-                className={clsx(
-                  'py-3 px-4 hover:bg-white/15 text-white rounded-md text-sm font-medium',
-                  section.current && 'font-semibold bg-white/5 drop-shadow-xl'
-                )}
-              >
-                {section.name}
-              </li>
-            ))}
-          </ul>
-        }
+        sidebar={<SubmenuEntries items={sections} />}
       />
     </>
   )
