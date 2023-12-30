@@ -7,21 +7,7 @@ import installExtension, {
 // import storage from 'electron-json-storage'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { SettingKeys, SettingValues } from '../../types/settings.types'
-import { store } from '../store/store'
-
-const handleFileOpen = (window: BrowserWindow) => async () => {
-  const { canceled, filePaths } = await dialog.showOpenDialog(window)
-  if (!canceled) {
-    return filePaths[0]
-  }
-
-  return null
-}
-
-const onAppSetSettingValue = (key: SettingKeys, value: SettingValues): Promise<SettingValues> => {
-  return store.set(key, value)
-}
+import { initIpcListeners } from './listeners/ipc'
 
 function createWindow(): void {
   // Create the browser window.
@@ -58,33 +44,7 @@ function createWindow(): void {
 
   Menu.setApplicationMenu(menu)
 
-  // IPC: Call Renderer -> main
-  ipcMain.on('window:set-title', (event, title) => {
-    const webContents = event.sender
-    const mainWindow = BrowserWindow.fromWebContents(webContents)
-    mainWindow?.setTitle(title)
-  })
-
-  // IPC: Call Renderer -> main + data return
-  ipcMain.handle('dialog:open-file', handleFileOpen(mainWindow))
-
-  ipcMain.handle('settings:setValue', (_, key, value) => {
-    onAppSetSettingValue(key, value)
-  })
-
-  ipcMain.on('settings:get', async (event, val) => {
-    event.returnValue = store.get(val)
-  })
-
-  ipcMain.on('settings:getAll', async (event, key, val) => {
-    event.returnValue = store.store
-  })
-  ipcMain.on('settings:set', async (_, key, val) => {
-    store.set(key, val)
-  })
-  ipcMain.on('settings:reset', async () => {
-    store.reset()
-  })
+  initIpcListeners(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()

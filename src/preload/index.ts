@@ -2,8 +2,34 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
-const api = {
-  desktop: true,
+export const api = {
+  settings: {
+    get(key, defaultValue) {
+      return ipcRenderer.sendSync('settings:get', key, defaultValue)
+    },
+    getAll() {
+      return ipcRenderer.sendSync('settings:getAll')
+    },
+    set(property, val) {
+      ipcRenderer.send('settings:set', property, val)
+    },
+    reset() {
+      ipcRenderer.send('settings:reset')
+    },
+    // Other method you want to add like has(), reset(), etc.
+  },
+
+  // IPC: Renderer -> main
+  setTitle: (title: string) => ipcRenderer.send('window:set-title', title),
+
+  // IPC: Renderer -> main + data return
+  openFile: () => ipcRenderer.invoke('dialog:open-file'),
+
+  // IPC: main -> Renderer
+  onUpdateCounter: (callback) =>
+    ipcRenderer.on('update-counter', (_event, value) => callback(value)),
+  // IPC: Renderer -> main
+  counterValue: (value) => ipcRenderer.send('counter-value', value),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -12,35 +38,7 @@ const api = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', {
-      settings: {
-        get(key, defaultValue) {
-          return ipcRenderer.sendSync('settings:get', key, defaultValue)
-        },
-        getAll() {
-          return ipcRenderer.sendSync('settings:getAll')
-        },
-        set(property, val) {
-          ipcRenderer.send('settings:set', property, val)
-        },
-        reset() {
-          ipcRenderer.send('settings:reset')
-        },
-        // Other method you want to add like has(), reset(), etc.
-      },
-
-      // IPC: Renderer -> main
-      setTitle: (title: string) => ipcRenderer.send('window:set-title', title),
-
-      // IPC: Renderer -> main + data return
-      openFile: () => ipcRenderer.invoke('dialog:open-file'),
-
-      // IPC: main -> Renderer
-      onUpdateCounter: (callback) =>
-        ipcRenderer.on('update-counter', (_event, value) => callback(value)),
-      // IPC: Renderer -> main
-      counterValue: (value) => ipcRenderer.send('counter-value', value),
-    })
+    contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
