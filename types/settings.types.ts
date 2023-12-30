@@ -1,6 +1,6 @@
 export type SettingsType = {
   language: string | null
-  theme: 'light' | 'dark' | 'system'
+  theme: 'light' | 'dark'
 }
 
 export type SettingKeys = keyof SettingsType

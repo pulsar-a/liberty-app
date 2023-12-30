@@ -25,7 +25,7 @@ export const LanguageSelector: React.FC = () => {
   const handleLanguageChange = async (value: string | undefined) => {
     setSelectedLanguage(value)
     setSetting('language', value || 'en')
-    changeLanguage(value)
+    return changeLanguage(value)
   }
 
   return (

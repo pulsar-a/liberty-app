@@ -1,7 +1,7 @@
 const Store = require('electron-store')
 
 const schema = {
-  colorSchema: {
+  theme: {
     type: 'string',
     default: 'system',
   },
