@@ -7,6 +7,7 @@ import { SettingsGeneralView } from '@/views/SettingsGeneralView'
 import { SettingsView } from '@/views/SettingsView'
 import { RootRoute, Route, Router } from '@tanstack/react-router'
 import { z } from 'zod'
+import { MyCollectionsView } from '../views/MyCollectionsView'
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -44,6 +45,10 @@ const authorSearchSchema = z.object({
   authorId: z.number().optional(),
 })
 
+const collectionsSearchSchema = z.object({
+  collectionId: z.number().optional(),
+})
+
 export const libraryRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
   path: '/',
@@ -52,11 +57,12 @@ export const libraryRoute = new Route({
   validateSearch: authorSearchSchema,
 })
 
-const myCollectionsRoute = new Route({
+export const myCollectionsRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
   path: '/my-collections',
-  component: () => <LibraryView />,
+  component: () => <MyCollectionsView />,
   pendingComponent: () => <div>Loading...</div>,
+  validateSearch: collectionsSearchSchema,
 })
 
 const settingsRoute = new Route({

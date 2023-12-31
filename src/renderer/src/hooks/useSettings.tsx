@@ -1,4 +1,3 @@
-// import { store } from '@store/store'
 import { SettingKeys } from '@app-types/settings.types'
 
 // const store = new Store()
