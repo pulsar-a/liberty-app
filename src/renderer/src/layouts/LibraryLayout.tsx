@@ -66,7 +66,7 @@ export const LibraryLayout = () => {
                 <li>
                   <MainMenuEntries items={systemNavigation} />
                 </li>
-                <li className="-mx-4 mt-auto flex h-24 items-center justify-center border-t border-indigo-100 dark:border-gray-800">
+                <li className="-mx-4 mt-auto flex h-24 flex-col items-center justify-center border-t border-indigo-100 dark:border-gray-800">
                   <DarkModeToggle />
                 </li>
               </ul>
@@ -79,7 +79,7 @@ export const LibraryLayout = () => {
         <div className="fixed left-0 right-0 top-0 z-20 pl-60">
           <div className="sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-6 shadow-sm sm:gap-x-6 dark:border-gray-700 dark:bg-slate-900">
             <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
-              <form className="relative flex flex-1" action="#" method="GET">
+              <form className="relative flex flex-1" action="#">
                 <FontAwesomeIcon
                   icon={faMagnifyingGlass}
                   className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"

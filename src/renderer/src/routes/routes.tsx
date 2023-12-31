@@ -1,6 +1,4 @@
-// import { EmptyLayout } from '@/layouts/EmptyLayout'
 import { App } from '@/App'
-// import { MainLayout } from '@/layouts/MainLayout'
 import { LibraryLayout } from '@/layouts/LibraryLayout'
 import { LibraryView } from '@/views/LibraryView'
 import { SettingsAboutView } from '@/views/SettingsAboutView'
@@ -8,11 +6,12 @@ import { SettingsAppearanceView } from '@/views/SettingsAppearanceView'
 import { SettingsGeneralView } from '@/views/SettingsGeneralView'
 import { SettingsView } from '@/views/SettingsView'
 import { RootRoute, Route, Router } from '@tanstack/react-router'
+import { z } from 'zod'
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 
-// const TanStackRouterDevtools =
+// export const TanStackRouterDevtools =
 //   process.env.NODE_ENV === 'production'
 //     ? () => null // Render nothing in production
 //     : React.lazy(() =>
@@ -20,119 +19,86 @@ import { RootRoute, Route, Router } from '@tanstack/react-router'
 //         import('@tanstack/router-devtools').then((res) => ({
 //           default: res.TanStackRouterDevtools,
 //           // For Embedded Mode
-//           // default: res.TanStackRouterDevtoolsPanel
+//           // default: res.TanStackRouterDevtoolsPanel,
 //         }))
 //       )
 
 const rootRoute = new RootRoute({
-  component: () => <App />,
+  component: () => (
+    <>
+      <App />
+      {/*<TanStackRouterDevtools initialIsOpen={false} />*/}
+    </>
+  ),
+  pendingComponent: () => <div>Loading...</div>,
 })
-
-// const mainLayoutRoute = new Route({
-//   getParentRoute: () => rootRoute,
-//   component: () => <MainLayout />,
-//   id: 'main-layout',
-// })
 
 const libraryLayoutRoute = new Route({
   getParentRoute: () => rootRoute,
   component: () => <LibraryLayout />,
+  pendingComponent: () => <div>Loading...</div>,
   id: 'library-layout',
 })
-//
-// const emptyLayoutRoute = new Route({
-//   getParentRoute: () => rootRoute,
-//   component: () => <EmptyLayout />,
-//   id: 'empty-layout',
-// })
 
-const indexRoute = new Route({
+const authorSearchSchema = z.object({
+  authorId: z.number().optional(),
+})
+
+export const libraryRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
   path: '/',
   component: () => <LibraryView />,
-})
-
-const byAuthorsRoute = new Route({
-  getParentRoute: () => libraryLayoutRoute,
-  path: '/by-author',
-  component: () => <LibraryView />,
+  pendingComponent: () => <div>Loading...</div>,
+  validateSearch: authorSearchSchema,
 })
 
 const myCollectionsRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
   path: '/my-collections',
   component: () => <LibraryView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
-
-// const settingsRoute = new Route({
-//   getParentRoute: () => libraryLayoutRoute,
-//   path: '/settings',
-//   component: () => <SettingsView />,
-// })
-
-/*
-{
-      name: 'Appearance',
-      to: '/settings/appearance',
-      current: false,
-      id: 'appearance',
-    },
-    {
-      name: 'Reading',
-      to: '/settings/reading',
-      current: false,
-      id: 'reading',
-    },
-    {
-      name: 'Formats',
-      to: '/settings/formats',
-      current: false,
-      id: 'formats',
-    },
-    {
-      name: 'Plugins',
-      to: '/settings/plugins',
-      current: false,
-      id: 'plugins',
-    },
-    { name: 'About', to: '/settings/about', current: false, id: 'about' },
- */
 
 const settingsRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
   id: 'settings',
   component: () => <SettingsView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
 const settingsGeneralRoute = new Route({
   getParentRoute: () => settingsRoute,
   path: '/settings',
   component: () => <SettingsGeneralView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
 const settingsAppearanceRoute = new Route({
   getParentRoute: () => settingsRoute,
   path: '/settings/appearance',
   component: () => <SettingsAppearanceView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
 const settingsReadingRoute = new Route({
   getParentRoute: () => settingsRoute,
   path: '/settings/reading',
   component: () => <SettingsAboutView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
 const settingsPluginsRoute = new Route({
   getParentRoute: () => settingsRoute,
   path: '/settings/plugins',
   component: () => <SettingsAboutView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
 const settingsAboutRoute = new Route({
   getParentRoute: () => settingsRoute,
   path: '/settings/about',
   component: () => <SettingsAboutView />,
+  pendingComponent: () => <div>Loading...</div>,
 })
 
 const routeTree = rootRoute.addChildren([
   libraryLayoutRoute.addChildren([
-    indexRoute,
-    byAuthorsRoute,
+    libraryRoute,
     myCollectionsRoute,
     settingsRoute.addChildren([
       settingsGeneralRoute,
@@ -142,8 +108,6 @@ const routeTree = rootRoute.addChildren([
       settingsAboutRoute,
     ]),
   ]),
-  // mainLayoutRoute.addChildren([settingsRoute]),
-  // emptyLayoutRoute.addChildren([]),
 ])
 
 export const router = new Router({ routeTree })

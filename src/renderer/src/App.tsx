@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { useSettings } from './hooks/useSettings'
+import { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSettings } from './hooks/useSettings'
 
 export const App = () => {
   const {
@@ -16,7 +16,9 @@ export const App = () => {
 
   return (
     <>
-      <Outlet />
+      <Suspense>
+        <Outlet />
+      </Suspense>
     </>
   )
 }

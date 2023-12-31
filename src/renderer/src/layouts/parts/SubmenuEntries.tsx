@@ -14,11 +14,12 @@ export const SubmenuEntries: React.FC<SubmenuEntriesProps> = ({ items }) => {
           <Link
             to={item?.to || '#'}
             onClick={item.fn}
-            activeOptions={{ exact: true }}
+            activeOptions={{ exact: true, includeSearch: true }}
             activeProps={{
               className:
                 'font-semibold dark:text-white border-indigo-500 dark:border-white/50 bg-indigo-300 dark:bg-white/10',
             }}
+            search={item.search}
             className={clsx(
               'block cursor-pointer rounded-md border-r-4 border-transparent py-2 pl-3 pr-2 text-sm font-medium text-gray-900 hover:border-black hover:bg-gray-600/15 dark:text-gray-300 dark:hover:border-white dark:hover:bg-white/15',
               item.disabled && 'pointer-events-none opacity-50'
