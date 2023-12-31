@@ -73,7 +73,7 @@ export const LibraryLayout = () => {
         </div>
 
         {/* SEARCH BAR */}
-        <div className="pl-60">
+        <div className="pl-60 fixed top-0 right-0 left-0 z-20">
           <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white shadow-sm sm:gap-x-6 px-8 dark:bg-slate-900">
             <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
               <form className="relative flex flex-1" action="#" method="GET">

@@ -23,7 +23,7 @@ export const SettingsView: React.FC = () => {
         content={
           <main>
             <div className="divide-y divide-white/5">
-              <div className="grid gap-x-8 gap-y-10 py-16 grid-cols-3 px-8">
+              <div className="grid gap-x-8 gap-y-10 grid-cols-3 px-8">
                 <form className="col-span-2">
                   <div className="grid gap-x-6 gap-y-8 grid-cols-6">
                     <div className="col-span-3">

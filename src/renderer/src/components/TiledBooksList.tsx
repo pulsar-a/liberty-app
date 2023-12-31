@@ -7,8 +7,8 @@ type BooksListProps = {
 
 export const TiledBooksList: React.FC<BooksListProps> = ({ books }) => {
   return (
-    <div className="bg-white dark:bg-slate-900">
-      <div className="px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+    <div>
+      <div className="px-4 lg:px-8 pb-36">
         <div className="sm:flex sm:items-baseline sm:justify-between">
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             All Books
