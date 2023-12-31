@@ -9,6 +9,12 @@
     "mainMenu_authors_title": "Autoren",
     "mainMenu_myCollections_title": "Meine Sammlungen",
     "mainMenu_settings_title": "Einstellungen",
-    "mainMenu_quit_title": "Beenden"
+    "mainMenu_quit_title": "Beenden",
+    "settings_subsection_general_title": "Allgemein",
+    "settings_subsection_appearance_title": "Aussehen",
+    "settings_subsection_reading_title": "Lesen",
+    "settings_subsection_formats_title": "Formate",
+    "settings_subsection_plugins_title": "Plugins",
+    "settings_subsection_about_title": "Über uns"
   }
 }

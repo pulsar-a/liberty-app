@@ -1,10 +1,13 @@
-import { Router, Route, RootRoute } from '@tanstack/react-router'
 // import { EmptyLayout } from '@/layouts/EmptyLayout'
+import { App } from '@/App'
 // import { MainLayout } from '@/layouts/MainLayout'
 import { LibraryLayout } from '@/layouts/LibraryLayout'
 import { LibraryView } from '@/views/LibraryView'
+import { SettingsAboutView } from '@/views/SettingsAboutView'
+import { SettingsAppearanceView } from '@/views/SettingsAppearanceView'
+import { SettingsGeneralView } from '@/views/SettingsGeneralView'
 import { SettingsView } from '@/views/SettingsView'
-import { App } from '../App'
+import { RootRoute, Route, Router } from '@tanstack/react-router'
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -61,14 +64,84 @@ const myCollectionsRoute = new Route({
   component: () => <LibraryView />,
 })
 
+// const settingsRoute = new Route({
+//   getParentRoute: () => libraryLayoutRoute,
+//   path: '/settings',
+//   component: () => <SettingsView />,
+// })
+
+/*
+{
+      name: 'Appearance',
+      to: '/settings/appearance',
+      current: false,
+      id: 'appearance',
+    },
+    {
+      name: 'Reading',
+      to: '/settings/reading',
+      current: false,
+      id: 'reading',
+    },
+    {
+      name: 'Formats',
+      to: '/settings/formats',
+      current: false,
+      id: 'formats',
+    },
+    {
+      name: 'Plugins',
+      to: '/settings/plugins',
+      current: false,
+      id: 'plugins',
+    },
+    { name: 'About', to: '/settings/about', current: false, id: 'about' },
+ */
+
 const settingsRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
-  path: '/settings',
+  id: 'settings',
   component: () => <SettingsView />,
+})
+const settingsGeneralRoute = new Route({
+  getParentRoute: () => settingsRoute,
+  path: '/settings',
+  component: () => <SettingsGeneralView />,
+})
+const settingsAppearanceRoute = new Route({
+  getParentRoute: () => settingsRoute,
+  path: '/settings/appearance',
+  component: () => <SettingsAppearanceView />,
+})
+const settingsReadingRoute = new Route({
+  getParentRoute: () => settingsRoute,
+  path: '/settings/reading',
+  component: () => <SettingsAboutView />,
+})
+const settingsPluginsRoute = new Route({
+  getParentRoute: () => settingsRoute,
+  path: '/settings/plugins',
+  component: () => <SettingsAboutView />,
+})
+const settingsAboutRoute = new Route({
+  getParentRoute: () => settingsRoute,
+  path: '/settings/about',
+  component: () => <SettingsAboutView />,
 })
 
 const routeTree = rootRoute.addChildren([
-  libraryLayoutRoute.addChildren([indexRoute, byAuthorsRoute, myCollectionsRoute, settingsRoute]),
+  libraryLayoutRoute.addChildren([
+    indexRoute,
+    byAuthorsRoute,
+    myCollectionsRoute,
+    settingsRoute.addChildren([
+      settingsGeneralRoute,
+      settingsAppearanceRoute,
+      settingsReadingRoute,
+      settingsPluginsRoute,
+      settingsAboutRoute,
+    ]),
+  ]),
   // mainLayoutRoute.addChildren([settingsRoute]),
   // emptyLayoutRoute.addChildren([]),
 ])

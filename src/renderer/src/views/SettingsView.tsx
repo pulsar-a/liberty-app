@@ -1,91 +1,47 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUser, faEnvelope } from '@fortawesome/free-solid-svg-icons'
-import { LanguageSelector } from '../components/LanguageSelector'
-import { TextInput } from '../components/TextInput'
-import { LayoutThreeSections } from '../layouts/parts/LayoutThreeSections'
+import { RouteEntry } from '@app-types/router.types'
+import { Outlet } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
+import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
 
 export const SettingsView: React.FC = () => {
-  // const { t } = useTranslation()
+  const { t } = useTranslation()
 
-  const sections = [
-    { name: 'General', to: '#', current: true, id: 'general' },
-    { name: 'Appearance', to: '#', current: false, id: 'appearance' },
-    { name: 'Reading', to: '#', current: false, id: 'reading' },
-    { name: 'Formats', to: '#', current: false, id: 'formats' },
-    { name: 'Plugins', to: '#', current: false, id: 'plugins' },
-    { name: 'About', to: '#', current: false, id: 'about' },
+  const sections: RouteEntry[] = [
+    {
+      id: 'general',
+      name: t('settings_subsection_general_title'),
+      to: '/settings',
+    },
+    {
+      id: 'appearance',
+      name: t('settings_subsection_appearance_title'),
+      to: '/settings/appearance',
+    },
+    {
+      id: 'reading',
+      name: t('settings_subsection_reading_title'),
+      // to: '/settings/reading',
+      disabled: true,
+    },
+    {
+      id: 'formats',
+      name: t('settings_subsection_formats_title'),
+      // to: '/settings/formats',
+      disabled: true,
+    },
+    {
+      id: 'plugins',
+      name: t('settings_subsection_plugins_title'),
+      // to: '/settings/plugins',
+      disabled: true,
+    },
+    {
+      id: 'about',
+      name: t('settings_subsection_about_title'),
+      to: '/settings/about',
+    },
   ]
 
-  return (
-    <>
-      <LayoutThreeSections
-        content={
-          <main>
-            <div className="divide-y divide-white/5">
-              <div className="grid gap-x-8 gap-y-10 grid-cols-3 px-8">
-                <form className="col-span-2">
-                  <div className="grid gap-x-6 gap-y-8 grid-cols-6">
-                    <div className="col-span-3">
-                      <TextInput
-                        id="first-name"
-                        name="first-name"
-                        label="First Name"
-                        placeholder="Manne"
-                        prefix={<FontAwesomeIcon icon={faUser} className="w-4 h-4" />}
-                        value=""
-                        onChange={() => {}}
-                      />
-                    </div>
-
-                    <div className="col-span-3">
-                      <TextInput
-                        id="last-name"
-                        name="last-name"
-                        label="Last Name"
-                        placeholder="Quinn"
-                        value=""
-                        onChange={() => {}}
-                      />
-                    </div>
-
-                    <div className="col-span-full">
-                      <TextInput
-                        id="email"
-                        name="email"
-                        label="Email address"
-                        prefix={<FontAwesomeIcon icon={faEnvelope} className="w-4 h-4" />}
-                        placeholder="janesmith"
-                        value="info@example.com"
-                        onChange={() => {}}
-                      />
-                    </div>
-
-                    <div className="col-span-full">
-                      <TextInput
-                        id="username"
-                        name="username"
-                        label="Username"
-                        prefix="$"
-                        placeholder="janesmith"
-                        value="HELLO"
-                        onChange={() => {}}
-                      />
-                    </div>
-
-                    <div className="col-span-full">
-                      <div className="mt-2">
-                        <LanguageSelector />
-                      </div>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </main>
-        }
-        sidebar={<SubmenuEntries items={sections} />}
-      />
-    </>
-  )
+  return <ThreeSectionsLayout content={<Outlet />} sidebar={<SubmenuEntries items={sections} />} />
 }

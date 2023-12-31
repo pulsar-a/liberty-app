@@ -1,6 +1,6 @@
 {
   "translation": {
-    "libraryView_title": "Library",
+    "libraryView_title": "Books",
     "settingsView_title": "Settings",
     "settingsView_config_language_title": "Language",
     "searchbar_placeholder": "Search...",
@@ -9,6 +9,12 @@
     "mainMenu_authors_title": "Authors",
     "mainMenu_myCollections_title": "My Collections",
     "mainMenu_settings_title": "Settings",
-    "mainMenu_quit_title": "Quit"
+    "mainMenu_quit_title": "Quit",
+    "settings_subsection_general_title": "General",
+    "settings_subsection_appearance_title": "Appearance",
+    "settings_subsection_reading_title": "Reading",
+    "settings_subsection_formats_title": "Formats",
+    "settings_subsection_plugins_title": "Plugins",
+    "settings_subsection_about_title": "About"
   }
 }

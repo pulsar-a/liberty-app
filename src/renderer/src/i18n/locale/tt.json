@@ -9,6 +9,12 @@
     "mainMenu_authors_title": "Авторлар",
     "mainMenu_myCollections_title": "Коллекцияларым",
     "mainMenu_settings_title": "Көйләүләр",
-    "mainMenu_quit_title": "Чыгу"
+    "mainMenu_quit_title": "Чыгу",
+    "settings_subsection_general_title": "Башлык",
+    "settings_subsection_appearance_title": "Күрүнеш",
+    "settings_subsection_reading_title": "Уку",
+    "settings_subsection_formats_title": "Форматлар",
+    "settings_subsection_plugins_title": "Плагиннар",
+    "settings_subsection_about_title": "Программа турында"
   }
 }

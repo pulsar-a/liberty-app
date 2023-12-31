@@ -9,6 +9,12 @@
     "mainMenu_authors_title": "Авторы",
     "mainMenu_myCollections_title": "Мои Коллекции",
     "mainMenu_settings_title": "Настройки",
-    "mainMenu_quit_title": "Выход"
+    "mainMenu_quit_title": "Выход",
+    "settings_subsection_general_title": "Основные",
+    "settings_subsection_appearance_title": "Внешний вид",
+    "settings_subsection_reading_title": "Чтение",
+    "settings_subsection_formats_title": "Форматы",
+    "settings_subsection_plugins_title": "Плагины",
+    "settings_subsection_about_title": "О программе"
   }
 }

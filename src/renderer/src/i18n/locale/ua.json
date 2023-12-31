@@ -9,6 +9,12 @@
     "mainMenu_authors_title": "Автори",
     "mainMenu_myCollections_title": "Мої колекції",
     "mainMenu_settings_title": "Налаштування",
-    "mainMenu_quit_title": "Вихід"
+    "mainMenu_quit_title": "Вихід",
+    "settings_subsection_general_title": "Загальні",
+    "settings_subsection_appearance_title": "Зовнішній вигляд",
+    "settings_subsection_reading_title": "Читання",
+    "settings_subsection_formats_title": "Формати",
+    "settings_subsection_plugins_title": "Плагіни",
+    "settings_subsection_about_title": "Про програму"
   }
 }

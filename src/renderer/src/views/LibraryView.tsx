@@ -1,33 +1,34 @@
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Book } from '../../../../types/books.types'
-import { TiledBooksList } from '../components/TiledBooksList'
-import { LayoutThreeSections } from '../layouts/parts/LayoutThreeSections'
-import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
-import shuraleCover from '@/assets/images/shurale.png'
 import langoliersCover from '@/assets/images/langoliers.png'
 import reliquaryCover from '@/assets/images/reliquary.png'
+import shuraleCover from '@/assets/images/shurale.png'
+import { useState } from 'react'
+import { Book } from '../../../../types/books.types'
+import { TiledBooksList } from '../components/TiledBooksList'
+import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
+import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
 
 export const LibraryView: React.FC = () => {
-  const { t } = useTranslation()
-
-  const [filePath, setFilePath] = useState<string | null>(null)
-  const [count, setCount] = useState<number>(0)
+  //** THESE ARE EXAMPLES OF IPC COMMUNICATION */
+  //
+  // const { t } = useTranslation()
+  //
+  // const [filePath, setFilePath] = useState<string | null>(null)
+  // const [count, setCount] = useState<number>(0)
+  //
+  // const uploadFile = async () => {
+  //   const filePath = await window.api.openFile()
+  //   setFilePath(filePath)
+  // }
+  //
+  // window.api.onUpdateCounter((counter) => {
+  //   setCount(counter)
+  //   console.log('counter', counter)
+  // })
 
   const [authors] = useState([
-    { id: 1, name: 'Stephen King', current: true },
-    { id: 2, name: 'Sir Arthur Conan Doyle', current: false },
+    { id: 1, name: 'Stephen King', to: '/by-authors&author=$author' },
+    { id: 2, name: 'Sir Arthur Conan Doyle', to: '#' },
   ])
-
-  const uploadFile = async () => {
-    const filePath = await window.api.openFile()
-    setFilePath(filePath)
-  }
-
-  window.api.onUpdateCounter((counter) => {
-    setCount(counter)
-    console.log('counter', counter)
-  })
 
   const books: Book[] = [
     {
@@ -94,7 +95,7 @@ export const LibraryView: React.FC = () => {
 
   return (
     <>
-      <LayoutThreeSections
+      <ThreeSectionsLayout
         content={
           <div>
             <TiledBooksList books={books} />

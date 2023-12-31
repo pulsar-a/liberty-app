@@ -1,28 +1,32 @@
+import { RouteEntry } from '@app-types/router.types'
+import { Link } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 
 type SubmenuEntriesProps = {
-  items: {
-    name: string
-    to?: string
-    fn?: () => void
-    id: string | number
-    current: boolean
-    disabled?: boolean
-  }[]
+  items: RouteEntry[]
 }
 
 export const SubmenuEntries: React.FC<SubmenuEntriesProps> = ({ items }) => {
   return (
     <ul className="flex flex-col gap-y-1.5">
       {items.map((item) => (
-        <li
-          key={item.id}
-          className={clsx(
-            'py-2 px-4 hover:bg-gray-600/15 dark:hover:bg-white/15 dark:text-white text-gray-900 rounded-md text-sm border-r-4 border-transparent dark:hover:border-white hover:border-black font-medium cursor-pointer',
-            item.current && 'font-semibold dark:bg-white/5 bg-gray-300 border-indigo-600'
-          )}
-        >
-          {item.name}
+        <li key={item.id}>
+          <Link
+            to={item?.to || '#'}
+            onClick={item.fn}
+            activeOptions={{ exact: true }}
+            activeProps={{
+              className:
+                'font-semibold dark:text-white border-indigo-500 dark:border-white/50 bg-indigo-300 dark:bg-white/10',
+            }}
+            className={clsx(
+              'block cursor-pointer rounded-md border-r-4 border-transparent py-2 pl-3 pr-2 text-sm font-medium text-gray-900 hover:border-black hover:bg-gray-600/15 dark:text-gray-300 dark:hover:border-white dark:hover:bg-white/15',
+              item.disabled && 'pointer-events-none opacity-50'
+            )}
+            disabled={item.disabled}
+          >
+            {item.name}
+          </Link>
         </li>
       ))}
     </ul>

@@ -1,13 +1,13 @@
-import { Outlet } from '@tanstack/react-router'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
+  faBookOpen,
+  faCog,
   faFolder,
   faHome,
-  faCog,
-  faBookOpen,
   faMagnifyingGlass,
   faPowerOff,
 } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Outlet } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
 import { MainMenuEntries } from './parts/MainMenuEntries'
@@ -16,8 +16,9 @@ export const LibraryLayout = () => {
   const { t } = useTranslation()
 
   const navigation = [
-    { name: t('mainMenu_allBooks_title'), to: '/', icon: faHome, current: true },
+    { id: 'all-books', name: t('mainMenu_allBooks_title'), to: '/', icon: faHome, current: true },
     {
+      id: 'my-collections',
       name: t('mainMenu_myCollections_title'),
       to: '/my-collections',
       icon: faFolder,
@@ -27,12 +28,14 @@ export const LibraryLayout = () => {
 
   const systemNavigation = [
     {
+      id: 'settings',
       name: t('mainMenu_settings_title'),
       to: '/settings',
       icon: faCog,
       current: false,
     },
     {
+      id: 'quit',
       name: t('mainMenu_quit_title'),
       fn: () => {
         window.close()
@@ -46,9 +49,9 @@ export const LibraryLayout = () => {
     <>
       <div>
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
-          <div className="flex grow flex-col gap-y-8 overflow-y-auto border-r border-gray-200 dark:border-gray-700 px-4 pt-3">
+          <div className="flex grow flex-col gap-y-8 overflow-y-auto border-r border-gray-200 px-4 pt-3 dark:border-gray-700">
             {/* LOGO */}
-            <div className="flex h-16 pt-4 shrink-0 items-center gap-2 dark:text-indigo-300 text-indigo-700 justify-center font-semibold text-2xl">
+            <div className="flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold text-indigo-700 dark:text-indigo-300">
               <FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-600" />
               <div>Liberty</div>
             </div>
@@ -63,7 +66,7 @@ export const LibraryLayout = () => {
                 <li>
                   <MainMenuEntries items={systemNavigation} />
                 </li>
-                <li className="mt-auto flex items-center justify-center h-24 -mx-4 border-t border-indigo-100 dark:border-gray-800">
+                <li className="-mx-4 mt-auto flex h-24 items-center justify-center border-t border-indigo-100 dark:border-gray-800">
                   <DarkModeToggle />
                 </li>
               </ul>
@@ -73,8 +76,8 @@ export const LibraryLayout = () => {
         </div>
 
         {/* SEARCH BAR */}
-        <div className="pl-60 fixed top-0 right-0 left-0 z-20">
-          <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white shadow-sm sm:gap-x-6 px-8 dark:bg-slate-900">
+        <div className="fixed left-0 right-0 top-0 z-20 pl-60">
+          <div className="sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-6 shadow-sm sm:gap-x-6 dark:border-gray-700 dark:bg-slate-900">
             <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
               <form className="relative flex flex-1" action="#" method="GET">
                 <FontAwesomeIcon
@@ -84,7 +87,7 @@ export const LibraryLayout = () => {
                 />
                 <input
                   id="search-field"
-                  className="block h-full w-full border-0 bg-white dark:bg-slate-900 py-0 pl-8 pr-0 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm"
+                  className="block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm dark:text-white"
                   placeholder={t('searchbar_placeholder')}
                   type="search"
                   name="search"
