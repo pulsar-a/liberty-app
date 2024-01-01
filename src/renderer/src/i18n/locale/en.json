@@ -13,7 +13,9 @@
     "settings_subsection_general_title": "General",
     "settings_subsection_appearance_title": "Appearance",
     "settings_subsection_reading_title": "Reading",
-    "settings_subsection_formats_title": "Formats",
+    "settings_subsection_files_title": "Files",
+    "settings_subsection_files_userFilesFolder_label": "User files folder",
+    "settings_subsection_files_defaultSystemFolder_placeholder": "Default system folder",
     "settings_subsection_plugins_title": "Plugins",
     "settings_subsection_about_title": "About"
   }

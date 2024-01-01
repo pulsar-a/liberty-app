@@ -13,8 +13,10 @@
     "settings_subsection_general_title": "Allgemein",
     "settings_subsection_appearance_title": "Aussehen",
     "settings_subsection_reading_title": "Lesen",
-    "settings_subsection_formats_title": "Formate",
+    "settings_subsection_files_title": "Dateien",
+    "settings_subsection_files_userFilesFolder_label": "Benutzerdateien",
+    "settings_subsection_files_defaultSystemFolder_placeholder": "Standardordner für Systeme",
     "settings_subsection_plugins_title": "Plugins",
-    "settings_subsection_about_title": "Über uns"
+    "settings_subsection_about_title": "Über das Programm"
   }
 }

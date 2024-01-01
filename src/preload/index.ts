@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
 
 // Custom APIs for renderer
 export const api = {
@@ -24,6 +24,7 @@ export const api = {
 
   // IPC: Renderer -> main + data return
   openFile: () => ipcRenderer.invoke('dialog:open-file'),
+  selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
 
   // IPC: main -> Renderer
   onUpdateCounter: (callback) =>

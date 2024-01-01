@@ -4,13 +4,13 @@ import { SettingKeys } from '@app-types/settings.types'
 
 export const useSettings = () => {
   return {
-    setSetting: (key: SettingKeys, value: string | number | null | object = null): void => {
+    setSetting: (key: SettingKeys, value: string | number | null = null): void => {
       window.api.settings.set(key, value)
     },
     getSetting: (
-      key: string,
-      defaultValue: string | number | null | object = null
-    ): string | number | null | object => {
+      key: SettingKeys,
+      defaultValue: string | number | null = null
+    ): string | number | null => {
       return window.api.settings.get(key, defaultValue)
     },
     resetSettings: () => {

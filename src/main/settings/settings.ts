@@ -9,7 +9,11 @@ const schema = {
     type: 'string',
     default: 'en',
   },
+  userFilesDir: {
+    type: 'string',
+    default: '',
+  },
 }
 
-export const store = new Store({ schema })
+export const settings = new Store({ schema })
 // Store.initRenderer()

@@ -17,6 +17,7 @@ export const SettingsView: React.FC = () => {
       id: 'appearance',
       name: t('settings_subsection_appearance_title'),
       to: '/settings/appearance',
+      disabled: true,
     },
     {
       id: 'reading',
@@ -25,10 +26,9 @@ export const SettingsView: React.FC = () => {
       disabled: true,
     },
     {
-      id: 'formats',
-      name: t('settings_subsection_formats_title'),
-      // to: '/settings/formats',
-      disabled: true,
+      id: 'files',
+      name: t('settings_subsection_files_title'),
+      to: '/settings/files',
     },
     {
       id: 'plugins',

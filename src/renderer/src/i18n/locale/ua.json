@@ -13,7 +13,9 @@
     "settings_subsection_general_title": "Загальні",
     "settings_subsection_appearance_title": "Зовнішній вигляд",
     "settings_subsection_reading_title": "Читання",
-    "settings_subsection_formats_title": "Формати",
+    "settings_subsection_files_title": "Файли",
+    "settings_subsection_files_userFilesFolder_label": "Папка з файлами користувача",
+    "settings_subsection_files_defaultSystemFolder_placeholder": "Папка за замовчуванням",
     "settings_subsection_plugins_title": "Плагіни",
     "settings_subsection_about_title": "Про програму"
   }

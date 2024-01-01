@@ -19,6 +19,7 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
+      webSecurity: false,
     },
   })
 
@@ -46,6 +47,7 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()
     mainWindow.show()
+    console.log('PATH:', app.getPath('userData'))
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

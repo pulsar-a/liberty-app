@@ -8,7 +8,8 @@ export declare const api: {
         reset(): void;
     };
     setTitle: (title: string) => void;
-    openFile: () => Promise<any>;
+    openFile: () => Promise<string|null>;
+    selectFolder: () => Promise<string|null>;
     onUpdateCounter: (callback: any) => Electron.IpcRenderer;
     counterValue: (value: any) => void;
 };

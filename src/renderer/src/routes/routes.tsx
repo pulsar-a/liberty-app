@@ -8,6 +8,7 @@ import { SettingsView } from '@/views/SettingsView'
 import { RootRoute, Route, Router } from '@tanstack/react-router'
 import { z } from 'zod'
 import { MyCollectionsView } from '../views/MyCollectionsView'
+import { SettingsFilesView } from '../views/SettingsFilesView'
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -95,6 +96,12 @@ const settingsPluginsRoute = new Route({
   component: () => <SettingsAboutView />,
   pendingComponent: () => <div>Loading...</div>,
 })
+const settingsFilesRoute = new Route({
+  getParentRoute: () => settingsRoute,
+  path: '/settings/files',
+  component: () => <SettingsFilesView />,
+  pendingComponent: () => <div>Loading...</div>,
+})
 const settingsAboutRoute = new Route({
   getParentRoute: () => settingsRoute,
   path: '/settings/about',
@@ -110,6 +117,7 @@ const routeTree = rootRoute.addChildren([
       settingsGeneralRoute,
       settingsAppearanceRoute,
       settingsReadingRoute,
+      settingsFilesRoute,
       settingsPluginsRoute,
       settingsAboutRoute,
     ]),
