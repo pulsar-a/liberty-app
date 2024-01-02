@@ -1,0 +1,10 @@
+version: '3'
+
+tasks:
+  db_populate:
+    cmds:
+      - npx prisma migrate dev --name initialize
+
+  db_ui:
+    cmds:
+      - npx prisma studio

@@ -1,5 +1,10 @@
 import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge, ipcRenderer } from 'electron'
+import { exposeElectronTRPC } from 'electron-trpc/main'
+
+process.once('loaded', async () => {
+  exposeElectronTRPC()
+})
 
 // Custom APIs for renderer
 export const api = {

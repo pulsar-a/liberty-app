@@ -11,45 +11,46 @@ datasource db {
 }
 
 model Book {
-  id Int @id @default(autoincrement())
-  name String
+  id             Int              @id @default(autoincrement())
+  name           String
   bookIdentifier String
   identifierType String
-  authors AuthorBook[]
-  folders FolderBook[]
+  authors        AuthorBook[]
+  collections    CollectionBook[]
+
   @@unique([bookIdentifier, identifierType], name: "uniqueBookId")
 }
 
 model Author {
-  id Int @id @default(autoincrement())
-  name String
+  id    Int          @id @default(autoincrement())
+  name  String
   books AuthorBook[]
 }
 
 model AuthorBook {
-  book Book @relation(fields: [bookId], references: [id])
-  bookId Int
-  author Author @relation(fields: [authorId], references: [id])
+  book     Book   @relation(fields: [bookId], references: [id])
+  bookId   Int
+  author   Author @relation(fields: [authorId], references: [id])
   authorId Int
 
   @@id([bookId, authorId])
 }
 
-model FolderBook {
-  book Book @relation(fields: [bookId], references: [id])
-  bookId Int
-  author Folder @relation(fields: [folderId], references: [id])
-  folderId Int
+model CollectionBook {
+  book         Book       @relation(fields: [bookId], references: [id])
+  bookId       Int
+  author       Collection @relation(fields: [collectionId], references: [id])
+  collectionId Int
 
-  @@id([bookId, folderId])
+  @@id([bookId, collectionId])
 }
 
-model Folder {
-  id Int @id @default(autoincrement())
-  name String
-  color String
+model Collection {
+  id      Int              @id @default(autoincrement())
+  name    String
+  color   String
   content String?
-  books FolderBook[]
+  books   CollectionBook[]
   // published Boolean @default(false)
   // author    User    @relation(fields: [authorId], references: [id])
   // authorId  Int

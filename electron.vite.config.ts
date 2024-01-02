@@ -14,6 +14,7 @@ export default defineConfig({
       alias: {
         '@': resolve('src/renderer/src'),
         '@app-types': resolve('types'),
+        '@ipc-routes': resolve('src/main/router'),
       },
     },
     plugins: [react()],

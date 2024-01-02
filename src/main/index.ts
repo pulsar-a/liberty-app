@@ -4,9 +4,11 @@ import installExtension, {
   REACT_DEVELOPER_TOOLS,
   REDUX_DEVTOOLS,
 } from 'electron-devtools-installer'
-import { join } from 'path'
+import { createIPCHandler } from 'electron-trpc/main'
 // import icon from '../../resources/icon.png?asset'
+import { join } from 'path'
 import { initIpcListeners } from './listeners/ipc'
+import { router } from './router/routes'
 
 function createWindow(): void {
   // Create the browser window.
@@ -20,8 +22,11 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       webSecurity: false,
+      // Replace this path with the path to your BUILT preload file
     },
   })
+
+  createIPCHandler({ router, windows: [mainWindow] })
 
   // IPC: main -> Renderer
   const menu = Menu.buildFromTemplate([

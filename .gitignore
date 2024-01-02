@@ -3,6 +3,8 @@ dist
 out
 .idea/
 test-files/
+prisma/liberty.db
+prisma/liberty.db-journal
 
 
 *.log*

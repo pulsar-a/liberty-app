@@ -15,16 +15,17 @@ import { libraryRoute } from '../routes/routes'
 export const LibraryView: React.FC = () => {
   const { t } = useTranslation()
   const { authorId } = libraryRoute.useSearch()
+
   //** THESE ARE EXAMPLES OF IPC COMMUNICATION */
   //
   //
-  const [filePath, setFilePath] = useState<string | null>(null)
+  // const [filePath, setFilePath] = useState<string | null>(null)
   // const [count, setCount] = useState<number>(0)
 
-  const uploadFile = async () => {
-    const filePath = await window.api.openFile()
-    setFilePath(filePath)
-  }
+  // const uploadFile = async () => {
+  //   const filePath = await window.api.openFile()
+  //   setFilePath(filePath)
+  // }
   //
   // window.api.onUpdateCounter((counter) => {
   //   setCount(counter)
@@ -121,11 +122,12 @@ export const LibraryView: React.FC = () => {
               <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                 {t('libraryView_title')}
               </h2>
+
               {authorId && <h4 className="text-xl">{selectedAuthorName}</h4>}
             </div>
             {/*<div>{t('libraryView_title')}</div>*/}
-            {filePath && <div>=== FILE PATH: {filePath}</div>}
-            {filePath && <img src={filePath || ''} alt="" />}
+            {/*{filePath && <div>=== FILE PATH: {filePath}</div>}*/}
+            {/*{filePath && <img src={filePath || ''} alt="" />}*/}
             {/*<div>=== Counter: {count}</div>*/}
             {/*<button*/}
             {/*  className="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"*/}
