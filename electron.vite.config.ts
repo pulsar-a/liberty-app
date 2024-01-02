@@ -1,13 +1,19 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { bytecodePlugin, defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { resolve } from 'path'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin(),
+      bytecodePlugin({ protectedStrings: ['**ADD YOUR TOKENS**'] }),
+    ],
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin(),
+      bytecodePlugin({ protectedStrings: ['**ADD YOUR TOKENS**'] }),
+    ],
   },
   renderer: {
     resolve: {

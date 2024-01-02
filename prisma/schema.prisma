@@ -11,20 +11,33 @@ datasource db {
 }
 
 model Book {
-  id             Int              @id @default(autoincrement())
-  name           String
-  bookIdentifier String
-  identifierType String
-  authors        AuthorBook[]
-  collections    CollectionBook[]
+  id              Int              @id @default(autoincrement())
+  name            String
+  bookIdentifier  String
+  identifierType  String
+  fileName        String
+  cover           String?
+  description     String?
+  fileFormat      String?
+  readingProgress Int?
+  score           Int?
+  collections     CollectionBook[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  authorBook      AuthorBook[]
 
   @@unique([bookIdentifier, identifierType], name: "uniqueBookId")
+  @@map("books")
 }
 
 model Author {
-  id    Int          @id @default(autoincrement())
-  name  String
-  books AuthorBook[]
+  id        Int          @id @default(autoincrement())
+  name      String       @unique
+  books     AuthorBook[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("authors")
 }
 
 model AuthorBook {
@@ -34,6 +47,9 @@ model AuthorBook {
   authorId Int
 
   @@id([bookId, authorId])
+  @@index([bookId])
+  @@index([authorId])
+  @@map("author_book")
 }
 
 model CollectionBook {
@@ -43,15 +59,19 @@ model CollectionBook {
   collectionId Int
 
   @@id([bookId, collectionId])
+  @@index([bookId])
+  @@index([collectionId])
+  @@map("collection_book")
 }
 
 model Collection {
-  id      Int              @id @default(autoincrement())
-  name    String
-  color   String
-  content String?
-  books   CollectionBook[]
-  // published Boolean @default(false)
-  // author    User    @relation(fields: [authorId], references: [id])
-  // authorId  Int
+  id        Int              @id @default(autoincrement())
+  name      String
+  color     String
+  content   String?
+  books     CollectionBook[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("collections")
 }

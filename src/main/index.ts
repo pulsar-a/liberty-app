@@ -7,6 +7,7 @@ import installExtension, {
 import { createIPCHandler } from 'electron-trpc/main'
 // import icon from '../../resources/icon.png?asset'
 import { join } from 'path'
+import { seed } from '../../prisma/seeds/seed'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
 
@@ -21,8 +22,6 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      webSecurity: false,
-      // Replace this path with the path to your BUILT preload file
     },
   })
 
@@ -48,6 +47,9 @@ function createWindow(): void {
   Menu.setApplicationMenu(menu)
 
   initIpcListeners(mainWindow)
+
+  // Seed database FIXME: comment this out after first run
+  seed()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()

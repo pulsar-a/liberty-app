@@ -4,6 +4,13 @@ tasks:
   db_populate:
     cmds:
       - npx prisma migrate dev --name initialize
+  db_seed:
+    cmds:
+      - node ./prisma/seeds/addSeeds.js
+  db_fresh:
+    cmds:
+#      TODO: add file cleanup
+      - task db_populate
 
   db_ui:
     cmds:
