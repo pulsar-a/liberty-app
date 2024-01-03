@@ -1,20 +1,19 @@
-import cosmosCover from '@/assets/images/cosmos.png'
-import faustCover from '@/assets/images/faust.png'
-import kobzarCover from '@/assets/images/kobzar.png'
-import langoliersCover from '@/assets/images/langoliers.png'
-import reliquaryCover from '@/assets/images/reliquary.png'
-import shuraleCover from '@/assets/images/shurale.png'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { TiledBooksList } from '@/components/TiledBooksList'
+import { useIpc } from '@/hooks/useIpc'
+import { SubmenuEntries } from '@/layouts/parts/SubmenuEntries'
+import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
+import { libraryRoute } from '@/routes/routes'
+import { Book } from '@app-types/books.types'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Book } from '../../../../types/books.types'
-import { TiledBooksList } from '../components/TiledBooksList'
-import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
-import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
-import { libraryRoute } from '../routes/routes'
+import placeholderBook from '../assets/images/placeholder-book.png'
 
 export const LibraryView: React.FC = () => {
   const { t } = useTranslation()
   const { authorId } = libraryRoute.useSearch()
+  const { main } = useIpc()
+  const { data: books, isLoading } = main.getBooks.useQuery()
 
   //** THESE ARE EXAMPLES OF IPC COMMUNICATION */
   //
@@ -47,65 +46,75 @@ export const LibraryView: React.FC = () => {
     },
   ])
 
-  const books: Book[] = [
-    {
-      id: 1,
-      name: 'Шүрәле',
-      bookIdentifier: '1234567890',
-      identifierType: 'ISBN',
-      authors: [{ id: 3, name: 'Габдулла Тукай' }],
-      image: shuraleCover,
-    },
-    {
-      id: 2,
-      name: 'Langoliers',
-      bookIdentifier: 'B000FC0SIM',
-      identifierType: 'ASIN',
-      authors: [{ id: 1, name: 'Stephen King' }],
-      image: langoliersCover,
-    },
-    {
-      id: 3,
-      name: 'Reliquary',
-      bookIdentifier: '3234122343',
-      identifierType: 'ISBN',
-      authors: [
-        { id: 5, name: 'Douglas Preston' },
-        { id: 6, name: 'Lincoln Child' },
-      ],
-      image: reliquaryCover,
-    },
-    {
-      id: 4,
-      name: 'Кобзар',
-      bookIdentifier: '1234567390',
-      identifierType: 'ISBN',
-      authors: [{ id: 4, name: 'Тарас Шевченко' }],
-      image: kobzarCover,
-    },
-    {
-      id: 5,
-      name: 'Faust, Part One',
-      bookIdentifier: '3234122343',
-      identifierType: 'ISBN',
-      authors: [{ id: 7, name: 'Johann Wolfgang von Goethe' }],
-      image: faustCover,
-    },
-    {
-      id: 6,
-      name: 'Cosmos',
-      bookIdentifier: '1234122343',
-      identifierType: 'ISBN',
-      authors: [{ id: 2, name: 'Carl Sagan' }],
-      image: cosmosCover,
-    },
-  ]
+  // const books: Book[] = [
+  //   {
+  //     id: 1,
+  //     name: 'Шүрәле',
+  //     bookIdentifier: '1234567890',
+  //     identifierType: 'ISBN',
+  //     authors: [{ id: 3, name: 'Габдулла Тукай' }],
+  //     image: shuraleCover,
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Langoliers',
+  //     bookIdentifier: 'B000FC0SIM',
+  //     identifierType: 'ASIN',
+  //     authors: [{ id: 1, name: 'Stephen King' }],
+  //     image: langoliersCover,
+  //   },
+  //   {
+  //     id: 3,
+  //     name: 'Reliquary',
+  //     bookIdentifier: '3234122343',
+  //     identifierType: 'ISBN',
+  //     authors: [
+  //       { id: 5, name: 'Douglas Preston' },
+  //       { id: 6, name: 'Lincoln Child' },
+  //     ],
+  //     image: reliquaryCover,
+  //   },
+  //   {
+  //     id: 4,
+  //     name: 'Кобзар',
+  //     bookIdentifier: '1234567390',
+  //     identifierType: 'ISBN',
+  //     authors: [{ id: 4, name: 'Тарас Шевченко' }],
+  //     image: kobzarCover,
+  //   },
+  //   {
+  //     id: 5,
+  //     name: 'Faust, Part One',
+  //     bookIdentifier: '3234122343',
+  //     identifierType: 'ISBN',
+  //     authors: [{ id: 7, name: 'Johann Wolfgang von Goethe' }],
+  //     image: faustCover,
+  //   },
+  //   {
+  //     id: 6,
+  //     name: 'Cosmos',
+  //     bookIdentifier: '1234122343',
+  //     identifierType: 'ISBN',
+  //     authors: [{ id: 2, name: 'Carl Sagan' }],
+  //     image: cosmosCover,
+  //   },
+  // ]
 
-  const filteredBooks = useMemo(() => {
-    if (!authorId) {
-      return books
+  const filteredBooks = useMemo<Book[]>((): Book[] => {
+    if (!books?.items) {
+      return []
     }
-    return books.filter((book) => book.authors.some((author) => author.id === authorId))
+    //
+    // if (!authorId) {
+    //   return books.items
+    // }
+
+    return books.items.map((book) => ({
+      ...book,
+      cover: book?.cover || placeholderBook,
+      authors: [],
+    })) as Book[]
+    // return books?.items.filter((book) => book.authors.some((author) => author.id === authorId))
   }, [books, authorId])
 
   const selectedAuthorName = useMemo(() => {
@@ -135,7 +144,12 @@ export const LibraryView: React.FC = () => {
             {/*>*/}
             {/*  Upload File*/}
             {/*</button>*/}
-            <TiledBooksList books={filteredBooks} />
+            {isLoading && (
+              <div className="flex h-full items-center justify-center">
+                <LoadingSpinner size="lg" />
+              </div>
+            )}
+            {!isLoading && books && <TiledBooksList books={filteredBooks || []} />}
           </div>
         }
         sidebar={<SubmenuEntries items={authors} />}

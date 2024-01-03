@@ -5,6 +5,6 @@ const trpcReact = createTRPCReact<AppRouter>()
 
 export const useIpc = () => {
   return {
-    client: trpcReact,
+    main: trpcReact,
   }
 }

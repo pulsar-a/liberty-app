@@ -11,11 +11,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
       className="group relative cursor-pointer rounded-lg bg-indigo-100 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-950"
     >
       <div className="aspect-h-3 aspect-w-2 h-96 w-full overflow-hidden rounded-t-lg">
-        <img
-          src={book.image}
-          alt={book.imageAlt}
-          className="h-full w-full object-cover object-center"
-        />
+        <img src={book.cover} alt="" className="h-full w-full object-cover object-center" />
       </div>
 
       <h3 className="mt-4 px-4 text-base font-semibold text-gray-900 dark:text-white">

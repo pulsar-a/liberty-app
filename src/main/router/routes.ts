@@ -1,7 +1,11 @@
+import { PrismaClient } from '@prisma/client'
 import { initTRPC } from '@trpc/server'
 import { observable } from '@trpc/server/observable'
 import { EventEmitter } from 'events'
 import { z } from 'zod'
+import { BookEntity } from '../../../types/books.types'
+
+const prisma = new PrismaClient()
 
 const ee = new EventEmitter()
 
@@ -28,6 +32,21 @@ export const router = t.router({
         ee.off('greeting', onGreet)
       }
     })
+  }),
+  getBooks: t.procedure.query(async () => {
+    const books = await prisma.book.findMany()
+    return {
+      items: books.map((book) => ({
+        ...book,
+        authors: [],
+      })) as BookEntity[],
+    }
+  }),
+  getAuthors: t.procedure.query(async () => {
+    const authors = await prisma.author.findMany()
+    return {
+      items: authors,
+    }
   }),
 })
 

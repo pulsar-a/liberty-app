@@ -7,9 +7,9 @@ export type Book = {
   id: number
   name: string
   bookIdentifier: string
-  identifierType: 'ISBN' | 'ASIN'
-  image?: string
-  imageAlt?: string
+  identifierType: string
+  cover?: string
+  coverAlt?: string
   authors: Author[]
 }
 

@@ -8,6 +8,7 @@ import { createIPCHandler } from 'electron-trpc/main'
 // import icon from '../../resources/icon.png?asset'
 import { join } from 'path'
 import { seed } from '../../prisma/seeds/seed'
+import { isDev } from './constants/app'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
 
@@ -48,8 +49,9 @@ function createWindow(): void {
 
   initIpcListeners(mainWindow)
 
-  // Seed database FIXME: comment this out after first run
-  seed()
+  if (isDev) {
+    seed()
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()

@@ -23,8 +23,7 @@ export const booksSeed = async () => {
       name: 'The Lord of the Rings',
       bookIdentifier: '9780261103252',
       identifierType: 'ISBN',
-      cover:
-        'https://images-na.ssl-images-amazon.com/images/I/51ZQ7NB5EFL._SX331_BO1,204,203,200_.jpg',
+      cover: '',
       score: 5,
       fileName: 'The Lord of the Rings - J.R.R. Tolkien.epub',
       fileFormat: 'epub',
@@ -36,8 +35,7 @@ export const booksSeed = async () => {
       name: 'The Hobbit',
       bookIdentifier: '9780261103306',
       identifierType: 'ISBN',
-      cover:
-        'https://images-na.ssl-images-amazon.com/images/I/51ZQ7NB5EFL._SX331_BO1,204,203,200_.jpg',
+      cover: '',
       score: 3,
       fileName: 'The Hobbit - J.R.R. Tolkien.epub',
       fileFormat: 'epub',
@@ -50,8 +48,7 @@ export const booksSeed = async () => {
       name: 'The Silmarillion',
       bookIdentifier: '9780261102736',
       identifierType: 'ISBN',
-      cover:
-        'https://images-na.ssl-images-amazon.com/images/I/51ZQ7NB5EFL._SX331_BO1,204,203,200_.jpg',
+      cover: '',
       score: 2,
       fileName: 'The Silmarillion - J.R.R. Tolkien.epub',
       fileFormat: 'mobi',
@@ -64,8 +61,7 @@ export const booksSeed = async () => {
       name: 'Reliquary',
       bookIdentifier: '9780261102236',
       identifierType: 'ISBN',
-      cover:
-        'https://images-na.ssl-images-amazon.com/images/I/51ZQ7NB5EFL._SX331_BO1,204,203,200_.jpg',
+      cover: '',
       score: 5,
       fileName: 'reliquary.epub',
       fileFormat: 'epub',
