@@ -17,7 +17,9 @@ export const booksQuery = {
       },
     })
   },
-  // async createBook(book: Omit<BookEntity, 'id'>) {
-  //   const book = new BookEntity()
-  // },
+  async createBook(book: Omit<BookEntity, 'id'>) {
+    const bookRepository = db.getRepository(BookEntity)
+    const newBook = bookRepository.create(book)
+    return await bookRepository.save(newBook)
+  },
 }

@@ -16,31 +16,18 @@ export const LibraryView: React.FC = () => {
   const { data: books, isLoading: isBooksLoading } = main.getBooks.useQuery()
   const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery()
 
-  // const [authors] = useState([
-  //   { id: 1, name: 'Stephen King', to: '/', search: { authorId: 1 } },
-  //   { id: 2, name: 'Carl Sagan', to: '/', search: { authorId: 2 } },
-  //   { id: 3, name: 'Габдулла Тукай', to: '/', search: { authorId: 3 } },
-  //   { id: 4, name: 'Тарас Шевченко', to: '/', search: { authorId: 4 } },
-  //   { id: 5, name: 'Douglas Preston', to: '/', search: { authorId: 5 } },
-  //   { id: 6, name: 'Lincoln Child', to: '/', search: { authorId: 6 } },
-  //   {
-  //     id: 7,
-  //     name: 'Johann Wolfgang von Goethe',
-  //     to: '/',
-  //     search: { authorId: 7 },
-  //   },
-  // ])
-
-  // @ts-ignore no timestamps
-  const filteredBooks: BookEntity[] = useMemo(() => {
+  const filteredBooks = useMemo<BookEntity[]>((): BookEntity[] => {
     if (!books?.items) {
       return []
     }
 
     if (!authorId) {
-      return books.items
+      return books.items as unknown as BookEntity[]
     }
-    return books.items.filter((book) => book.authors.some((author) => author.id === authorId))
+
+    return books.items.filter((book) =>
+      book.authors.some((author) => author.id === authorId)
+    ) as unknown as BookEntity[]
   }, [books, authorId])
 
   const authorRouteEntries: RouteEntry[] = useMemo(() => {

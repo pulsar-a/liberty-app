@@ -17,7 +17,4 @@ export const authorsQuery = {
       },
     })
   },
-  // async createBook(book: Omit<BookEntity, 'id'>) {
-  //   const book = new BookEntity()
-  // },
 }

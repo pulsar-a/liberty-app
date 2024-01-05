@@ -2,6 +2,8 @@ import { initTRPC } from '@trpc/server'
 import { observable } from '@trpc/server/observable'
 import { EventEmitter } from 'events'
 import { z } from 'zod'
+import AuthorEntity from '../entities/author.entity'
+import BookEntity from '../entities/book.entity'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
 
@@ -31,7 +33,7 @@ export const router = t.router({
       }
     })
   }),
-  getBooks: t.procedure.query(async () => {
+  getBooks: t.procedure.query(async (): Promise<{ items: BookEntity[] }> => {
     const books = await booksQuery.books()
     return {
       items: books,
@@ -41,7 +43,7 @@ export const router = t.router({
       // })) as BookEntity[],
     }
   }),
-  getAuthors: t.procedure.query(async () => {
+  getAuthors: t.procedure.query(async (): Promise<{ items: AuthorEntity[] }> => {
     const authors = await authorsQuery.authors()
     return {
       items: authors,

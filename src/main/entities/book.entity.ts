@@ -40,15 +40,15 @@ export default class BookEntity {
   @Column('integer', { nullable: true })
   score: number | null
 
-  @CreateDateColumn({ type: 'text', default: () => 'CURRENT_TIMESTAMP' })
-  public created_at: Date
+  @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date
 
   @UpdateDateColumn({
-    type: 'text',
+    type: 'date',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  public updated_at: Date
+  updatedAt: Date
 
   @ManyToMany(() => AuthorEntity)
   @JoinTable({ name: 'author_book' })

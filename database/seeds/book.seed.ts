@@ -13,20 +13,20 @@ export default class CreateBooks implements Seeder {
         {
           id: 1,
           name: 'Шүрәле',
-          fileName: 'shurale.fb2',
-          fileFormat: 'fb2',
+          fileName: 'shurale.epub',
+          fileFormat: 'epub',
         },
         {
           id: 2,
           name: 'Langoliers',
-          fileName: 'langoliers.fb2',
-          fileFormat: 'fb2',
+          fileName: 'langoliers.epub',
+          fileFormat: 'epub',
         },
         {
           id: 3,
           name: 'Reliquary',
-          fileName: 'reliquary.fb2',
-          fileFormat: 'fb2',
+          fileName: 'reliquary.mobi',
+          fileFormat: 'mobi',
         },
         {
           id: 4,
