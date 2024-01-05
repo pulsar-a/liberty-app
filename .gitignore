@@ -5,6 +5,7 @@ out
 test-files/
 prisma/liberty.db
 prisma/liberty.db-journal
+./data
 
 
 *.log*

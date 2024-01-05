@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
 import installExtension, {
@@ -7,10 +8,10 @@ import installExtension, {
 import { createIPCHandler } from 'electron-trpc/main'
 // import icon from '../../resources/icon.png?asset'
 import { join } from 'path'
-import { seed } from '../../prisma/seeds/seed'
-import { isDev } from './constants/app'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
+
+import './services/db'
 
 function createWindow(): void {
   // Create the browser window.
@@ -49,9 +50,9 @@ function createWindow(): void {
 
   initIpcListeners(mainWindow)
 
-  if (isDev) {
-    seed()
-  }
+  // if (isDev) {
+  //   seed()
+  // }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()

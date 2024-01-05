@@ -11,23 +11,26 @@ export type Book = {
   cover?: string
   coverAlt?: string
   authors: Author[]
-}
-
-export type BookEntity = {
-  id: number | never
-  name: string
-  bookIdentifier: string
-  identifierType: string
-  cover?: string
-  score?: number
-  fileName: string
-  fileFormat: string
-  description?: string
   readingProgress?: number
-  authors?: AuthorEntity[]
-  createdAt?: Date
-  updatedAt?: Date
+  score?: number
+  fileFormat: string
 }
+//
+// export type BookEntity = {
+//   id: number | never
+//   name: string
+//   bookIdentifier: string
+//   identifierType: string
+//   cover?: string
+//   score?: number
+//   fileName: string
+//   fileFormat: string
+//   description?: string
+//   readingProgress?: number
+//   authors?: AuthorEntity[]
+//   createdAt?: Date
+//   updatedAt?: Date
+// }
 
 export type AuthorEntity = {
   id: number | never

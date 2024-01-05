@@ -2,14 +2,16 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "include": [
     "electron.vite.config.*",
-    "src/main/listeners/*",
-    "src/main/mocks/*",
-    "src/main/settings/*",
+    "src/main/**/*",
+    "prisma/**/*.ts",
     "src/preload/*",
     "types/*.ts",
   ],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false
   }
 }
