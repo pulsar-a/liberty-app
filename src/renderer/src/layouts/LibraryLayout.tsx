@@ -57,7 +57,7 @@ export const LibraryLayout = () => {
     <>
       <div className="h-dvh">
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
-          <div className="flex grow flex-col gap-y-8 overflow-y-auto border-r border-gray-200 px-4 pt-3 dark:border-gray-700">
+          <div className="flex grow flex-col gap-y-8 border-r border-gray-200 px-4 pt-3 dark:border-gray-700">
             {/* LOGO */}
             <div className="flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold text-indigo-700 dark:text-indigo-300">
               <FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-600" />

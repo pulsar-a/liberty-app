@@ -15,7 +15,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
   return (
     <div
       key={book.id}
-      className="group relative cursor-pointer rounded-lg bg-indigo-100 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-950"
+      className="group relative cursor-pointer rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl"
     >
       <div className="aspect-h-3 aspect-w-2 relative h-96 w-full overflow-hidden rounded-t-lg">
         {hasReadingProgress && (
@@ -48,11 +48,11 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
         )}
       </div>
 
-      <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-gray-900 dark:text-white">
+      <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-white">
         {book.name}
       </h3>
 
-      <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-gray-500 dark:text-white">
+      <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-white">
         {book.authors.map((author) => author.name).join(', ')}
       </div>
     </div>
