@@ -9,4 +9,6 @@ export type RouteEntry = {
   name: string
   disabled?: boolean
   icon?: IconDefinition
+  hash?: string
+  children?: RouteEntry[]
 }

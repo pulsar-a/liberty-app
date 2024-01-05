@@ -8,6 +8,7 @@ import { SettingsView } from '@/views/SettingsView'
 import { RootRoute, Route, Router } from '@tanstack/react-router'
 import { z } from 'zod'
 import { MyCollectionsView } from '../views/MyCollectionsView'
+import { ReaderView } from '../views/ReaderView'
 import { SettingsFilesView } from '../views/SettingsFilesView'
 
 // Devtools
@@ -66,6 +67,13 @@ export const myCollectionsRoute = new Route({
   validateSearch: collectionsSearchSchema,
 })
 
+const readerRoute = new Route({
+  getParentRoute: () => libraryLayoutRoute,
+  path: '/reader',
+  component: () => <ReaderView />,
+  pendingComponent: () => <div>Loading...</div>,
+})
+
 const settingsRoute = new Route({
   getParentRoute: () => libraryLayoutRoute,
   id: 'settings',
@@ -113,6 +121,7 @@ const routeTree = rootRoute.addChildren([
   libraryLayoutRoute.addChildren([
     libraryRoute,
     myCollectionsRoute,
+    readerRoute,
     settingsRoute.addChildren([
       settingsGeneralRoute,
       settingsAppearanceRoute,

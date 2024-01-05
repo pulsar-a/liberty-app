@@ -5,6 +5,7 @@ import {
   faHome,
   faMagnifyingGlass,
   faPowerOff,
+  faTabletScreenButton,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Outlet } from '@tanstack/react-router'
@@ -22,6 +23,13 @@ export const LibraryLayout = () => {
       name: t('mainMenu_myCollections_title'),
       to: '/my-collections',
       icon: faFolder,
+      current: false,
+    },
+    {
+      id: '',
+      name: t('mainMenu_reader_title'),
+      to: '/reader',
+      icon: faTabletScreenButton,
       current: false,
     },
   ]

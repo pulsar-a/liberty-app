@@ -1,7 +1,7 @@
 type LayoutThreeSectionsProps = {
   content: React.ReactNode
   sidebar: React.ReactNode
-  sidebarTop: React.ReactNode
+  sidebarTop?: React.ReactNode
 }
 
 export const ThreeSectionsLayout: React.FC<LayoutThreeSectionsProps> = ({
@@ -21,7 +21,7 @@ export const ThreeSectionsLayout: React.FC<LayoutThreeSectionsProps> = ({
       </aside>
       <main className="pl-56">
         <div className="pl-60">
-          <div className="bg-gray-100 py-28 dark:bg-slate-900">{content}</div>
+          <div className="relative h-dvh bg-gray-100 py-28 dark:bg-slate-900">{content}</div>
         </div>
       </main>
     </>
