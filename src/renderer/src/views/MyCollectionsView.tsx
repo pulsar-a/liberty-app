@@ -1,6 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
+import { Button } from '../components/Button'
 import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
 import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
 import { myCollectionsRoute } from '../routes/routes'
@@ -11,8 +12,8 @@ export const MyCollectionsView: React.FC = () => {
 
   const collections: RouteEntry[] = [
     { id: 1, name: 'Favorites', to: '/my-collections', search: { collectionId: 1 } },
-    { id: 1, name: 'Popular Science', to: '/my-collections', search: { collectionId: 2 } },
-    { id: 1, name: 'Horrors', to: '/my-collections', search: { collectionId: 3 } },
+    { id: 2, name: 'Popular Science', to: '/my-collections', search: { collectionId: 2 } },
+    { id: 3, name: 'Horrors', to: '/my-collections', search: { collectionId: 3 } },
   ]
 
   return (
@@ -32,7 +33,12 @@ export const MyCollectionsView: React.FC = () => {
             {/*<button onClick={uploadFile}>Upload File</button>*/}
           </div>
         }
-        sidebar={<SubmenuEntries items={collections} />}
+        sidebar={
+          <div className="pt-4">
+            <Button label={t('myCollectionView_createCollection_button')} block />
+            <SubmenuEntries className="pt-8" items={collections} />
+          </div>
+        }
       />
     </>
   )

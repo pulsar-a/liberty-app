@@ -47,7 +47,7 @@ export const LibraryLayout = () => {
 
   return (
     <>
-      <div>
+      <div className="h-dvh">
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
           <div className="flex grow flex-col gap-y-8 overflow-y-auto border-r border-gray-200 px-4 pt-3 dark:border-gray-700">
             {/* LOGO */}

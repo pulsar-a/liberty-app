@@ -33,7 +33,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
         {!book.cover && (
           <>
             <div className="absolute left-14 right-0 top-20 bg-amber-950/50 px-4 py-2">
-              <div className="line-clamp-6 text-right text-xl font-semibold text-orange-300">
+              <div className="line-clamp-6 break-words text-right text-xl font-semibold text-orange-300">
                 {book.name}
               </div>
             </div>
@@ -48,14 +48,13 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
         )}
       </div>
 
-      <h3 className="mt-4 px-4 text-base font-semibold text-gray-900 dark:text-white">
-        <span className="absolute inset-0" />
+      <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-gray-900 dark:text-white">
         {book.name}
       </h3>
 
-      <p className="mt-2 px-4 pb-4 text-sm text-gray-500 dark:text-white">
+      <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-gray-500 dark:text-white">
         {book.authors.map((author) => author.name).join(', ')}
-      </p>
+      </div>
     </div>
   )
 }

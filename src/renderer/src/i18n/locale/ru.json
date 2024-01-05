@@ -1,7 +1,10 @@
 {
   "translation": {
     "libraryView_title": "Библиотека",
+    "libraryView_addBooks_button": "Добавить книги",
+    "libraryView_filterAuthors_placeholder": "Фильтр по авторам",
     "settingsView_title": "Настройки",
+    "myCollectionView_createCollection_button": "Создать коллекцию",
     "settingsView_config_language_title": "Язык",
     "searchbar_placeholder": "Искать...",
     "mainMenu_submenu_system_title": "Система",

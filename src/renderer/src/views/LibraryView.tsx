@@ -4,17 +4,34 @@ import { useIpc } from '@/hooks/useIpc'
 import { SubmenuEntries } from '@/layouts/parts/SubmenuEntries'
 import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
 import { libraryRoute } from '@/routes/routes'
-import React, { useMemo } from 'react'
+import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
 import BookEntity from '../../../main/entities/book.entity'
+import { Button } from '../components/Button'
+import { TextInput } from '../components/TextInput'
 
 export const LibraryView: React.FC = () => {
   const { t } = useTranslation()
   const { authorId } = libraryRoute.useSearch()
   const { main } = useIpc()
-  const { data: books, isLoading: isBooksLoading } = main.getBooks.useQuery()
+  const { data: books, isLoading: isBooksLoading } = main.getBooks.useQuery(undefined, {
+    queryKey: ['getBooks', undefined],
+  })
   const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery()
+
+  const utils = main.useUtils()
+  const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
+
+  const mutation = main.addBooks.useMutation({
+    onSuccess: () => {
+      utils.invalidate(undefined, {
+        queryKey: ['getBooks', undefined],
+      })
+    },
+  })
 
   const filteredBooks = useMemo<BookEntity[]>((): BookEntity[] => {
     if (!books?.items) {
@@ -32,14 +49,21 @@ export const LibraryView: React.FC = () => {
 
   const authorRouteEntries: RouteEntry[] = useMemo(() => {
     return (
-      authors?.items.map((author) => ({
-        id: author.id.toString(),
-        name: author.name,
-        to: '/',
-        search: { authorId: author.id },
-      })) || []
+      authors?.items
+        .filter((author) => {
+          return (
+            authorSearchTerm.toLowerCase() === '' ||
+            author.name.toLowerCase().includes(authorSearchTerm.toLowerCase())
+          )
+        })
+        .map((author) => ({
+          id: author.id.toString(),
+          name: author.name,
+          to: '/',
+          search: { authorId: author.id },
+        })) || []
     )
-  }, [authors])
+  }, [authors, authorSearchTerm])
 
   const selectedAuthorName = useMemo(() => {
     const author = authors?.items.find((author) => author.id === authorId)
@@ -47,6 +71,11 @@ export const LibraryView: React.FC = () => {
   }, [authors, authorId])
 
   const isLoading = isBooksLoading || isAuthorsLoading
+
+  const addBook = async () => {
+    mutation.mutate()
+    // const filePath = await window.api.openFile()
+  }
 
   return (
     <>
@@ -68,7 +97,30 @@ export const LibraryView: React.FC = () => {
             {!isLoading && books && <TiledBooksList books={filteredBooks || []} />}
           </div>
         }
-        sidebar={<SubmenuEntries items={authorRouteEntries || []} />}
+        sidebarTop={
+          <div className="px-2">
+            <Button
+              label={t('libraryView_addBooks_button')}
+              leadingIcon={<FontAwesomeIcon icon={faPlus} />}
+              variant="primary"
+              shape="rounded"
+              block
+              size="xl"
+              onClick={addBook}
+            />
+            <TextInput
+              value={authorSearchTerm}
+              placeholder={t('libraryView_filterAuthors_placeholder')}
+              className="mt-8"
+              onChange={setAuthorSearchTerm}
+            />
+          </div>
+        }
+        sidebar={
+          <div className="px-2 pb-8 pt-3">
+            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
+          </div>
+        }
       />
     </>
   )

@@ -9,10 +9,10 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ className, size 
   return (
     <div
       className={clsx(
-        'inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-primary motion-reduce:animate-[spin_1.5s_linear_infinite]',
-        size === 'sm' && 'h-4 w-4',
-        size === 'md' && 'h-8 w-8',
-        size === 'lg' && 'h-18 w-18',
+        'text-primary inline-block animate-spin rounded-full border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]',
+        size === 'sm' && 'h-4 w-4 border-2',
+        size === 'md' && 'h-8 w-8 border-4',
+        size === 'lg' && 'h-16 w-16 border-8',
         className
       )}
       role="status"

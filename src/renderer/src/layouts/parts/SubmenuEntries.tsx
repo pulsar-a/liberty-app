@@ -4,11 +4,12 @@ import { clsx } from 'clsx'
 
 type SubmenuEntriesProps = {
   items: RouteEntry[]
+  className?: string
 }
 
-export const SubmenuEntries: React.FC<SubmenuEntriesProps> = ({ items }) => {
+export const SubmenuEntries: React.FC<SubmenuEntriesProps> = ({ items, className }) => {
   return (
-    <ul className="flex flex-col gap-y-1.5">
+    <ul className={clsx('flex flex-col gap-y-1.5', className)}>
       {items.map((item) => (
         <li key={item.id}>
           <Link
