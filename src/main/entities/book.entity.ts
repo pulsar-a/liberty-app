@@ -22,6 +22,9 @@ export default class BookEntity {
   @Column('text')
   fileName: string
 
+  @Column('text')
+  originalFileName: string
+
   @OneToMany(() => BookIdEntity, (bookId) => bookId.book)
   bookIds: BookIdEntity[]
 

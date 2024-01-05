@@ -17,4 +17,18 @@ export const authorsQuery = {
       },
     })
   },
+  async findByName(name: string): Promise<AuthorEntity | null> {
+    return db.manager.findOne(AuthorEntity, {
+      where: { name },
+      relations: {
+        books: true,
+      },
+    })
+  },
+  async createAuthor(author: Omit<AuthorEntity, 'id'>): Promise<AuthorEntity> {
+    const authorRepository = db.getRepository(AuthorEntity)
+    const newAuthor = authorRepository.create(author)
+
+    return await authorRepository.save(newAuthor)
+  },
 }
