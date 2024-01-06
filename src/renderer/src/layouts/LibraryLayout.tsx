@@ -3,7 +3,6 @@ import {
   faCog,
   faFolder,
   faHome,
-  faMagnifyingGlass,
   faPowerOff,
   faTabletScreenButton,
 } from '@fortawesome/free-solid-svg-icons'
@@ -11,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Outlet } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
+import { GlobalSearch } from './parts/GlobalSearch'
 import { MainMenuEntries } from './parts/MainMenuEntries'
 
 export const LibraryLayout = () => {
@@ -55,11 +55,11 @@ export const LibraryLayout = () => {
 
   return (
     <>
-      <div className="h-dvh">
+      <div className="h-dvh overflow-hidden">
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
           <div className="flex grow flex-col gap-y-8 border-r border-gray-200 px-4 pt-3 shadow-2xl dark:border-gray-800">
             {/* LOGO */}
-            <div className="text-mako-800 flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold dark:text-indigo-200/70">
+            <div className="flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold text-mako-800 dark:text-indigo-200/70">
               <FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-500" />
               <div>Liberty</div>
             </div>
@@ -84,27 +84,7 @@ export const LibraryLayout = () => {
         </div>
 
         {/* SEARCH BAR */}
-        <div className="fixed left-0 right-0 top-0 z-10 pl-60">
-          <div className="dark:bg-mako-950 sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-6 shadow sm:gap-x-6 dark:border-gray-800">
-            <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
-              <form className="relative flex flex-1" action="#">
-                <FontAwesomeIcon
-                  icon={faMagnifyingGlass}
-                  className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-                <input
-                  id="search-field"
-                  className="block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm dark:text-white"
-                  placeholder={t('searchbar_placeholder')}
-                  type="search"
-                  name="search"
-                />
-              </form>
-              <div className="flex items-center gap-x-4 md:gap-x-6">{/* RIGHT Side */}</div>
-            </div>
-          </div>
-        </div>
+        <GlobalSearch />
         {/* /SEARCH BAR */}
 
         <Outlet />

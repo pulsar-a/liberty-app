@@ -40,11 +40,13 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick }) => {
               </div>
             </div>
             <div className="absolute bottom-10 left-0 mr-14 bg-amber-950/50 px-4 py-2">
-              <div className="line-clamp-3 text-sm text-gray-100">
-                {book.authors.map((author) => (
-                  <div key={author.id}>{author.name}</div>
-                ))}
-              </div>
+              {book.authors.length > 0 && (
+                <div className="line-clamp-3 text-sm text-gray-100">
+                  {book.authors.map((author) => (
+                    <div key={author.id}>{author.name}</div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}

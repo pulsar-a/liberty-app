@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next'
+import { PageTitle } from '../components/PageTitle'
 
 export const SettingsAboutView: React.FC = () => {
   const { t } = useTranslation()
 
   return (
     <main className="px-8">
-      <h2 className="text-2xl font-semibold">{t('settings_subsection_about_title')}</h2>
+      <PageTitle title={t('settingsView_title')} subtitle={t('settings_subsection_about_title')} />
       <div className="mt-8">Developed by Garfild (2023-{new Date().getFullYear()})</div>
       <h3 className="pb-4 pt-8 text-xl font-semibold">Credits</h3>
       <div>

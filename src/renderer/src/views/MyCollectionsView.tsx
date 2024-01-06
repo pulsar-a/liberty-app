@@ -4,6 +4,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
 import { Button } from '../components/Button'
+import { PageTitle } from '../components/PageTitle'
 import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
 import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
 import { myCollectionsRoute } from '../routes/routes'
@@ -24,15 +25,11 @@ export const MyCollectionsView: React.FC = () => {
         content={
           <div className="px-4 pb-36 lg:px-8">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {t('My Collections')} {collectionId}
-              </h2>
+              <PageTitle
+                title={t('myCollectionsView_title')}
+                subtitle={`${collectionId || 'All'}`}
+              />
             </div>
-
-            {/*<div>{t('libraryView_title')}</div>*/}
-            {/*<div>=== FILE PATH: {filePath}</div>*/}
-            {/*<div>=== Counter: {count}</div>*/}
-            {/*<button onClick={uploadFile}>Upload File</button>*/}
           </div>
         }
         sidebar={

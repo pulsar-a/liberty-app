@@ -29,7 +29,13 @@ export const SettingsFilesView: React.FC = () => {
 
   return (
     <main>
-      <h2 className="px-8 pb-8 text-2xl font-semibold">{t('settings_subsection_files_title')}</h2>
+      <h2 className="flex gap-4 px-8 pb-8 text-2xl font-semibold">
+        {t('settingsView_title')}
+        <span>.</span>
+        <span className="text-gray-600 dark:text-indigo-300/50">
+          {t('settings_subsection_files_title')}
+        </span>
+      </h2>
       <div className="divide-y divide-white/5">
         <div className="grid grid-cols-3 gap-x-8 gap-y-10 px-8">
           <form className="col-span-2">

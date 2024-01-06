@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
 import BookEntity from '../../../main/entities/book.entity'
 import { Button } from '../components/Button'
+import { PageTitle } from '../components/PageTitle'
 import { TextInput } from '../components/TextInput'
 
 export const LibraryView: React.FC = () => {
@@ -83,10 +84,7 @@ export const LibraryView: React.FC = () => {
         content={
           <div className="px-4 pb-36 lg:px-8">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                {t('libraryView_title')}
-              </h2>
-
+              <PageTitle title={t('libraryView_title')} />
               {authorId && <h4 className="text-xl">{selectedAuthorName}</h4>}
             </div>
             {isLoading && (
