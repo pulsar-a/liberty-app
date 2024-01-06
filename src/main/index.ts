@@ -50,10 +50,6 @@ function createWindow(): void {
 
   initIpcListeners(mainWindow)
 
-  // if (isDev) {
-  //   seed()
-  // }
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()
     mainWindow.show()

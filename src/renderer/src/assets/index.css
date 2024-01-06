@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light dark;
+}
+
 body {
   display: flex;
   flex-direction: column;
@@ -10,7 +14,6 @@ body {
     RedHat,
     sans-serif;
   color: #86a5b1;
-  background-color: #2f3241;
 }
 
 * {

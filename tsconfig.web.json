@@ -9,6 +9,8 @@
     "types/*.ts",
     "src/main/router/*.ts",
     "src/main/controllers/*.controller.ts",
+    "src/main/entities/*.entity.ts",
+    "src/main/queries/*.ts",
   ],
   "compilerOptions": {
     "composite": true,

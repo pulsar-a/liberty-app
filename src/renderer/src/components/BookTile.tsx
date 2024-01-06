@@ -16,7 +16,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick }) => {
   return (
     <div
       key={book.id}
-      className="group relative cursor-default rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-400/30"
+      className="group relative cursor-default rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-500/30"
       onClick={onClick}
     >
       <div className="aspect-h-3 aspect-w-2 relative h-96 w-full overflow-hidden rounded-t-lg">

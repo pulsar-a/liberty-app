@@ -1,15 +1,21 @@
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect, useState } from 'react'
+import { useIpc } from '../hooks/useIpc'
 import { useSettings } from '../hooks/useSettings'
 import { Toggle } from './Toggle'
 
 export const DarkModeToggle: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
   const { getSetting, setSetting } = useSettings()
+  const { main } = useIpc()
+
+  const mutation = main.changeColorScheme.useMutation()
 
   useEffect(() => {
-    handleModeChange(getSetting('theme') === 'dark')
+    const scheme = getSetting('theme', 'light') as 'light' | 'dark'
+    handleModeChange(scheme === 'dark').catch(console.error)
+    mutation.mutate({ colorScheme: scheme })
   }, [])
 
   const handleModeChange = async (value: boolean) => {
@@ -20,6 +26,8 @@ export const DarkModeToggle: React.FC = () => {
     }
     setIsDarkMode(value)
     setSetting('theme', value ? 'dark' : 'light')
+
+    mutation.mutate({ colorScheme: value ? 'dark' : 'light' })
   }
 
   return (

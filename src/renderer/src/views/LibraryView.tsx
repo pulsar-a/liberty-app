@@ -119,10 +119,6 @@ export const LibraryView: React.FC = () => {
         sidebar={
           <div className="px-2 pb-8 pt-3">
             <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
-            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
-            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
-            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
-            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
           </div>
         }
       />

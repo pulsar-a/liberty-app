@@ -11,9 +11,9 @@ export const ThreeSectionsLayout: React.FC<LayoutThreeSectionsProps> = ({
 }) => {
   return (
     <>
-      <aside className="dark:bg-bright-gray-950 fixed inset-y-0 left-60 mt-16 flex h-[calc(100dvh-65px)] w-56 flex-col border-r border-gray-300 bg-indigo-100 dark:border-gray-800">
+      <aside className="fixed inset-y-0 left-60 mt-16 flex h-[calc(100dvh-65px)] w-56 flex-col border-r border-gray-300 bg-indigo-100 dark:border-gray-800 dark:bg-bright-gray-950">
         {sidebarTop && (
-          <div className="sticky left-0 right-0 top-0 z-10 bg-indigo-100 py-2 shadow dark:bg-indigo-950/25">
+          <div className="sticky left-0 right-0 top-0 z-10 bg-indigo-100 py-2 shadow dark:bg-bright-gray-950">
             {sidebarTop}
           </div>
         )}
