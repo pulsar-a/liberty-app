@@ -1,3 +1,5 @@
+import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
@@ -34,8 +36,14 @@ export const MyCollectionsView: React.FC = () => {
           </div>
         }
         sidebar={
-          <div className="pt-4">
-            <Button label={t('myCollectionView_createCollection_button')} block />
+          <div className="px-2 pt-2">
+            <Button
+              label={t('myCollectionView_createCollection_button')}
+              shape="rounded"
+              size="xl"
+              leadingIcon={<FontAwesomeIcon icon={faPlus} />}
+              block
+            />
             <SubmenuEntries className="pt-8" items={collections} />
           </div>
         }

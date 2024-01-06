@@ -6,8 +6,9 @@ import placeholderPink from '../assets/images/placeholder-pink.jpg'
 
 type BookTileProps = {
   book: BookEntity
+  onClick?: () => void
 }
-export const BookTile: React.FC<BookTileProps> = ({ book }) => {
+export const BookTile: React.FC<BookTileProps> = ({ book, onClick }) => {
   const placeholders = [placeholderGreen, placeholderPink, placeholderBlue]
 
   const hasReadingProgress = book.readingProgress !== null && book.readingProgress !== undefined
@@ -15,7 +16,8 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
   return (
     <div
       key={book.id}
-      className="group relative cursor-pointer rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl"
+      className="group relative cursor-default rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-400/30"
+      onClick={onClick}
     >
       <div className="aspect-h-3 aspect-w-2 relative h-96 w-full overflow-hidden rounded-t-lg">
         {hasReadingProgress && (
@@ -38,7 +40,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book }) => {
               </div>
             </div>
             <div className="absolute bottom-10 left-0 mr-14 bg-amber-950/50 px-4 py-2">
-              <div className="line-clamp-3 text-sm text-gray-400">
+              <div className="line-clamp-3 text-sm text-gray-100">
                 {book.authors.map((author) => (
                   <div key={author.id}>{author.name}</div>
                 ))}

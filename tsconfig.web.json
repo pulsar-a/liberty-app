@@ -8,6 +8,7 @@
     "src/preload/*.d.ts",
     "types/*.ts",
     "src/main/router/*.ts",
+    "src/main/controllers/*.controller.ts",
   ],
   "compilerOptions": {
     "composite": true,

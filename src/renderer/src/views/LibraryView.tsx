@@ -6,6 +6,7 @@ import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
 import { libraryRoute } from '@/routes/routes'
 import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Outlet } from '@tanstack/react-router'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
@@ -21,7 +22,6 @@ export const LibraryView: React.FC = () => {
     queryKey: ['getBooks', undefined],
   })
   const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery()
-
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
 
@@ -74,11 +74,11 @@ export const LibraryView: React.FC = () => {
 
   const addBook = async () => {
     mutation.mutate()
-    // const filePath = await window.api.openFile()
   }
 
   return (
     <>
+      <Outlet />
       <ThreeSectionsLayout
         content={
           <div className="px-4 pb-36 lg:px-8">
@@ -118,6 +118,10 @@ export const LibraryView: React.FC = () => {
         }
         sidebar={
           <div className="px-2 pb-8 pt-3">
+            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
+            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
+            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
+            <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
             <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
           </div>
         }

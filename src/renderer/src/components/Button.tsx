@@ -38,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
         disabled={disabled}
         onClick={!disabled && onClick ? onClick : undefined}
         className={clsx(
-          'flex justify-center gap-x-1 font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
+          'flex cursor-default justify-center gap-x-1 font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
           {
             'rounded-md': shape === 'rounded',
             'rounded-full': ['pill', 'circle'].includes(shape),
@@ -50,7 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
           size === 'lg' && (shape === 'circle' ? 'px-2.5 py-2 text-sm' : 'px-3 py-2 text-sm'),
           size === 'xl' && (shape === 'circle' ? 'px-3 py-2.5 text-sm' : 'px-3.5 py-2.5 text-sm'),
           variant === 'primary' &&
-            'bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500',
+            'bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500 dark:bg-indigo-500/30 dark:hover:bg-indigo-500/60',
           variant === 'secondary' &&
             'bg-white text-gray-700 hover:bg-gray-200 focus-visible:ring-indigo-500',
           variant === 'danger' &&

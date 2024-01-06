@@ -13,6 +13,10 @@ const schema = {
     type: 'string',
     default: '',
   },
+  currentlyReading: {
+    type: ['number', 'null'],
+    default: null,
+  },
 }
 
 export const settings = new Store({ schema })

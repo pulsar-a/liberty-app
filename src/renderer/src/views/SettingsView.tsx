@@ -46,7 +46,7 @@ export const SettingsView: React.FC = () => {
   return (
     <ThreeSectionsLayout
       content={<Outlet />}
-      sidebar={<SubmenuEntries className="pt-16" items={sections} />}
+      sidebar={<SubmenuEntries className="px-2 pt-16" items={sections} />}
     />
   )
 }

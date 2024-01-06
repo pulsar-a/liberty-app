@@ -18,14 +18,14 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
             onClick={item.fn}
             activeProps={{
               className:
-                'bg-indigo-600 text-white hover:bg-gray-700 dark:bg-gray-800 dark:text-indigo-50',
+                'bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-mako-800 dark:text-indigo-500',
             }}
             inactiveProps={{
               className:
-                'text-gray-700 hover:bg-gray-300 hover:text-indigo-500 dark:hover:bg-gray-600',
+                'text-gray-700 hover:bg-mako-300/50 hover:text-gray-900 dark:hover:bg-mako-600/20',
             }}
             className={clsx(
-              'group flex gap-x-3 rounded-md py-3 pl-3 pr-2 text-sm font-semibold leading-6'
+              'group flex cursor-default gap-x-3 rounded-md py-3 pl-3 pr-2 text-sm font-semibold leading-6'
             )}
           >
             {item.icon && (
