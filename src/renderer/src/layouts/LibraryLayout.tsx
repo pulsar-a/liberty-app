@@ -57,7 +57,7 @@ export const LibraryLayout = () => {
     <>
       <div className="h-dvh">
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
-          <div className="flex grow flex-col gap-y-8 border-r border-gray-200 px-4 pt-3 shadow-xl dark:border-gray-800">
+          <div className="flex grow flex-col gap-y-8 border-r border-gray-200 px-4 pt-3 shadow-2xl dark:border-gray-800">
             {/* LOGO */}
             <div className="text-mako-800 flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold dark:text-indigo-200/70">
               <FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-500" />
@@ -85,7 +85,7 @@ export const LibraryLayout = () => {
 
         {/* SEARCH BAR */}
         <div className="fixed left-0 right-0 top-0 z-10 pl-60">
-          <div className="sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-6 shadow-sm sm:gap-x-6 dark:border-gray-800 dark:bg-woodsmoke-950">
+          <div className="dark:bg-mako-950 sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-6 shadow sm:gap-x-6 dark:border-gray-800">
             <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
               <form className="relative flex flex-1" action="#">
                 <FontAwesomeIcon

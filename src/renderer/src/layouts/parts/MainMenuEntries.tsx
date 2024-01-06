@@ -18,11 +18,11 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
             onClick={item.fn}
             activeProps={{
               className:
-                'bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-mako-800 dark:text-indigo-500',
+                'bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-mako-800 dark:text-indigo-500 dark:hover:bg-mako-700 dark:hover:text-indigo-500',
             }}
             inactiveProps={{
               className:
-                'text-gray-700 hover:bg-mako-300/50 hover:text-gray-900 dark:hover:bg-mako-600/20',
+                'text-gray-700 hover:bg-mako-300/50 hover:text-gray-900 dark:hover:bg-mako-600/20 dark:hover:text-indigo-500',
             }}
             className={clsx(
               'group flex cursor-default gap-x-3 rounded-md py-3 pl-3 pr-2 text-sm font-semibold leading-6'
