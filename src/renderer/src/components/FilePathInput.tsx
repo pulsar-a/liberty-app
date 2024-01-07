@@ -66,7 +66,7 @@ export const FilePathInput: React.FC<TextInputProps> = ({
             id={id}
             value={value}
             className={clsx(
-              'dark:bg-mako-950 dark:ring-mako-200/40 block w-full rounded-none rounded-l-md border-0 py-1.5 pl-10 text-gray-900 shadow-inner ring-1 ring-inset ring-gray-500 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:text-white'
+              'block  w-full rounded-none rounded-l-md border-0 py-1.5 pl-10 text-gray-900 shadow-inner ring-1 ring-inset ring-gray-500 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-mako-950 dark:text-white dark:ring-mako-200/40'
             )}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
@@ -74,7 +74,7 @@ export const FilePathInput: React.FC<TextInputProps> = ({
         </div>
         <button
           type="button"
-          className="dark:ring-mako-200/40 relative -ml-px inline-flex cursor-default items-center gap-x-1.5 px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-500 hover:bg-gray-50 dark:bg-indigo-300/10 dark:text-white dark:hover:bg-indigo-300/20"
+          className="relative -ml-px inline-flex cursor-default items-center gap-x-1.5 px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-500 hover:bg-gray-50 dark:bg-indigo-300/10 dark:text-white dark:ring-mako-200/40 dark:hover:bg-indigo-300/20"
           title={t('Use default system path')}
           onClick={handleClearButtonClick}
         >
@@ -86,7 +86,7 @@ export const FilePathInput: React.FC<TextInputProps> = ({
         </button>
         <button
           type="button"
-          className="dark:ring-mako-200/40 relative -ml-px inline-flex cursor-default items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-500 hover:bg-gray-50 dark:bg-indigo-300/10 dark:text-white dark:hover:bg-indigo-300/20"
+          className="relative -ml-px inline-flex cursor-default items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-500 hover:bg-gray-50 dark:bg-indigo-300/10 dark:text-white dark:ring-mako-200/40 dark:hover:bg-indigo-300/20"
           title={t('Choose folder')}
           onClick={handleButtonClick}
         >

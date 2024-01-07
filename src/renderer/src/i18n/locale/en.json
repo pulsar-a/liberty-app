@@ -1,6 +1,6 @@
 {
   "translation": {
-    "libraryView_title": "Books",
+    "libraryView_title": "Library",
     "libraryView_addBooks_button": "Add books",
     "libraryView_filterAuthors_placeholder": "Filter authors",
     "settingsView_title": "Settings",
@@ -9,7 +9,7 @@
     "settingsView_config_language_title": "Language",
     "searchbar_placeholder": "Search...",
     "mainMenu_submenu_system_title": "System",
-    "mainMenu_allBooks_title": "All Books",
+    "mainMenu_allBooks_title": "Library",
     "mainMenu_reader_title": "Reader",
     "mainMenu_myCollections_title": "My Collections",
     "mainMenu_settings_title": "Settings",

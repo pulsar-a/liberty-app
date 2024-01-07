@@ -1,13 +1,17 @@
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Listbox, Transition } from '@headlessui/react'
+import { clsx } from 'clsx'
 import { Fragment, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { grabIsMac, usePlatformStore } from '../../store/usePlatformStore'
 import { SearchDropdownBookEntry } from './SearchDropdownBookEntry'
 
 export const GlobalSearch: React.FC = () => {
   const { t } = useTranslation()
+  const isMac = usePlatformStore(grabIsMac)
   const [open, setOpen] = useState<boolean>(true)
+  const [focused, setFocused] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [publishingOptions] = useState([
     {
@@ -28,12 +32,29 @@ export const GlobalSearch: React.FC = () => {
     setOpen(searchTerm.length > 0)
   }, [searchTerm])
 
+  const handleFocus = () => {
+    searchTerm.length > 0 && setOpen(true)
+    setFocused(true)
+  }
+
+  const handleBlur = () => {
+    setOpen(false)
+    setFocused(false)
+  }
+
+  const withShortcuts = false
+
   return (
     <>
       <Listbox>
         <div className="relative mt-2">
           <div className="fixed left-0 right-0 top-0 z-10 pl-60">
-            <div className="sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-6 shadow sm:gap-x-6 dark:border-gray-800 dark:bg-mako-950">
+            <div
+              className={clsx(
+                'sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 px-6 shadow transition-colors sm:gap-x-6 dark:border-gray-800',
+                focused ? 'bg-white dark:bg-mako-900' : 'bg-mako-50 dark:bg-mako-950'
+              )}
+            >
               <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
                 <form className="relative flex flex-1" action="#">
                   <FontAwesomeIcon
@@ -50,11 +71,17 @@ export const GlobalSearch: React.FC = () => {
                     name="search"
                     autoComplete="off"
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => searchTerm.length > 0 && setOpen(true)}
-                    onBlur={() => setOpen(false)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                   />
                 </form>
-                <div className="flex items-center gap-x-4 md:gap-x-6">{/* RIGHT Side */}</div>
+                <div className="flex items-center gap-x-4 md:gap-x-6">
+                  {withShortcuts && (
+                    <kbd className="inline-flex items-center rounded border border-gray-200 bg-white px-1 font-mono text-lg text-gray-400 dark:border-gray-700 dark:bg-mako-800">
+                      {isMac ? '⌘' : 'Ctrl+'}K
+                    </kbd>
+                  )}
+                </div>
               </div>
             </div>
           </div>

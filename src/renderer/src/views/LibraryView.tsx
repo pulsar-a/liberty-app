@@ -84,8 +84,7 @@ export const LibraryView: React.FC = () => {
         content={
           <div className="px-4 pb-36 lg:px-8">
             <div className="flex items-baseline justify-between">
-              <PageTitle title={t('libraryView_title')} />
-              {authorId && <h4 className="text-xl">{selectedAuthorName}</h4>}
+              <PageTitle title={t('libraryView_title')} subtitle={selectedAuthorName} />
             </div>
             {isLoading && (
               <div className="flex h-full items-center justify-center">

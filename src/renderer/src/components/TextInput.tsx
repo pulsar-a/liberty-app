@@ -11,7 +11,7 @@ type TextInputProps = {
   placeholder?: string
   id?: string
   prefix?: string | ReactNode
-  withRemove: boolean | true
+  withRemove?: boolean | true
   onChange: (value: string) => void
   className?: string
 }

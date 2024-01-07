@@ -40,7 +40,7 @@ export const Select: React.FC<SelectProps> = ({
             </Listbox.Label>
           )}
           <div className="relative mt-2">
-            <Listbox.Button className="relative w-full cursor-default rounded-md bg-indigo-50 py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6 dark:bg-indigo-600/15 dark:text-white dark:ring-indigo-300/30">
+            <Listbox.Button className="relative w-full cursor-default rounded-md bg-indigo-50 py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm sm:leading-6 dark:bg-mako-950 dark:text-white dark:ring-mako-200/40">
               <span className="flex items-center">
                 {/* LEADING ICON */}
                 <span className="ml-3 block truncate">{selectedLabel}</span>
