@@ -9,7 +9,7 @@ export const GlobalSearch: React.FC = () => {
   const { t } = useTranslation()
   const [open, setOpen] = useState<boolean>(true)
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const [publishingOptions, setPublishingOptions] = useState([
+  const [publishingOptions] = useState([
     {
       title: 'All',
       description: 'Search all books',

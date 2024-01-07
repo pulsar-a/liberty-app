@@ -1,12 +1,12 @@
+import logoDark from '@/assets/images/logos/logo-dark.svg'
+import logoLight from '@/assets/images/logos/logo-light.svg'
 import {
-  faBookOpen,
   faCog,
   faFolder,
   faHome,
   faPowerOff,
   faTabletScreenButton,
 } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Outlet } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
@@ -60,8 +60,10 @@ export const LibraryLayout = () => {
           <div className="flex grow flex-col gap-y-8 border-r border-gray-200 px-4 pt-3 shadow-2xl dark:border-gray-800">
             {/* LOGO */}
             <div className="flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold text-mako-800 dark:text-indigo-200/70">
-              <FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-500" />
-              <div>Liberty</div>
+              {/*<FontAwesomeIcon icon={faBookOpen} className="block h-8 w-auto text-indigo-500" />*/}
+              {/*<div>Liberty</div>*/}
+              <img src={logoLight} alt="Liberty" className="block h-14 w-auto dark:hidden" />
+              <img src={logoDark} alt="Liberty" className="hidden h-14 w-auto dark:block" />
             </div>
             {/* /LOGO */}
 

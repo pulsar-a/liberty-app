@@ -2,6 +2,7 @@
   "name": "liberty",
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
+  "license": "proprietary",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://www.electronjs.org",

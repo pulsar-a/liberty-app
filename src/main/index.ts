@@ -6,8 +6,9 @@ import installExtension, {
   REDUX_DEVTOOLS,
 } from 'electron-devtools-installer'
 import { createIPCHandler } from 'electron-trpc/main'
-// import icon from '../../resources/icon.png?asset'
 import { join } from 'path'
+import iconDarwin from '../../resources/app-icons/mac/app-icon.icns?asset'
+import icon from '../../resources/app-icons/windows/app-icon.ico?asset'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
 
@@ -20,7 +21,7 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    // ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform !== 'darwin' ? { icon } : { icon: iconDarwin }),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,

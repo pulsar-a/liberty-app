@@ -1,7 +1,8 @@
-appId: com.electron.app
-productName: liberty
+appId: com.pulsar-a.liberty
+productName: Liberty
 directories:
   buildResources: build
+  output: releases/${platform}/${arch}
 files:
   - '!**/.vscode/*'
   - '!**/.idea/*'
@@ -13,7 +14,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: liberty
+  executableName: Liberty
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -34,7 +35,7 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: pulsar-a.com
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

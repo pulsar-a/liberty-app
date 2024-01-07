@@ -19,7 +19,7 @@ export const ThreeSectionsLayout: React.FC<LayoutThreeSectionsProps> = ({
         )}
         <div className="shrink grow overflow-y-auto">{sidebar}</div>
       </aside>
-      <main className="pl-56 pt-16">
+      <main className="pl-56 pt-14">
         <div className="pl-60">
           <div className="relative h-[calc(100dvh-65px)] overflow-y-auto bg-indigo-200/30 pt-8 shadow-inner dark:bg-indigo-400/10">
             {content}
