@@ -1,7 +1,8 @@
-import { dialog } from 'electron'
+import { app, dialog } from 'electron'
 import fs from 'fs'
 import path from 'node:path'
 import slugify from 'slugify'
+import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
 import { authorsQuery } from '../queries/authors'
@@ -13,7 +14,7 @@ export const addBooksController = () => async () => {
     filters: [
       {
         name: 'Books',
-        extensions: ['pdf', 'epub', 'mobi', 'fb2', 'fb3', 'djvu', 'txt'],
+        extensions: ['pdf', 'epub'], //, 'mobi', 'fb2', 'fb3', 'djvu', 'txt'],
       },
       {
         name: 'PDF',
@@ -23,26 +24,26 @@ export const addBooksController = () => async () => {
         name: 'EPUB',
         extensions: ['epub'],
       },
-      {
-        name: 'MOBI',
-        extensions: ['mobi'],
-      },
-      {
-        name: 'FB2',
-        extensions: ['fb2'],
-      },
-      {
-        name: 'FB3',
-        extensions: ['fb3'],
-      },
-      {
-        name: 'DJVU',
-        extensions: ['djvu'],
-      },
-      {
-        name: 'TXT',
-        extensions: ['txt'],
-      },
+      // {
+      //   name: 'MOBI',
+      //   extensions: ['mobi'],
+      // },
+      // {
+      //   name: 'FB2',
+      //   extensions: ['fb2'],
+      // },
+      // {
+      //   name: 'FB3',
+      //   extensions: ['fb3'],
+      // },
+      // {
+      //   name: 'DJVU',
+      //   extensions: ['djvu'],
+      // },
+      // {
+      //   name: 'TXT',
+      //   extensions: ['txt'],
+      // },
       {
         name: 'All Files',
         extensions: ['*'],
@@ -55,12 +56,13 @@ export const addBooksController = () => async () => {
   }
 
   const result: Promise<BookEntity>[] = filePaths.map(async (filePath) => {
+    const appDataPath = isDev ? __dirname : app.getPath('userData')
     const originalFilename = path.basename(filePath)
     const sluggifiedFilename = slugify(originalFilename, { replacement: '-' })
-    const subfolder = 'books/test'
+    const subfolder = path.join(appDataPath, 'books/test')
     const fileName = path.join('books/test', sluggifiedFilename)
 
-    const destinationDir = path.join(__dirname, subfolder)
+    const destinationDir = subfolder
     const destinationFile = path.join(destinationDir, sluggifiedFilename)
 
     console.log('destinationDir', destinationDir)

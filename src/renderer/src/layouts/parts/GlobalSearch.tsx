@@ -78,7 +78,7 @@ export const GlobalSearch: React.FC = () => {
                 <div className="flex items-center gap-x-4 md:gap-x-6">
                   {withShortcuts && (
                     <kbd className="inline-flex items-center rounded border border-gray-200 bg-white px-1 font-mono text-lg text-gray-400 dark:border-gray-700 dark:bg-mako-800">
-                      {isMac ? '⌘' : 'Ctrl+'}K
+                      {isMac ? '⌘' : 'Ctrl + '}K
                     </kbd>
                   )}
                 </div>

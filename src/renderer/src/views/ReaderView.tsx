@@ -43,7 +43,7 @@ export const ReaderView: React.FC = () => {
     <ThreeSectionsLayout
       content={
         <div
-          className="absolute inset-0 z-10 grid grid-cols-2 gap-4 object-cover object-center px-8 py-24 text-black"
+          className="absolute inset-0 z-10 grid select-text grid-cols-2 gap-4 object-cover object-center px-8 py-24 text-black"
           style={{ backgroundImage: `url(${bookBg})` }}
         >
           <p>

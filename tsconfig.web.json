@@ -11,6 +11,7 @@
     "src/main/controllers/*.controller.ts",
     "src/main/entities/*.entity.ts",
     "src/main/queries/*.ts",
+    "src/main/constants/*.ts",
   ],
   "compilerOptions": {
     "composite": true,

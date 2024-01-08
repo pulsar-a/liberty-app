@@ -66,7 +66,7 @@ export const FilePathInput: React.FC<TextInputProps> = ({
             id={id}
             value={value}
             className={clsx(
-              'block  w-full rounded-none rounded-l-md border-0 py-1.5 pl-10 text-gray-900 shadow-inner ring-1 ring-inset ring-gray-500 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-mako-950 dark:text-white dark:ring-mako-200/40'
+              'block  w-full rounded-none rounded-l-md border-0 bg-mako-50 py-1.5 pl-10 text-gray-900 shadow-inner ring-1 ring-inset ring-gray-500 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-mako-950 dark:text-white dark:ring-mako-200/40 dark:focus:bg-mako-900'
             )}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}

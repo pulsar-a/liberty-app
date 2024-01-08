@@ -1,18 +1,18 @@
 import { useTranslation } from 'react-i18next'
 import { LanguageSelector } from '../components/LanguageSelector'
+import { PageTitle } from '../components/PageTitle'
 
 export const SettingsGeneralView: React.FC = () => {
   const { t } = useTranslation()
 
   return (
     <main>
-      <h2 className="flex gap-4 px-8 pb-8 text-2xl font-semibold">
-        {t('settingsView_title')}
-        <span>.</span>
-        <span className="text-gray-600 dark:text-indigo-300/50">
-          {t('settings_subsection_general_title')}
-        </span>
-      </h2>
+      <div className="px-8">
+        <PageTitle
+          title={t('settingsView_title')}
+          subtitle={t('settings_subsection_general_title')}
+        />
+      </div>
       <div className="divide-y divide-white/5">
         <div className="grid grid-cols-3 gap-x-8 gap-y-10 px-8">
           <form className="col-span-2">
@@ -65,9 +65,7 @@ export const SettingsGeneralView: React.FC = () => {
               {/*</div>*/}
 
               <div className="col-span-full">
-                <div className="mt-2">
-                  <LanguageSelector />
-                </div>
+                <LanguageSelector />
               </div>
             </div>
           </form>

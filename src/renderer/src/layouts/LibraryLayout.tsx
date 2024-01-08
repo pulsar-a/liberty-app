@@ -55,11 +55,11 @@ export const LibraryLayout = () => {
 
   return (
     <>
-      <div className="h-dvh overflow-hidden">
+      <div className="h-dvh select-none overflow-hidden">
         <div className="fixed inset-y-0 z-50 flex w-60 flex-col">
           <div className="flex grow flex-col gap-y-8 border-r border-gray-200 px-4 pt-3 shadow-2xl dark:border-gray-800">
             {/* LOGO */}
-            <div className="flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold text-mako-800 dark:text-indigo-200/70">
+            <div className="pointer-events-none flex h-16 shrink-0 items-center justify-center gap-2 pt-4 text-2xl font-semibold text-mako-800 dark:text-indigo-200/70">
               <img src={logoLight} alt="Liberty" className="block h-14 w-auto dark:hidden" />
               <img src={logoDark} alt="Liberty" className="hidden h-14 w-auto dark:block" />
             </div>

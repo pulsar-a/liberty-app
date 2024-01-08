@@ -7,6 +7,7 @@ module.exports = {
   factories: [path.join(__dirname, './database/factories/*.factory.ts')],
   migrations: [path.join(__dirname, './database/migrations/*.ts')],
   entities: [path.join(__dirname, './src/main/entities/*.entity.ts')],
+  migrationsRun: true,
   cli: {
     migrationsDir: './database/migrations/',
   },

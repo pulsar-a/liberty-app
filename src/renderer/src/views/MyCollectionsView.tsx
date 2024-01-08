@@ -19,6 +19,9 @@ export const MyCollectionsView: React.FC = () => {
     { id: 3, name: 'Horrors', to: '/my-collections', search: { collectionId: 3 } },
   ]
 
+  const selectedCollectionName =
+    collections.find((collection) => collection.id === collectionId)?.name || 'All'
+
   return (
     <>
       <ThreeSectionsLayout
@@ -27,7 +30,7 @@ export const MyCollectionsView: React.FC = () => {
             <div className="flex items-baseline justify-between">
               <PageTitle
                 title={t('myCollectionsView_title')}
-                subtitle={`${collectionId || 'All'}`}
+                subtitle={`${selectedCollectionName}`}
               />
             </div>
           </div>
