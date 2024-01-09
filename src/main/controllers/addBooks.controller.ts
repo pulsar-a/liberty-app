@@ -1,3 +1,4 @@
+import { parseEpub } from '@gxl/epub-parser'
 import { app, dialog } from 'electron'
 import fs from 'fs'
 import path from 'node:path'
@@ -5,6 +6,8 @@ import slugify from 'slugify'
 import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
+import BookIdEntity from '../entities/bookId.entity'
+import { EpubParser } from '../parsers/epub/EpubParser'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
 
@@ -65,6 +68,7 @@ export const addBooksController = () => async () => {
     const destinationDir = subfolder
     const destinationFile = path.join(destinationDir, sluggifiedFilename)
 
+    console.log('=================================')
     console.log('destinationDir', destinationDir)
     console.log('destinationFile', destinationFile)
     console.log('filePath', filePath)
@@ -72,6 +76,7 @@ export const addBooksController = () => async () => {
     console.log('originalFilename', originalFilename)
     console.log('sluggifiedFilename', sluggifiedFilename)
     console.log('subfolder', subfolder)
+    console.log('=================================')
 
     if (!fs.existsSync(destinationDir)) {
       console.log('creating dir', destinationDir)
@@ -80,22 +85,49 @@ export const addBooksController = () => async () => {
 
     fs.copyFileSync(filePath, destinationFile)
 
-    const author =
-      (await authorsQuery.findByName('Борис Акунин')) ||
-      (await authorsQuery.createAuthor(new AuthorEntity({ name: 'Борис Акунин' })))
+    const parsed = await parseEpub(destinationFile, {
+      type: 'path',
+    })
+
+    const parsedTest = await new EpubParser(destinationFile).parse()
+
+    console.log('PARSED TESTTESTTSETSTSTETST:', parsedTest?.metadata)
+
+    const authors = parsed?.info?.authors || []
+
+    const authorsList = await Promise.all(
+      authors.map(async (name: string) => {
+        return (
+          (await authorsQuery.findByName(name)) ||
+          (await authorsQuery.createAuthor(new AuthorEntity({ name })))
+        )
+      })
+    )
 
     const book = new BookEntity()
-    book.name = originalFilename
+    book.name = parsed?.info?.title || originalFilename
     book.fileName = fileName
     book.originalFileName = originalFilename
     book.fileFormat = path.extname(filePath).slice(1)
-    book.description = 'test'
+    book.description = parsed?.info?.description || null
+    book.lang = 'test'
+    book.publisher = 'test'
     book.cover = null
     book.readingProgress = null
     book.score = null
-    book.authors = author ? [author] : []
+    book.authors = authorsList
 
-    return booksQuery.createBook(book)
+    const createdBook = await booksQuery.createBook(book)
+
+    return Promise.all(
+      parsed.info.identifiers.map(async (identifier: { type: string; value: string }) => {
+        const bookId = new BookIdEntity()
+        bookId.book = createdBook
+        bookId.idType = identifier.type
+        bookId.idVal = identifier.value
+        await booksQuery.createBookId(bookId)
+      })
+    )
   })
 
   return await Promise.all(result)

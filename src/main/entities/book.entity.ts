@@ -32,6 +32,12 @@ export default class BookEntity {
   cover: string | null
 
   @Column('text', { nullable: true })
+  lang: string | null
+
+  @Column('text', { nullable: true })
+  publisher: string | null
+
+  @Column('text', { nullable: true })
   description: string | null
 
   @Column('text')

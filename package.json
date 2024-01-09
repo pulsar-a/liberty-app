@@ -31,6 +31,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@gxl/epub-parser": "https://github.com/pulsar-a/epub-parser.git#master",
     "@headlessui/react": "^1.7.17",
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/line-clamp": "^0.4.4",
@@ -48,6 +49,7 @@
     "electron-updater": "^6.1.1",
     "i18next": "^23.7.11",
     "immer": "^10.0.3",
+    "node-zip": "^1.1.1",
     "promise-worker": "^2.0.1",
     "radash": "^11.0.0",
     "react-i18next": "^14.0.0",
@@ -55,6 +57,7 @@
     "slugify": "^1.6.6",
     "sqlite3": "^5.1.7-rc.0",
     "typeorm": "^0.3.19",
+    "xml2js": "^0.6.2",
     "zod": "^3.22.4",
     "zustand": "^4.4.7"
   },

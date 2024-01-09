@@ -1,4 +1,5 @@
 import BookEntity from '../entities/book.entity'
+import BookIdEntity from '../entities/bookId.entity'
 import { db } from '../services/db'
 
 export const booksQuery = {
@@ -21,5 +22,10 @@ export const booksQuery = {
     const bookRepository = db.getRepository(BookEntity)
     const newBook = bookRepository.create(book)
     return await bookRepository.save(newBook)
+  },
+  async createBookId(bookId: Omit<BookIdEntity, 'id'>) {
+    const repository = db.getRepository(BookIdEntity)
+    const newItem = repository.create(bookId)
+    return await repository.save(newItem)
   },
 }
