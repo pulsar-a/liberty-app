@@ -27,7 +27,7 @@ export const LibraryView: React.FC = () => {
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
 
   const mutation = main.addBooks.useMutation({
-    onSuccess: () => {
+    onSettled: () => {
       utils.invalidate(undefined, {
         queryKey: ['getBooks', undefined],
       })

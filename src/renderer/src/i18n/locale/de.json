@@ -21,6 +21,8 @@
     "settings_subsection_files_userFilesFolder_label": "Benutzerdateien",
     "settings_subsection_files_defaultSystemFolder_placeholder": "Standardordner für Systeme",
     "settings_subsection_plugins_title": "Plugins",
-    "settings_subsection_about_title": "Über das Programm"
+    "settings_subsection_about_title": "Über das Programm",
+    "loadingStatusesToast_bookAdded_label": "Hinzugefügt {{filename}}",
+    "loadingStatusesToast_clearFinished_label": "Fertige Einträge löschen"
   }
 }

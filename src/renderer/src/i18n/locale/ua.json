@@ -21,6 +21,8 @@
     "settings_subsection_files_userFilesFolder_label": "Папка з файлами користувача",
     "settings_subsection_files_defaultSystemFolder_placeholder": "Папка за замовчуванням",
     "settings_subsection_plugins_title": "Плагіни",
-    "settings_subsection_about_title": "Про програму"
+    "settings_subsection_about_title": "Про програму",
+    "loadingStatusesToast_bookAdded_label": "Додано {{filename}}",
+    "loadingStatusesToast_clearFinished_label": "Очистити завершені"
   }
 }

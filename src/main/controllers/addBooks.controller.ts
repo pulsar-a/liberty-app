@@ -1,7 +1,8 @@
 import { app, dialog } from 'electron'
+import { getMainWindow } from 'electron-main-window'
 import fs from 'fs'
 import path from 'node:path'
-import slugify from 'slugify'
+import { v4 as uuidv4 } from 'uuid'
 import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
@@ -57,76 +58,121 @@ export const addBooksController = () => async () => {
     return
   }
 
-  const result: Promise<BookEntity>[] = filePaths.map(async (filePath) => {
+  const files = filePaths.map((filePath) => {
     const appDataPath = isDev ? __dirname : app.getPath('userData')
     const originalFilename = path.basename(filePath)
-    const sluggifiedFilename = slugify(originalFilename, { replacement: '-' })
+    const sluggifiedFilename = uuidv4() + path.extname(filePath)
     const subfolder = path.join(appDataPath, 'books/test')
     const fileName = path.join('books/test', sluggifiedFilename)
 
     const destinationDir = subfolder
     const destinationFile = path.join(destinationDir, sluggifiedFilename)
 
-    console.log('=================================')
-    console.log('destinationDir', destinationDir)
-    console.log('destinationFile', destinationFile)
-    console.log('filePath', filePath)
-    console.log('fileName', fileName)
-    console.log('originalFilename', originalFilename)
-    console.log('sluggifiedFilename', sluggifiedFilename)
-    console.log('subfolder', subfolder)
-    console.log('=================================')
-
-    if (!fs.existsSync(destinationDir)) {
-      console.log('creating dir', destinationDir)
-      fs.mkdirSync(destinationDir, { recursive: true })
+    return {
+      filePath,
+      originalFilename,
+      sluggifiedFilename,
+      subfolder,
+      fileName,
+      destinationDir,
+      destinationFile,
     }
-
-    fs.copyFileSync(filePath, destinationFile)
-
-    const parsedTest = await new EpubParser(destinationFile).parse()
-
-    console.log('PARSED TESTTESTTSETSTSTETST:', parsedTest?.metadata)
-
-    const authors = parsedTest?.metadata.authors || []
-
-    const authorsList = await Promise.all(
-      authors.map(async (name: string) => {
-        return (
-          (await authorsQuery.findByName(name)) ||
-          (await authorsQuery.createAuthor(new AuthorEntity({ name })))
-        )
-      })
-    )
-
-    const book = new BookEntity()
-    book.name = parsedTest?.metadata.title || originalFilename
-    book.fileName = fileName
-    book.originalFileName = originalFilename
-    book.fileFormat = path.extname(filePath).slice(1)
-    book.description = parsedTest?.metadata.description || null
-    book.lang = parsedTest?.metadata.language || null
-    book.publisher = parsedTest?.metadata.publisher || null
-    book.cover = parsedTest?.metadata.coverImage || null
-    book.readingProgress = null
-    book.score = null
-    book.authors = authorsList
-
-    const createdBook = await booksQuery.createBook(book)
-
-    const addingBookIds =
-      parsedTest?.metadata.identifiers.map(async (identifier): Promise<BookIdEntity> => {
-        const bookId = new BookIdEntity()
-        bookId.book = createdBook
-        bookId.idType = identifier.type
-        bookId.idVal = identifier.value
-        return await booksQuery.createBookId(bookId)
-      }) || []
-
-    await Promise.all(addingBookIds)
-
-    return createdBook
   })
+
+  const mainWindow = getMainWindow()
+
+  await mainWindow.webContents.send(
+    'loader:add-items',
+    files.map(({ sluggifiedFilename, originalFilename }) => ({
+      id: sluggifiedFilename,
+      label: originalFilename,
+      status: 'loading',
+    }))
+  )
+
+  const result: Promise<BookEntity>[] = files.map(
+    async ({
+      filePath,
+      destinationFile,
+      fileName,
+      destinationDir,
+      sluggifiedFilename,
+      subfolder,
+      originalFilename,
+    }) => {
+      console.log('=================================')
+      console.log('destinationDir', destinationDir)
+      console.log('destinationFile', destinationFile)
+      console.log('filePath', filePath)
+      console.log('fileName', fileName)
+      console.log('originalFilename', originalFilename)
+      console.log('sluggifiedFilename', sluggifiedFilename)
+      console.log('subfolder', subfolder)
+      console.log('=================================')
+
+      if (!fs.existsSync(destinationDir)) {
+        console.log('creating dir', destinationDir)
+        fs.mkdirSync(destinationDir, { recursive: true })
+      }
+
+      fs.copyFileSync(filePath, destinationFile)
+
+      const parsedTest = await new EpubParser(destinationFile).parse()
+
+      console.log('PARSED TESTTESTTSETSTSTETST:', parsedTest?.metadata)
+
+      const authors = parsedTest?.metadata.authors || []
+
+      const authorsList = await Promise.all(
+        authors.map(async (name: string) => {
+          return (
+            (await authorsQuery.findByName(name)) ||
+            (await authorsQuery.createAuthor(new AuthorEntity({ name })))
+          )
+        })
+      )
+
+      const book = new BookEntity()
+      book.name = parsedTest?.metadata.title || originalFilename
+      book.fileName = fileName
+      book.originalFileName = originalFilename
+      book.fileFormat = path.extname(filePath).slice(1)
+      book.description = parsedTest?.metadata.description || null
+      book.lang = parsedTest?.metadata.language || null
+      book.publisher = parsedTest?.metadata.publisher || null
+      book.cover = parsedTest?.metadata.coverImage || null
+      book.readingProgress = null
+      book.score = null
+      book.authors = authorsList
+
+      const createdBook = await booksQuery.createBook(book)
+
+      const addingBookIds =
+        parsedTest?.metadata.identifiers.map(async (identifier): Promise<BookIdEntity> => {
+          const bookId = new BookIdEntity()
+          bookId.book = createdBook
+          bookId.idType = identifier.type
+          bookId.idVal = identifier.value
+          return await booksQuery.createBookId(bookId)
+        }) || []
+
+      await Promise.all(addingBookIds)
+
+      console.log('=================================')
+      console.log('UPDATING LOADER', filePath)
+      console.log('=================================')
+      await mainWindow.webContents.send('loader:update-item', {
+        id: sluggifiedFilename,
+        label: 'loadingStatusesToast_bookAdded_label',
+        labelParams: {
+          filename: originalFilename,
+        },
+        status: 'success',
+      })
+
+      return createdBook
+    }
+  )
 
   return await Promise.all(result)
 }

@@ -1,6 +1,7 @@
 import { faClose } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Transition } from '@headlessui/react'
+import { clsx } from 'clsx'
 import React, { Fragment } from 'react'
 
 type ToastProps = {
@@ -8,6 +9,7 @@ type ToastProps = {
   children: React.ReactNode
   withCloseButton?: boolean
   onCloseClick?: () => void
+  className?: string
 }
 
 export const Toast: React.FC<ToastProps> = ({
@@ -15,6 +17,7 @@ export const Toast: React.FC<ToastProps> = ({
   children,
   withCloseButton = false,
   onCloseClick,
+  className,
 }) => {
   return (
     <>
@@ -35,12 +38,19 @@ export const Toast: React.FC<ToastProps> = ({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-md bg-bright-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 transition-colors hover:bg-bright-gray-50 dark:bg-mako-900 dark:hover:bg-mako-800">
-              <div className="p-4">
+            <div
+              className={clsx(
+                'pointer-events-auto w-full max-w-sm overflow-hidden rounded-md bg-bright-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 transition-colors dark:bg-mako-900',
+                // !withCloseButton && 'transition-opacity hover:opacity-20',
+                className
+              )}
+            >
+              <div className="px-4">
                 <div className="flex items-start justify-end">
                   <div className="flex-shrink flex-grow">{children}</div>
+
                   {withCloseButton && (
-                    <div className="ml-4 flex flex-shrink-0 flex-grow-0 basis-4">
+                    <div className="ml-6 mt-4 flex flex-shrink-0 flex-grow-0 basis-4">
                       <button
                         type="button"
                         className="inline-flex rounded-md bg-white text-gray-400 transition-colors hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-transparent dark:text-gray-500 dark:hover:text-gray-300"

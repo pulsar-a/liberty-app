@@ -1,4 +1,6 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { ipcRenderer } from 'electron'
+import { LoadingStatusItem } from '../../types/loader.types'
 
 export declare const api: {
     settings: {
@@ -12,6 +14,15 @@ export declare const api: {
     selectFolder: () => Promise<string|null>;
     onUpdateCounter: (callback: any) => Electron.IpcRenderer;
     counterValue: (value: any) => void;
+    onAddLoaders: (callback: (items: LoadingStatusItem[]) => void) => void,
+    onUpdateLoader: (
+      callback: (value: {
+        id: string | number
+        status: LoadingStatusItem['status']
+        label?: string
+        labelParams?: Record<string, string>
+      }) => void
+    ) => void,
 };
 
 
