@@ -13,7 +13,7 @@ export const db = new DataSource({
   database: path.join(isDev ? 'database' : productionPath, 'liberty-database.sqlite'),
   synchronize: true,
   migrationsRun: true,
-  logging: true,
+  logging: false,
   logger: 'advanced-console',
   entities: [BookEntity, AuthorEntity, BookIdEntity],
   subscribers: [],

@@ -11,7 +11,6 @@ export const GlobalSearch: React.FC = () => {
   const { t } = useTranslation()
   const isMac = usePlatformStore(grabIsMac)
   const [open, setOpen] = useState<boolean>(true)
-  const [focused, setFocused] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [publishingOptions] = useState([
     {
@@ -34,12 +33,10 @@ export const GlobalSearch: React.FC = () => {
 
   const handleFocus = () => {
     searchTerm.length > 0 && setOpen(true)
-    setFocused(true)
   }
 
   const handleBlur = () => {
     setOpen(false)
-    setFocused(false)
   }
 
   const withShortcuts = false
@@ -51,8 +48,7 @@ export const GlobalSearch: React.FC = () => {
           <div className="fixed left-0 right-0 top-0 z-10 pl-60">
             <div
               className={clsx(
-                'sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 px-6 shadow transition-colors sm:gap-x-6 dark:border-gray-800',
-                focused ? 'bg-white dark:bg-mako-900' : 'bg-mako-50 dark:bg-mako-950'
+                'sticky top-0 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-mako-50 px-6 shadow transition-colors focus-within:bg-white sm:gap-x-6 dark:border-gray-800 dark:bg-mako-950 focus-within:dark:bg-mako-900'
               )}
             >
               <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">

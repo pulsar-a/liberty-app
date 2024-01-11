@@ -1,4 +1,3 @@
-import { parseEpub } from '@gxl/epub-parser'
 import { app, dialog } from 'electron'
 import fs from 'fs'
 import path from 'node:path'
@@ -85,15 +84,11 @@ export const addBooksController = () => async () => {
 
     fs.copyFileSync(filePath, destinationFile)
 
-    const parsed = await parseEpub(destinationFile, {
-      type: 'path',
-    })
-
     const parsedTest = await new EpubParser(destinationFile).parse()
 
     console.log('PARSED TESTTESTTSETSTSTETST:', parsedTest?.metadata)
 
-    const authors = parsed?.info?.authors || []
+    const authors = parsedTest?.metadata.authors || []
 
     const authorsList = await Promise.all(
       authors.map(async (name: string) => {
@@ -105,29 +100,32 @@ export const addBooksController = () => async () => {
     )
 
     const book = new BookEntity()
-    book.name = parsed?.info?.title || originalFilename
+    book.name = parsedTest?.metadata.title || originalFilename
     book.fileName = fileName
     book.originalFileName = originalFilename
     book.fileFormat = path.extname(filePath).slice(1)
-    book.description = parsed?.info?.description || null
-    book.lang = 'test'
-    book.publisher = 'test'
-    book.cover = null
+    book.description = parsedTest?.metadata.description || null
+    book.lang = parsedTest?.metadata.language || null
+    book.publisher = parsedTest?.metadata.publisher || null
+    book.cover = parsedTest?.metadata.coverImage || null
     book.readingProgress = null
     book.score = null
     book.authors = authorsList
 
     const createdBook = await booksQuery.createBook(book)
 
-    return Promise.all(
-      parsed.info.identifiers.map(async (identifier: { type: string; value: string }) => {
+    const addingBookIds =
+      parsedTest?.metadata.identifiers.map(async (identifier): Promise<BookIdEntity> => {
         const bookId = new BookIdEntity()
         bookId.book = createdBook
         bookId.idType = identifier.type
         bookId.idVal = identifier.value
-        await booksQuery.createBookId(bookId)
-      })
-    )
+        return await booksQuery.createBookId(bookId)
+      }) || []
+
+    await Promise.all(addingBookIds)
+
+    return createdBook
   })
 
   return await Promise.all(result)

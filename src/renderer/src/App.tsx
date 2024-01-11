@@ -1,6 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 import { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LoadingInfoToast } from './components/LoadingInfoToast'
 import { useIpc } from './hooks/useIpc'
 import { useSettings } from './hooks/useSettings'
 import { usePlatformStore } from './store/usePlatformStore'
@@ -29,6 +30,7 @@ export const App = () => {
     <>
       <Suspense>
         <Outlet />
+        <LoadingInfoToast />
       </Suspense>
     </>
   )
