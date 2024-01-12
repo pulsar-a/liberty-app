@@ -9,7 +9,6 @@ import { Toast } from './Toast'
 
 window.api.onAddLoaders((itemsToAdd) => {
   itemsToAdd.forEach((item) => {
-    console.log('Adding item', item)
     useLoadingStatusesStore.getState().addItem(item)
   })
 })

@@ -22,7 +22,8 @@
     "settings_subsection_files_defaultSystemFolder_placeholder": "Standardordner für Systeme",
     "settings_subsection_plugins_title": "Plugins",
     "settings_subsection_about_title": "Über das Programm",
-    "loadingStatusesToast_bookAdded_label": "Hinzugefügt {{filename}}",
+    "loadingStatusesToast_bookAdded_label": "Hinzugefügt \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_label": "Fehler beim Hinzufügen von \"{{filename}}\"",
     "loadingStatusesToast_clearFinished_label": "Fertige Einträge löschen"
   }
 }

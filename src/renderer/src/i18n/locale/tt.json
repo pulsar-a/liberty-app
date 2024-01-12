@@ -22,7 +22,8 @@
     "settings_subsection_files_defaultSystemFolder_placeholder": "Буларның беренче директориясе",
     "settings_subsection_plugins_title": "Плагиннар",
     "settings_subsection_about_title": "Программа турында",
-    "loadingStatusesToast_bookAdded_label": "Өстәлде {{filename}}",
+    "loadingStatusesToast_bookAdded_label": "Өстәлде \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_label": "\"{{filename}}\" өстәп булмады",
     "loadingStatusesToast_clearFinished_label": "Тамамланганларны тазалау"
   }
 }

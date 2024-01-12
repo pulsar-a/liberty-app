@@ -22,7 +22,8 @@
     "settings_subsection_files_defaultSystemFolder_placeholder": "Папка по умолчанию",
     "settings_subsection_plugins_title": "Плагины",
     "settings_subsection_about_title": "О программе",
-    "loadingStatusesToast_bookAdded_label": "Добавлена {{filename}}",
+    "loadingStatusesToast_bookAdded_label": "Добавлена \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_label": "Ошибка при добавлении \"{{filename}}\"",
     "loadingStatusesToast_clearFinished_label": "Очистить завершенные"
   }
 }

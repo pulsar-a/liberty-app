@@ -22,7 +22,7 @@ export class EpubParser extends AbstractParser {
 
     // FIXME: Use META-INF folder XML file to determine content.opf file location
     // @see https://www.w3.org/TR/epub/#sec-parsing-urls-metainf
-    const xmlString: string | null =
+    const xmlString: string | undefined =
       (await this.getArchivedFileContent('content.opf')) ||
       (await this.getArchivedFileContent('OEBPS/content.opf'))
 
@@ -46,7 +46,7 @@ export class EpubParser extends AbstractParser {
     return this.parsedCache
   }
 
-  private async getArchivedFileContent(filename: string): Promise<string | null> {
+  private async getArchivedFileContent(filename: string): Promise<string | undefined> {
     try {
       const buffer: Buffer = fs.readFileSync(this.filePath, 'binary') as unknown as Buffer
 
@@ -58,7 +58,7 @@ export class EpubParser extends AbstractParser {
     } catch (error) {
       // TODO: DELETE FILE WITH ERROR AND RETURN THE CORRECT STATUS TO THE APP
       console.error('ZIP:', error)
-      return null
+      throw new Error('ZIP: Error while reading file')
     }
   }
 
