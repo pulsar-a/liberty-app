@@ -20,6 +20,7 @@ function createWindow(): void {
     width: 900,
     height: 670,
     show: false,
+    minWidth: 850,
     autoHideMenuBar: true,
     ...(process.platform !== 'darwin' ? { icon } : { icon: iconDarwin }),
     webPreferences: {

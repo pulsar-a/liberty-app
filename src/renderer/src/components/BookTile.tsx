@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import React from 'react'
 import BookEntity from '../../../main/entities/book.entity'
 import placeholderBlue from '../assets/images/placeholder-blue.jpg'
@@ -6,9 +7,10 @@ import placeholderPink from '../assets/images/placeholder-pink.jpg'
 
 type BookTileProps = {
   book: BookEntity
+  className?: string
   onClick?: () => void
 }
-export const BookTile: React.FC<BookTileProps> = ({ book, onClick }) => {
+export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) => {
   const placeholders = [placeholderGreen, placeholderPink, placeholderBlue]
 
   const hasReadingProgress = book.readingProgress !== null && book.readingProgress !== undefined
@@ -16,10 +18,13 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick }) => {
   return (
     <div
       key={book.id}
-      className="group relative cursor-default rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-500/30"
+      className={clsx(
+        'group relative w-72 cursor-default rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-500/30',
+        className
+      )}
       onClick={onClick}
     >
-      <div className="aspect-h-3 aspect-w-2 relative h-96 w-full overflow-hidden rounded-t-lg">
+      <div className="aspect-2/3 relative h-96 w-full overflow-hidden rounded-t-lg">
         {hasReadingProgress && (
           <div className="absolute right-2 top-2 bg-amber-950/70 p-1 text-sm text-white">
             {book.readingProgress}%

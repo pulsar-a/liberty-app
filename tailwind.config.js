@@ -7,6 +7,10 @@ module.exports = {
   content: ['./src/renderer/index.html', './src/renderer/src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      aspectRatio: {
+        '4/3': '4 / 3',
+        '2/3': '2 / 3',
+      },
       fontFamily: {
         sans: ['RedHat', ...defaultTheme.fontFamily.sans],
       },

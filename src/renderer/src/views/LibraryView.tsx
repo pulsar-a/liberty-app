@@ -82,7 +82,7 @@ export const LibraryView: React.FC = () => {
       <Outlet />
       <ThreeSectionsLayout
         content={
-          <div className="px-4 pb-36 lg:px-8">
+          <div className="max-w-full px-4 pb-36 lg:px-8">
             <PageTitle title={t('libraryView_title')} subtitle={selectedAuthorName} />
             {isLoading && (
               <div className="flex h-full items-center justify-center">

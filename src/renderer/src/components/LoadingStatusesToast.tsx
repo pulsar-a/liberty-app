@@ -2,32 +2,39 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import i18n from '../i18n/i18n'
 import { grabSortedItems, useLoadingStatusesStore } from '../store/useLoadingStatusesStore'
 import { LoadingStatusEntry } from './LoadingStatusEntry'
 import { Toast } from './Toast'
 
+window.api.onAddLoaders((itemsToAdd) => {
+  itemsToAdd.forEach((item) => {
+    console.log('Adding item', item)
+    useLoadingStatusesStore.getState().addItem(item)
+  })
+})
+
+window.api.onUpdateLoader((item) => {
+  useLoadingStatusesStore
+    .getState()
+    .setItemStatus(
+      item.id,
+      item.status,
+      item.label ? i18n.t(item.label, item.labelParams) : undefined
+    )
+})
+
 export const LoadingStatusesToast: React.FC = () => {
   const { t } = useTranslation()
-  const { addItem, setItemStatus, clearFinished } = useLoadingStatusesStore()
+  const { clearFinished } = useLoadingStatusesStore()
   const items = useLoadingStatusesStore(grabSortedItems)
 
-  window.api.onAddLoaders((itemsToAdd) => {
-    itemsToAdd.forEach((item) => {
-      console.log('Adding item', item)
-      addItem(item)
-    })
-  })
-
-  window.api.onUpdateLoader((item) => {
-    setItemStatus(item.id, item.status, item.label ? t(item.label, item.labelParams) : undefined)
-  })
-
-  const hasManyFinished =
+  const hasManyFinishedItems =
     items.filter((item) => ['success', 'error'].includes(item.status)).length > 1
 
   return (
     <Toast show={items.length > 0}>
-      {hasManyFinished && (
+      {hasManyFinishedItems && (
         <div className="border-bright-gray-30 -mx-4 flex justify-end border-b px-4 py-2 dark:border-bright-gray-600">
           <button
             className="text-xs text-gray-600 transition-colors hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
