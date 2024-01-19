@@ -21,6 +21,8 @@ export declare const api: {
         status: LoadingStatusItem['status']
         label?: string
         labelParams?: Record<string, string>
+        subLabel?: string
+        subLabelParams?: Record<string, string>
       }) => void
     ) => void,
 };

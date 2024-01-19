@@ -40,7 +40,7 @@ export const Toast: React.FC<ToastProps> = ({
           >
             <div
               className={clsx(
-                'pointer-events-auto w-full max-w-sm overflow-hidden rounded-md bg-bright-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 transition-colors dark:bg-mako-900',
+                'pointer-events-auto w-full max-w-sm overflow-hidden rounded-md bg-bright-gray-100 shadow-xl ring-1 ring-black ring-opacity-5 transition-colors dark:bg-mako-900',
                 // !withCloseButton && 'transition-opacity hover:opacity-20',
                 className
               )}

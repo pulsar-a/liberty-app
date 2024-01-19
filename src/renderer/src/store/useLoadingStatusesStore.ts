@@ -6,8 +6,12 @@ type LoadingStatusesState = {
 }
 type LoadingStatusesMethods = {
   addItem: (item: LoadingStatusItem) => void
-  setItemStatus: (id: string | number, status: LoadingStatusItem['status'], label?: string) => void
-  setItemPercentage: (id: string | number, percentage: number) => void
+  setItemStatus: (
+    id: string | number,
+    status: LoadingStatusItem['status'],
+    label?: string,
+    subLabel?: string
+  ) => void
   removeItem: (id: string | number) => void
   clearFinished: () => void
 }
@@ -26,6 +30,17 @@ export const useLoadingStatusesStore = create<LoadingStatusesState & LoadingStat
       //     'File format is not known to humanbeing, but we will keep trying it untill the end of the world. lorem ipsum dolor sit amet, consectetur adipiscing elit.',
       //   status: 'error',
       // },
+      {
+        id: 1,
+        label: 'Uploading "Reliquary.epub"',
+        status: 'loading',
+      },
+      {
+        id: 2,
+        label: 'No uploaded: "Reliquary.epub"',
+        subLabel: 'File format is not supported',
+        status: 'error',
+      },
       // {
       //   id: 3,
       //   label: 'Uploaded successfully',
@@ -83,20 +98,16 @@ export const useLoadingStatusesStore = create<LoadingStatusesState & LoadingStat
       // },
     ],
     addItem: (item: LoadingStatusItem) => set((state) => ({ items: [...state.items, item] })),
-    setItemStatus: (id: string | number, status: LoadingStatusItem['status'], label) =>
+    setItemStatus: (id: string | number, status: LoadingStatusItem['status'], label, subLabel) =>
       set((state) => ({
         items: state.items.map((item) => {
           if (item.id === id) {
-            return { ...item, status, ...(label ? { label } : {}) }
-          }
-          return item
-        }),
-      })),
-    setItemPercentage: (id: string | number, percentage: number) =>
-      set((state) => ({
-        items: state.items.map((item) => {
-          if (item.id === id) {
-            return { ...item, percentage }
+            return {
+              ...item,
+              status,
+              ...(label ? { label } : {}),
+              ...(subLabel ? { subLabel } : {}),
+            }
           }
           return item
         }),

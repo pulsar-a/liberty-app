@@ -24,6 +24,7 @@
     "settings_subsection_about_title": "Про програму",
     "loadingStatusesToast_bookAdded_label": "Додано \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Помилка додавання \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Формат файлу не підтримується",
     "loadingStatusesToast_clearFinished_label": "Очистити завершені"
   }
 }

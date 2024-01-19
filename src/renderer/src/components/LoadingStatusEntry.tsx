@@ -32,7 +32,7 @@ export const LoadingStatusEntry: React.FC<LoadingStatusEntryProps> = ({ item }) 
     <animated.div
       key={item.id}
       className={clsx(
-        'not-last:border-b flex items-center border-bright-gray-300 py-2 pl-2 pr-4 dark:border-bright-gray-600'
+        'flex items-center border-bright-gray-300 py-2 pl-2 pr-4 shadow-inner not-last:border-b dark:border-bright-gray-600'
       )}
       style={{ ...springs }}
     >
@@ -54,6 +54,14 @@ export const LoadingStatusEntry: React.FC<LoadingStatusEntryProps> = ({ item }) 
           title={item.label}
         >
           {item.label}
+        </div>
+        <div
+          className={clsx(
+            'line-clamp-2 select-text overflow-hidden text-[10px] text-gray-950 dark:text-gray-200'
+          )}
+          title={item.subLabel}
+        >
+          {item.subLabel}
         </div>
       </div>
       {item.status !== 'loading' && (

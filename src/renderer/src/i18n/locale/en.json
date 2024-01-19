@@ -24,6 +24,7 @@
     "settings_subsection_about_title": "About",
     "loadingStatusesToast_bookAdded_label": "Added \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Error adding \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "File format not supported",
     "loadingStatusesToast_clearFinished_label": "Clear finished"
   }
 }

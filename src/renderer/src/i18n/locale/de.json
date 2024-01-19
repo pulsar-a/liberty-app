@@ -24,6 +24,7 @@
     "settings_subsection_about_title": "Über das Programm",
     "loadingStatusesToast_bookAdded_label": "Hinzugefügt \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Fehler beim Hinzufügen von \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Dateiformat wird nicht unterstützt",
     "loadingStatusesToast_clearFinished_label": "Fertige Einträge löschen"
   }
 }

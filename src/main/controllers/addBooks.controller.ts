@@ -61,7 +61,8 @@ export const addBooksController = () => async () => {
   const files = filePaths.map((filePath) => {
     const appDataPath = isDev ? __dirname : app.getPath('userData')
     const originalFilename = path.basename(filePath)
-    const encodedFilename = uuidv4() + path.extname(filePath)
+    const fileExtension = path.extname(filePath).slice(1) // Remove dot
+    const encodedFilename = `${uuidv4()}.${fileExtension}`
     const subfolder = path.join(appDataPath, 'books')
     const fileName = path.join('books', encodedFilename)
 
@@ -73,6 +74,7 @@ export const addBooksController = () => async () => {
       originalFilename,
       encodedFilename,
       subfolder,
+      fileExtension,
       fileName,
       destinationDir,
       destinationFile,
@@ -101,6 +103,7 @@ export const addBooksController = () => async () => {
       encodedFilename,
       subfolder,
       originalFilename,
+      fileExtension,
     } = file
     console.log('=================================')
     console.log('destinationDir', destinationDir)
@@ -109,6 +112,7 @@ export const addBooksController = () => async () => {
     console.log('fileName', fileName)
     console.log('originalFilename', originalFilename)
     console.log('encodedFilename', encodedFilename)
+    console.log('fileExtension', fileExtension)
     console.log('subfolder', subfolder)
     console.log('=================================')
 
@@ -119,9 +123,17 @@ export const addBooksController = () => async () => {
 
       fs.copyFileSync(filePath, destinationFile)
 
-      const parsedTest = await new EpubParser(destinationFile).parse()
+      const filetypeParsersMap = {
+        epub: EpubParser,
+      }
 
-      const authors = parsedTest?.metadata.authors || []
+      if (!filetypeParsersMap[fileExtension]) {
+        throw new Error('File type not supported')
+      }
+
+      const parsed = await new filetypeParsersMap[fileExtension](destinationFile).parse()
+
+      const authors = parsed?.metadata.authors || []
 
       const authorsList = await Promise.all(
         authors.map(async (name: string) => {
@@ -133,14 +145,14 @@ export const addBooksController = () => async () => {
       )
 
       const book = new BookEntity()
-      book.name = parsedTest?.metadata.title || originalFilename
+      book.name = parsed?.metadata.title || originalFilename
       book.fileName = fileName
       book.originalFileName = originalFilename
       book.fileFormat = path.extname(filePath).slice(1)
-      book.description = parsedTest?.metadata.description || null
-      book.lang = parsedTest?.metadata.language || null
-      book.publisher = parsedTest?.metadata.publisher || null
-      book.cover = parsedTest?.metadata.coverImage || null
+      book.description = parsed?.metadata.description || null
+      book.lang = parsed?.metadata.language || null
+      book.publisher = parsed?.metadata.publisher || null
+      book.cover = parsed?.metadata.coverImage || null
       book.readingProgress = null
       book.score = null
       book.authors = authorsList
@@ -148,7 +160,7 @@ export const addBooksController = () => async () => {
       const createdBook = await booksQuery.createBook(book)
 
       const addingBookIds =
-        parsedTest?.metadata.identifiers.map(async (identifier): Promise<BookIdEntity> => {
+        parsed?.metadata.identifiers.map(async (identifier): Promise<BookIdEntity> => {
           const bookId = new BookIdEntity()
           bookId.book = createdBook
           bookId.idType = identifier.type
@@ -175,6 +187,7 @@ export const addBooksController = () => async () => {
       await mainWindow.webContents.send('loader:update-item', {
         id: encodedFilename,
         label: 'loadingStatusesToast_bookAddError_label',
+        subLabel: 'loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel',
         labelParams: {
           filename: originalFilename,
         },

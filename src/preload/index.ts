@@ -41,6 +41,8 @@ export const api = {
       status: LoadingStatusItem['status']
       label?: string
       labelParams?: Record<string, string>
+      subLabel?: string
+      subLabelParams?: Record<string, string>
     }) => void
   ) => {
     ipcRenderer.on('loader:update-item', (_event, value) => callback(value))

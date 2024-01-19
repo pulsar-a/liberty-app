@@ -19,7 +19,8 @@ window.api.onUpdateLoader((item) => {
     .setItemStatus(
       item.id,
       item.status,
-      item.label ? i18n.t(item.label, item.labelParams) : undefined
+      item.label ? i18n.t(item.label, item.labelParams) : undefined,
+      item.subLabel ? i18n.t(item.subLabel, item.subLabelParams) : undefined
     )
 })
 
@@ -34,9 +35,9 @@ export const LoadingStatusesToast: React.FC = () => {
   return (
     <Toast show={items.length > 0}>
       {hasManyFinishedItems && (
-        <div className="border-bright-gray-30 -mx-4 flex justify-end border-b px-4 py-2 dark:border-bright-gray-600">
+        <div className="-mx-4 flex justify-end border-b border-bright-gray-200 bg-bright-gray-200 px-4 py-2 shadow dark:border-bright-gray-600 dark:bg-mako-800">
           <button
-            className="text-xs text-gray-600 transition-colors hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+            className="flex items-center justify-end gap-0.5 text-xs text-gray-600 transition-colors hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
             onClick={() => clearFinished()}
           >
             {t('loadingStatusesToast_clearFinished_label')}

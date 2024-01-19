@@ -24,6 +24,7 @@
     "settings_subsection_about_title": "О программе",
     "loadingStatusesToast_bookAdded_label": "Добавлена \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Ошибка при добавлении \"{{filename}}\"",
+    "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Формат файла не поддерживается",
     "loadingStatusesToast_clearFinished_label": "Очистить завершенные"
   }
 }

@@ -52,7 +52,7 @@ export const GlobalSearch: React.FC = () => {
               )}
             >
               <div className="flex flex-1 gap-x-4 self-stretch md:gap-x-6">
-                <form className="relative flex flex-1" action="#">
+                <div className="relative flex flex-1">
                   <FontAwesomeIcon
                     icon={faMagnifyingGlass}
                     className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"
@@ -70,7 +70,7 @@ export const GlobalSearch: React.FC = () => {
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                   />
-                </form>
+                </div>
                 <div className="flex items-center gap-x-4 md:gap-x-6">
                   {withShortcuts && (
                     <kbd className="inline-flex items-center rounded border border-gray-200 bg-white px-1 font-mono text-lg text-gray-400 dark:border-gray-700 dark:bg-mako-800">

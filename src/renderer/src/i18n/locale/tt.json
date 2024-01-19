@@ -15,15 +15,16 @@
     "mainMenu_settings_title": "Көйләүләр",
     "mainMenu_quit_title": "Чыгу",
     "settings_subsection_general_title": "Башлык",
-    "settings_subsection_appearance_title": "Күрүнеш",
+    "settings_subsection_appearance_title": "Күренеш",
     "settings_subsection_reading_title": "Уку",
     "settings_subsection_files_title": "Файллар",
     "settings_subsection_files_userFilesFolder_label": "Файллар директориясе",
-    "settings_subsection_files_defaultSystemFolder_placeholder": "Буларның беренче директориясе",
+    "settings_subsection_files_defaultSystemFolder_placeholder": "Килешү буенча система папкасы",
     "settings_subsection_plugins_title": "Плагиннар",
     "settings_subsection_about_title": "Программа турында",
     "loadingStatusesToast_bookAdded_label": "Өстәлде \"{{filename}}\"",
-    "loadingStatusesToast_bookAddError_label": "\"{{filename}}\" өстәп булмады",
+    "loadingStatusesToast_bookAddError_label": "\"{{filename}}\" файлны өстәп булмады",
+    "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Файл форматы хупланмый",
     "loadingStatusesToast_clearFinished_label": "Тамамланганларны тазалау"
   }
 }
