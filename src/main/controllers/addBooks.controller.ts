@@ -8,6 +8,7 @@ import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
 import BookIdEntity from '../entities/bookId.entity'
 import { EpubParser } from '../parsers/epub/EpubParser'
+import { NoParser } from '../parsers/noParser/NoParser'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
 
@@ -27,26 +28,30 @@ export const addBooksController = () => async () => {
         name: 'EPUB',
         extensions: ['epub'],
       },
-      // {
-      //   name: 'MOBI',
-      //   extensions: ['mobi'],
-      // },
-      // {
-      //   name: 'FB2',
-      //   extensions: ['fb2'],
-      // },
-      // {
-      //   name: 'FB3',
-      //   extensions: ['fb3'],
-      // },
-      // {
-      //   name: 'DJVU',
-      //   extensions: ['djvu'],
-      // },
-      // {
-      //   name: 'TXT',
-      //   extensions: ['txt'],
-      // },
+      {
+        name: 'MOBI',
+        extensions: ['mobi'],
+      },
+      {
+        name: 'FB2',
+        extensions: ['fb2'],
+      },
+      {
+        name: 'FB3',
+        extensions: ['fb3'],
+      },
+      {
+        name: 'DJVU',
+        extensions: ['djvu'],
+      },
+      {
+        name: 'TXT',
+        extensions: ['txt'],
+      },
+      {
+        name: 'DOC, DOCX',
+        extensions: ['doc', 'docx'],
+      },
       {
         name: 'All Files',
         extensions: ['*'],
@@ -61,7 +66,7 @@ export const addBooksController = () => async () => {
   const files = filePaths.map((filePath) => {
     const appDataPath = isDev ? __dirname : app.getPath('userData')
     const originalFilename = path.basename(filePath)
-    const fileExtension = path.extname(filePath).slice(1) // Remove dot
+    const fileExtension = path.extname(filePath).slice(1).toLowerCase() // Remove dot
     const encodedFilename = `${uuidv4()}.${fileExtension}`
     const subfolder = path.join(appDataPath, 'books')
     const fileName = path.join('books', encodedFilename)
@@ -125,6 +130,14 @@ export const addBooksController = () => async () => {
 
       const filetypeParsersMap = {
         epub: EpubParser,
+        fb2: NoParser,
+        fb3: NoParser,
+        mobi: NoParser,
+        pdf: NoParser,
+        djvu: NoParser,
+        txt: NoParser,
+        doc: NoParser,
+        docx: NoParser,
       }
 
       if (!filetypeParsersMap[fileExtension]) {
@@ -184,6 +197,7 @@ export const addBooksController = () => async () => {
 
       // return createdBook
     } catch (error) {
+      // TODO: DELETE FILE WITH ERROR
       await mainWindow.webContents.send('loader:update-item', {
         id: encodedFilename,
         label: 'loadingStatusesToast_bookAddError_label',

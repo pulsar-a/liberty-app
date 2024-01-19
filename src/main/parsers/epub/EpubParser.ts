@@ -67,7 +67,6 @@ export class EpubParser extends AbstractParser {
 
       return fileData?.asText() || null
     } catch (error) {
-      // TODO: DELETE FILE WITH ERROR AND RETURN THE CORRECT STATUS TO THE APP
       console.error('ZIP:', error)
       throw new Error('ZIP: Error while reading file')
     }

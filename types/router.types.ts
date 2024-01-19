@@ -5,7 +5,7 @@ export type RouteEntry = {
   to?: string
   fn?: () => void
   params?: Record<string, string>
-  search?: Record<string, string | number>
+  search?: Record<string, string | number | null>
   name: string
   disabled?: boolean
   icon?: IconDefinition

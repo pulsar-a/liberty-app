@@ -5,7 +5,7 @@ import { SettingsAboutView } from '@/views/SettingsAboutView'
 import { SettingsAppearanceView } from '@/views/SettingsAppearanceView'
 import { SettingsGeneralView } from '@/views/SettingsGeneralView'
 import { SettingsView } from '@/views/SettingsView'
-import { RootRoute, Route, Router, createHashHistory } from '@tanstack/react-router'
+import { createHashHistory, RootRoute, Route, Router } from '@tanstack/react-router'
 import { z } from 'zod'
 import { BookDetailsView } from '../views/BookDetailsView'
 import { MyCollectionsView } from '../views/MyCollectionsView'
@@ -45,7 +45,7 @@ const libraryLayoutRoute = new Route({
 })
 
 const authorSearchSchema = z.object({
-  authorId: z.number().optional(),
+  authorId: z.number().optional().nullable(),
 })
 
 const collectionsSearchSchema = z.object({

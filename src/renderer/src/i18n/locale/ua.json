@@ -3,6 +3,7 @@
     "libraryView_title": "Бібліотека",
     "libraryView_addBooks_button": "Додати книги",
     "libraryView_filterAuthors_placeholder": "Автори",
+    "libraryView_noAuthor_label": "Невідомий автор",
     "settingsView_title": "Налаштування",
     "myCollectionView_createCollection_button": "Створити колекцію",
     "myCollectionsView_title": "Мої колекції",

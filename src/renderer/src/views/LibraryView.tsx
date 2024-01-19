@@ -39,17 +39,30 @@ export const LibraryView: React.FC = () => {
       return []
     }
 
-    if (!authorId) {
+    if (authorId === undefined) {
       return books.items as unknown as BookEntity[]
     }
 
-    return books.items.filter((book) =>
-      book.authors.some((author) => author.id === authorId)
-    ) as unknown as BookEntity[]
+    return books.items.filter((book) => {
+      // Books without author
+      if (book.authors.length === 0 && authorId === null) {
+        return true
+      }
+
+      // Search by author
+      return book.authors.some((author) => author.id === authorId)
+    }) as unknown as BookEntity[]
   }, [books, authorId])
 
   const authorRouteEntries: RouteEntry[] = useMemo(() => {
-    return (
+    return [
+      {
+        id: 'no-author',
+        name: t('libraryView_noAuthor_label'),
+        to: '/',
+        search: { authorId: null },
+      } as RouteEntry,
+    ].concat(
       authors?.items
         .filter((author) => {
           return (

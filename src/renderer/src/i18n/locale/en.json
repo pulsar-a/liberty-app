@@ -3,6 +3,7 @@
     "libraryView_title": "Library",
     "libraryView_addBooks_button": "Add books",
     "libraryView_filterAuthors_placeholder": "Filter authors",
+    "libraryView_noAuthor_label": "No author",
     "settingsView_title": "Settings",
     "myCollectionView_createCollection_button": "Create collection",
     "myCollectionsView_title": "My collections",
