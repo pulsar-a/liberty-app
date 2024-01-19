@@ -7,7 +7,9 @@ import installExtension, {
 } from 'electron-devtools-installer'
 import { createIPCHandler } from 'electron-trpc/main'
 import { join } from 'path'
+// @ts-ignore - no types
 import iconDarwin from '../../resources/app-icons/mac/app-icon.icns?asset'
+// @ts-ignore - no types
 import icon from '../../resources/app-icons/windows/app-icon.ico?asset'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
