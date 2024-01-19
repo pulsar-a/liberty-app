@@ -10,7 +10,7 @@ import { join } from 'path'
 // @ts-ignore - no types
 import iconDarwin from '../../resources/app-icons/mac/app-icon.icns?asset'
 // @ts-ignore - no types
-import icon from '../../resources/app-icons/windows/app-icon.ico?asset'
+import icon from '../../resources/app-icons/win/app-icon.ico?asset'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
 

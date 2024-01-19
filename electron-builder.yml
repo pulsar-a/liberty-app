@@ -16,11 +16,13 @@ asarUnpack:
   - resources/**
 win:
   executableName: Liberty
+  icon: resources/app-icons/win/app-icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  installerIcon: resources/app-icons/win/app-icon.ico
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
