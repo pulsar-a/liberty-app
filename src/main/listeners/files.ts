@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as fs from 'fs'
 // import * as path from 'node:path'
 
@@ -42,4 +42,9 @@ export const initFileListeners = (mainWindow: BrowserWindow) => {
   // IPC: Call Renderer -> main + data return
   ipcMain.handle('dialog:open-file', handleFileOpen(mainWindow))
   ipcMain.handle('dialog:select-folder', handleFolderOpen(mainWindow))
+
+  app.on('window-all-closed', () => {
+    ipcMain.removeHandler('dialog:open-file')
+    ipcMain.removeHandler('dialog:select-folder')
+  })
 }

@@ -7,6 +7,8 @@ test-files/
 database/liberty-database.sqlite
 ./data
 
+.DS_Store
+*.log
 *.log*
 
 .pnp.*

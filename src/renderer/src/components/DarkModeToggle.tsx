@@ -13,7 +13,7 @@ export const DarkModeToggle: React.FC = () => {
   const mutation = main.changeColorScheme.useMutation()
 
   useEffect(() => {
-    const scheme = getSetting('theme', 'light') as 'light' | 'dark'
+    const scheme = getSetting('theme', 'dark') as 'light' | 'dark'
     handleModeChange(scheme === 'dark').catch(console.error)
     mutation.mutate({ colorScheme: scheme })
   }, [])

@@ -20,11 +20,22 @@ export class EpubParser extends AbstractParser {
       return this.parsedCache
     }
 
-    // FIXME: Use META-INF folder XML file to determine content.opf file location
+    const containerDataRaw = await this.getArchivedFileContent('META-INF/container.xml')
+
+    if (!containerDataRaw) {
+      return null
+    }
+
+    const containerData = await this.xmlParser.parseStringPromise(containerDataRaw)
+
+    const contentOpfPath = containerData?.container?.rootfiles?.[0]?.rootfile?.[0]?.$?.['full-path']
+
+    if (!contentOpfPath) {
+      return null
+    }
+
     // @see https://www.w3.org/TR/epub/#sec-parsing-urls-metainf
-    const xmlString: string | undefined =
-      (await this.getArchivedFileContent('content.opf')) ||
-      (await this.getArchivedFileContent('OEBPS/content.opf'))
+    const xmlString: string | undefined = await this.getArchivedFileContent(contentOpfPath)
 
     if (!xmlString) {
       return null
@@ -92,6 +103,12 @@ export class EpubParser extends AbstractParser {
       []
     )
 
+    let bookTitle = metadataRaw?.package?.metadata?.[0]?.['dc:title']?.[0]
+
+    if (typeof bookTitle === 'object') {
+      bookTitle = bookTitle._
+    }
+
     return {
       authors: authors || [],
       description: metadataRaw?.package?.metadata?.[0]?.['dc:description']?.[0] || '',
@@ -99,7 +116,7 @@ export class EpubParser extends AbstractParser {
       language: metadataRaw?.package?.metadata?.[0]?.['dc:language']?.[0] || '',
       publisher: metadataRaw?.package?.metadata?.[0]?.['dc:publisher']?.[0] || '',
       subjects: [],
-      title: metadataRaw?.package?.metadata?.[0]?.['dc:title']?.[0] || '',
+      title: bookTitle || '',
       coverImage: '',
     }
   }

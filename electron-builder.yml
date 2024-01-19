@@ -6,6 +6,7 @@ directories:
 files:
   - '!**/.vscode/*'
   - '!**/.idea/*'
+  - '!**/.yarn/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
@@ -23,13 +24,17 @@ nsis:
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+#    - NSCameraUsageDescription: Application requests access to the device's camera.
+#    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
+  icon: resources/app-icons/mac/app-icon.icns
 dmg:
   artifactName: ${name}-${version}.${ext}
+  background: resources/dmg-bg-book.png
+  icon: resources/app-icons/mac/app-icon.icns
+  title: ${productName}
 linux:
   target:
     - AppImage

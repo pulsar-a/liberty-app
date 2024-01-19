@@ -1,5 +1,10 @@
 import react from '@vitejs/plugin-react'
-import { bytecodePlugin, defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import {
+  bytecodePlugin,
+  defineConfig,
+  externalizeDepsPlugin,
+  splitVendorChunkPlugin,
+} from 'electron-vite'
 import { resolve } from 'path'
 
 export default defineConfig({
@@ -23,6 +28,6 @@ export default defineConfig({
         '@ipc-routes': resolve('src/main/router'),
       },
     },
-    plugins: [react()],
+    plugins: [react(), splitVendorChunkPlugin()],
   },
 })

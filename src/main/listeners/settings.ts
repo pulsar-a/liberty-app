@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
 import { settings } from '../settings/settings'
 
 export const initSettingsListeners = () => {
@@ -16,5 +16,12 @@ export const initSettingsListeners = () => {
 
   ipcMain.on('settings:reset', async () => {
     settings.reset()
+  })
+
+  app.on('window-all-closed', () => {
+    ipcMain.removeAllListeners('settings:get')
+    ipcMain.removeAllListeners('settings:getAll')
+    ipcMain.removeAllListeners('settings:set')
+    ipcMain.removeAllListeners('settings:reset')
   })
 }

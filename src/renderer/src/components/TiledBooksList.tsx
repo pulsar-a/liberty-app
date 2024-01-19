@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import React from 'react'
+import { isDev } from '../../../main/constants/app'
 import BookEntity from '../../../main/entities/book.entity'
 import { BookTile } from './BookTile'
 
@@ -11,6 +12,10 @@ export const TiledBooksList: React.FC<BooksListProps> = ({ books }) => {
   const navigate = useNavigate({ from: '/' })
 
   const handleBookClick = (book: BookEntity) => {
+    if (!isDev) {
+      return
+    }
+
     navigate({ to: '/book/$bookId', params: { bookId: book.id } })
       .then()
       .catch(console.error)

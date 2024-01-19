@@ -24,7 +24,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) 
       )}
       onClick={onClick}
     >
-      <div className="aspect-2/3 relative h-96 w-full overflow-hidden rounded-t-lg">
+      <div className="relative aspect-2/3 h-96 w-full overflow-hidden rounded-t-lg">
         {hasReadingProgress && (
           <div className="absolute right-2 top-2 bg-amber-950/70 p-1 text-sm text-white">
             {book.readingProgress}%

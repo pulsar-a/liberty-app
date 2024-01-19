@@ -5,7 +5,7 @@ import { SettingsAboutView } from '@/views/SettingsAboutView'
 import { SettingsAppearanceView } from '@/views/SettingsAppearanceView'
 import { SettingsGeneralView } from '@/views/SettingsGeneralView'
 import { SettingsView } from '@/views/SettingsView'
-import { RootRoute, Route, Router } from '@tanstack/react-router'
+import { RootRoute, Route, Router, createHashHistory } from '@tanstack/react-router'
 import { z } from 'zod'
 import { BookDetailsView } from '../views/BookDetailsView'
 import { MyCollectionsView } from '../views/MyCollectionsView'
@@ -141,7 +141,9 @@ const routeTree = rootRoute.addChildren([
   ]),
 ])
 
-export const router = new Router({ routeTree })
+const history = createHashHistory()
+
+export const router = new Router({ routeTree, history })
 
 declare module '@tanstack/react-router' {
   interface AppRoutes {

@@ -4,7 +4,7 @@ import {
   faCog,
   faFolder,
   faHome,
-  faPowerOff,
+  // faPowerOff,
   faTabletScreenButton,
 } from '@fortawesome/free-solid-svg-icons'
 import { Outlet } from '@tanstack/react-router'
@@ -23,14 +23,12 @@ export const LibraryLayout = () => {
       name: t('mainMenu_myCollections_title'),
       to: '/my-collections',
       icon: faFolder,
-      current: false,
     },
     {
       id: '',
       name: t('mainMenu_reader_title'),
       to: '/reader',
       icon: faTabletScreenButton,
-      current: false,
     },
   ]
 
@@ -40,17 +38,16 @@ export const LibraryLayout = () => {
       name: t('mainMenu_settings_title'),
       to: '/settings',
       icon: faCog,
-      current: false,
     },
-    {
-      id: 'quit',
-      name: t('mainMenu_quit_title'),
-      fn: () => {
-        window.close()
-      },
-      icon: faPowerOff,
-      current: false,
-    },
+    // {
+    //   id: 'quit',
+    //   name: t('mainMenu_quit_title'),
+    //   fn: () => {
+    //     window.close()
+    //   },
+    //   icon: faPowerOff,
+    //   current: false,
+    // },
   ]
 
   return (

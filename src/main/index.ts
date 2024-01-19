@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import installExtension, {
   REACT_DEVELOPER_TOOLS,
   REDUX_DEVTOOLS,
@@ -34,23 +34,23 @@ function createWindow(): void {
   createIPCHandler({ router, windows: [mainWindow] })
 
   // IPC: main -> Renderer
-  const menu = Menu.buildFromTemplate([
-    {
-      label: app.name,
-      submenu: [
-        {
-          click: () => mainWindow.webContents.send('update-counter', 1),
-          label: 'Increment',
-        },
-        {
-          click: () => mainWindow.webContents.send('update-counter', -1),
-          label: 'Decrement',
-        },
-      ],
-    },
-  ])
+  // const menu = Menu.buildFromTemplate([
+  //   {
+  //     label: app.name,
+  //     submenu: [
+  //       {
+  //         click: () => mainWindow.webContents.send('update-counter', 1),
+  //         label: 'Increment',
+  //       },
+  //       {
+  //         click: () => mainWindow.webContents.send('update-counter', -1),
+  //         label: 'Decrement',
+  //       },
+  //     ],
+  //   },
+  // ])
 
-  Menu.setApplicationMenu(menu)
+  // Menu.setApplicationMenu(menu)
 
   initIpcListeners(mainWindow)
 
@@ -87,9 +87,9 @@ app.whenReady().then(async () => {
     .catch((err) => console.log('An error occurred: ', err))
 
   // IPC: Call Renderer -> main
-  ipcMain.on('counter-value', (_event, value) => {
-    console.log(value) // will print value to Node console
-  })
+  // ipcMain.on('counter-value', (_event, value) => {
+  //   console.log(value) // will print value to Node console
+  // })
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.pulsar-a.liberty')
