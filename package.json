@@ -98,5 +98,6 @@
     "typeorm-seeding": "^1.6.1",
     "typescript": "^5.3.3",
     "vite": "^4.4.9"
-  }
+  },
+  "packageManager": "yarn@4.0.2"
 }

@@ -43,6 +43,7 @@ export const MyCollectionsView: React.FC = () => {
               size="xl"
               leadingIcon={<FontAwesomeIcon icon={faPlus} />}
               block
+              disabled
             />
             <SubmenuEntries className="pt-8" items={collections} />
           </div>
