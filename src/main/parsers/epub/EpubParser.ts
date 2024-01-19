@@ -5,7 +5,7 @@ import { BookMetadata, ParsedBook } from '../../../../types/parsed.types'
 import { AbstractParser } from '../AbstractParser'
 
 export class EpubParser extends AbstractParser {
-  private filePath: string
+  private readonly filePath: string
   private xmlParser: xml2js.Parser
   private parsedCache: ParsedBook | null = null
 
@@ -76,9 +76,12 @@ export class EpubParser extends AbstractParser {
   private parseBookMetadata(metadataRaw: { package }): BookMetadata {
     const authorsRaw = metadataRaw?.package?.metadata?.[0]?.['dc:creator'] || []
 
-    const authors = authorsRaw?.map((author: string | Record<'_', string>) =>
-      typeof author === 'object' ? author?._ : author
-    )
+    const authors =
+      authorsRaw
+        ?.map((author: string | Record<'_', string>) =>
+          typeof author === 'object' ? author?._ : author
+        )
+        .map((author: string) => author.replace(/\s{2,}/g, ' ').trim()) || []
 
     const identifiers = metadataRaw?.package?.metadata?.[0]?.['dc:identifier']?.reduce(
       (
