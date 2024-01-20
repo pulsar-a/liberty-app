@@ -84,6 +84,10 @@ export const LibraryView: React.FC = () => {
   }, [authors, authorSearchTerm, books])
 
   const selectedAuthorName = useMemo(() => {
+    if (authorId === null) {
+      return t('libraryView_noAuthor_label')
+    }
+
     const author = authors?.items.find((author) => author.id === authorId)
     return author?.name
   }, [authors, authorId])
