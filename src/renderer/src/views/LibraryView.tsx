@@ -56,12 +56,16 @@ export const LibraryView: React.FC = () => {
 
   const authorRouteEntries: RouteEntry[] = useMemo(() => {
     return [
-      {
-        id: 'no-author',
-        name: t('libraryView_noAuthor_label'),
-        to: '/',
-        search: { authorId: null },
-      } as RouteEntry,
+      ...(books?.items.some((book) => book.authors.length === 0)
+        ? [
+            {
+              id: 'no-author',
+              name: t('libraryView_noAuthor_label'),
+              to: '/',
+              search: { authorId: null },
+            } as RouteEntry,
+          ]
+        : []),
     ].concat(
       authors?.items
         .filter((author) => {
@@ -77,7 +81,7 @@ export const LibraryView: React.FC = () => {
           search: { authorId: author.id },
         })) || []
     )
-  }, [authors, authorSearchTerm])
+  }, [authors, authorSearchTerm, books])
 
   const selectedAuthorName = useMemo(() => {
     const author = authors?.items.find((author) => author.id === authorId)

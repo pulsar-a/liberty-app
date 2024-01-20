@@ -2,17 +2,17 @@ import fs from 'fs'
 import NodeZip from 'node-zip'
 import xml2js from 'xml2js'
 import { BookMetadata, ParsedBook } from '../../../../types/parsed.types'
-import { AbstractParser } from '../AbstractParser'
+import { AbstractParser, FileData } from '../AbstractParser'
 
 export class EpubParser extends AbstractParser {
   private readonly filePath: string
   private xmlParser: xml2js.Parser
   private parsedCache: ParsedBook | null = null
 
-  constructor(filePath: string) {
-    super()
+  constructor(file: FileData) {
+    super(file)
     this.xmlParser = new xml2js.Parser()
-    this.filePath = filePath
+    this.filePath = file.filePath
   }
 
   async parse(): Promise<ParsedBook | null> {

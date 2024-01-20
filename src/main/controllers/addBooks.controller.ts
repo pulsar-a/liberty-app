@@ -144,7 +144,7 @@ export const addBooksController = () => async () => {
         throw new Error('File type not supported')
       }
 
-      const parsed = await new filetypeParsersMap[fileExtension](destinationFile).parse()
+      const parsed = await new filetypeParsersMap[fileExtension](file).parse()
 
       const authors = parsed?.metadata.authors || []
 

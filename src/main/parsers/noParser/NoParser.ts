@@ -1,20 +1,19 @@
-import path from 'node:path'
 import { ParsedBook } from '../../../../types/parsed.types'
-import { AbstractParser } from '../AbstractParser'
+import { AbstractParser, FileData } from '../AbstractParser'
 
 export class NoParser extends AbstractParser {
-  private readonly filePath: string
+  private readonly file: FileData
 
-  constructor(filePath: string) {
-    super()
-    this.filePath = filePath
+  constructor(file: FileData) {
+    super(file)
+    this.file = file
   }
 
   async parse(): Promise<ParsedBook | null> {
     return {
       metadata: {
         authors: [],
-        title: path.basename(this.filePath),
+        title: this.file.originalFilename,
         description: '',
         coverImage: '',
         publisher: '',

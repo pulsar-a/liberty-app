@@ -30,17 +30,17 @@ export const useLoadingStatusesStore = create<LoadingStatusesState & LoadingStat
       //     'File format is not known to humanbeing, but we will keep trying it untill the end of the world. lorem ipsum dolor sit amet, consectetur adipiscing elit.',
       //   status: 'error',
       // },
-      {
-        id: 1,
-        label: 'Uploading "Reliquary.epub"',
-        status: 'loading',
-      },
-      {
-        id: 2,
-        label: 'No uploaded: "Reliquary.epub"',
-        subLabel: 'File format is not supported',
-        status: 'error',
-      },
+      // {
+      //   id: 1,
+      //   label: 'Uploading "Reliquary.epub"',
+      //   status: 'loading',
+      // },
+      // {
+      //   id: 2,
+      //   label: 'No uploaded: "Reliquary.epub"',
+      //   subLabel: 'File format is not supported',
+      //   status: 'error',
+      // },
       // {
       //   id: 3,
       //   label: 'Uploaded successfully',
