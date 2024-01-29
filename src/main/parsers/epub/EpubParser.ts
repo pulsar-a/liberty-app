@@ -1,7 +1,8 @@
 import fs from 'fs'
 import NodeZip from 'node-zip'
 import xml2js from 'xml2js'
-import { BookMetadata, ParsedBook } from '../../../../types/parsed.types'
+import { DOMParser } from 'xmldom'
+import { BookIdentifier, BookMetadata, ParsedBook } from '../../../../types/parsed.types'
 import { AbstractParser, FileData } from '../AbstractParser'
 
 export class EpubParser extends AbstractParser {
@@ -41,9 +42,9 @@ export class EpubParser extends AbstractParser {
       return null
     }
 
-    const metadataRaw = await this.xmlParser.parseStringPromise(xmlString)
+    const metadata = await this.parseBookMetadata(xmlString)
 
-    const metadata = this.parseBookMetadata(metadataRaw)
+    console.log('==== METADATA:', metadata)
 
     if (!metadata) {
       return null
@@ -72,17 +73,37 @@ export class EpubParser extends AbstractParser {
     }
   }
 
-  private parseBookMetadata(metadataRaw: { package }): BookMetadata {
-    const authorsRaw = metadataRaw?.package?.metadata?.[0]?.['dc:creator'] || []
+  private async parseBookMetadata(xmlString: string): Promise<BookMetadata> {
+    const contentOpfRaw = await this.xmlParser.parseStringPromise(xmlString)
 
-    const authors =
-      authorsRaw
-        ?.map((author: string | Record<'_', string>) =>
-          typeof author === 'object' ? author?._ : author
-        )
-        .map((author: string) => author.replace(/\s{2,}/g, ' ').trim()) || []
+    const authors = this.getBookAuthors(contentOpfRaw)
 
-    const identifiers = metadataRaw?.package?.metadata?.[0]?.['dc:identifier']?.reduce(
+    const identifiers = this.getBookIdentifiers(contentOpfRaw)
+
+    let bookTitle = contentOpfRaw?.package?.metadata?.[0]?.['dc:title']?.[0]
+
+    if (typeof bookTitle === 'object') {
+      bookTitle = bookTitle._
+    }
+
+    const coverImagePath = this.getBookCoverImagePath(xmlString)
+
+    return {
+      authors: authors || [],
+      description: contentOpfRaw?.package?.metadata?.[0]?.['dc:description']?.[0] || '',
+      identifiers,
+      language: contentOpfRaw?.package?.metadata?.[0]?.['dc:language']?.[0] || '',
+      publisher: contentOpfRaw?.package?.metadata?.[0]?.['dc:publisher']?.[0] || '',
+      subjects: [],
+      title: bookTitle || '',
+      coverImage: coverImagePath || null,
+    }
+  }
+
+  private getBookIdentifiers(contentOpfRaw: {
+    package: Record<string, unknown>
+  }): BookIdentifier[] {
+    return contentOpfRaw?.package?.metadata?.[0]?.['dc:identifier']?.reduce(
       (
         result: { type: string; value: string }[],
         identifier: { $: { 'opf:scheme': string; id?: string }; _: string }
@@ -104,23 +125,46 @@ export class EpubParser extends AbstractParser {
       },
       []
     )
+  }
 
-    let bookTitle = metadataRaw?.package?.metadata?.[0]?.['dc:title']?.[0]
+  private getBookAuthors(contentOpfRaw: { package: Record<string, unknown> }): string[] {
+    const authorsRaw = contentOpfRaw?.package?.metadata?.[0]?.['dc:creator'] || []
+    // console.log(
+    //   '==== OPF CREATOR:',
+    //   opfDocument.getElementsByTagName('dc:creator')?.[0]?.textContent
+    // )
+    return (
+      authorsRaw
+        ?.map((author: string | Record<'_', string>) =>
+          typeof author === 'object' ? author?._ : author
+        )
+        .map((author: string) => author.replace(/\s{2,}/g, ' ').trim()) || []
+    )
+  }
 
-    if (typeof bookTitle === 'object') {
-      bookTitle = bookTitle._
+  private getBookCoverImagePath(xmlString: string): string | null {
+    const opfDocument = new DOMParser().parseFromString(xmlString, 'text/xml')
+
+    // console.log(
+    //   '==== OPF DOCUMENT:',
+    //   opfDocument.getElementById('coverimage')?.getAttribute('href')
+    // )
+
+    // const coverMeta = contentOpfRaw?.package?.metadata?.[0]?.meta?.find(
+    //   (meta: { $: { name: string } }) => meta.$?.name === 'cover'
+    // )
+
+    const metas = opfDocument.getElementsByTagName('meta')
+
+    const coverItemId = Array.from(metas)
+      .find((meta) => meta.getAttribute('name') === 'cover')
+      ?.getAttribute('content')
+
+    if (!coverItemId) {
+      return null
     }
 
-    return {
-      authors: authors || [],
-      description: metadataRaw?.package?.metadata?.[0]?.['dc:description']?.[0] || '',
-      identifiers,
-      language: metadataRaw?.package?.metadata?.[0]?.['dc:language']?.[0] || '',
-      publisher: metadataRaw?.package?.metadata?.[0]?.['dc:publisher']?.[0] || '',
-      subjects: [],
-      title: bookTitle || '',
-      coverImage: '',
-    }
+    return opfDocument.getElementById(coverItemId)?.getAttribute('href') || null
   }
 }
 
