@@ -2,18 +2,28 @@ import fs from 'fs'
 import NodeZip from 'node-zip'
 import xml2js from 'xml2js'
 import { DOMParser } from 'xmldom'
-import { BookIdentifier, BookMetadata, ParsedBook } from '../../../../types/parsed.types'
+import {
+  BookCoverData,
+  BookIdentifier,
+  BookMetadata,
+  ParsedBook,
+} from '../../../../types/parsed.types'
 import { AbstractParser, FileData } from '../AbstractParser'
 
 export class EpubParser extends AbstractParser {
   private readonly filePath: string
   private xmlParser: xml2js.Parser
   private parsedCache: ParsedBook | null = null
+  private readonly archive: NodeZip | null = null
 
   constructor(file: FileData) {
     super(file)
     this.xmlParser = new xml2js.Parser()
     this.filePath = file.filePath
+
+    const buffer: Buffer = fs.readFileSync(this.filePath, 'binary') as unknown as Buffer
+
+    this.archive = new NodeZip(buffer, { binary: true, base64: false, checkCRC32: true })
   }
 
   async parse(): Promise<ParsedBook | null> {
@@ -36,7 +46,7 @@ export class EpubParser extends AbstractParser {
     }
 
     // @see https://www.w3.org/TR/epub/#sec-parsing-urls-metainf
-    const xmlString: string | undefined = await this.getArchivedFileContent(contentOpfPath)
+    const xmlString = await this.getArchivedFileContent(contentOpfPath)
 
     if (!xmlString) {
       return null
@@ -44,25 +54,29 @@ export class EpubParser extends AbstractParser {
 
     const metadata = await this.parseBookMetadata(xmlString)
 
-    console.log('==== METADATA:', metadata)
-
     if (!metadata) {
       return null
     }
 
+    const cover = await this.getBookCoverData(xmlString)
+
     this.parsedCache = {
       metadata,
+      cover,
     }
 
-    // const sections = await this._parseSections()
+    console.log('==== BOOK DATA:', this.parsedCache)
+
     return this.parsedCache
   }
 
-  private async getArchivedFileContent(filename: string): Promise<string | undefined> {
-    try {
-      const buffer: Buffer = fs.readFileSync(this.filePath, 'binary') as unknown as Buffer
+  private async getArchivedFileContent(filename: string): Promise<string | null> {
+    if (!this.archive) {
+      return null
+    }
 
-      const zip: NodeZip = new NodeZip(buffer, { binary: true, base64: false, checkCRC32: true })
+    try {
+      const zip: NodeZip = this.archive
 
       const fileData = zip.file(filename)
 
@@ -86,8 +100,6 @@ export class EpubParser extends AbstractParser {
       bookTitle = bookTitle._
     }
 
-    const coverImagePath = this.getBookCoverImagePath(xmlString)
-
     return {
       authors: authors || [],
       description: contentOpfRaw?.package?.metadata?.[0]?.['dc:description']?.[0] || '',
@@ -96,7 +108,6 @@ export class EpubParser extends AbstractParser {
       publisher: contentOpfRaw?.package?.metadata?.[0]?.['dc:publisher']?.[0] || '',
       subjects: [],
       title: bookTitle || '',
-      coverImage: coverImagePath || null,
     }
   }
 
@@ -140,6 +151,15 @@ export class EpubParser extends AbstractParser {
         )
         .map((author: string) => author.replace(/\s{2,}/g, ' ').trim()) || []
     )
+  }
+
+  private async getBookCoverData(xmlString: string): Promise<BookCoverData> {
+    const coverImagePath = this.getBookCoverImagePath(xmlString)
+
+    return {
+      archivePath: coverImagePath || '',
+      imageBuffer: coverImagePath ? await this.archive.file(coverImagePath)?._data : null,
+    }
   }
 
   private getBookCoverImagePath(xmlString: string): string | null {

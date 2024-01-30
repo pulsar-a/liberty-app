@@ -46,6 +46,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) 
                 {book.name}
               </div>
             </div>
+            {book.cover}
             {hasAuthors && (
               <div className="absolute bottom-10 left-0 mr-14 bg-amber-950/50 px-4 py-2">
                 <div className="line-clamp-3 text-sm text-gray-100">

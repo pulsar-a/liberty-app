@@ -3,6 +3,7 @@ import { getMainWindow } from 'electron-main-window'
 import fs from 'fs'
 import path from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
+import { ParsedBook } from '../../../types/parsed.types'
 import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
@@ -64,12 +65,15 @@ export const addBooksController = () => async () => {
   }
 
   const files = filePaths.map((filePath) => {
+    const encodedName = uuidv4()
     const appDataPath = isDev ? __dirname : app.getPath('userData')
     const originalFilename = path.basename(filePath)
     const fileExtension = path.extname(filePath).slice(1).toLowerCase() // Remove dot
-    const encodedFilename = `${uuidv4()}.${fileExtension}`
+    const encodedFilename = `${encodedName}.${fileExtension}`
     const subfolder = path.join(appDataPath, 'books')
     const fileName = path.join('books', encodedFilename)
+    const imageAbsoluteDir = path.join(subfolder, 'images')
+    const imageDir = path.join('books', 'images')
 
     const destinationDir = subfolder
     const destinationFile = path.join(destinationDir, encodedFilename)
@@ -78,11 +82,14 @@ export const addBooksController = () => async () => {
       filePath,
       originalFilename,
       encodedFilename,
+      encodedName,
       subfolder,
       fileExtension,
       fileName,
       destinationDir,
       destinationFile,
+      imageDir,
+      imageAbsoluteDir,
     }
   })
 
@@ -109,8 +116,12 @@ export const addBooksController = () => async () => {
       subfolder,
       originalFilename,
       fileExtension,
+      encodedName,
+      imageDir,
+      imageAbsoluteDir,
     } = file
     console.log('=================================')
+    console.log('encodedName', encodedName)
     console.log('destinationDir', destinationDir)
     console.log('destinationFile', destinationFile)
     console.log('filePath', filePath)
@@ -119,11 +130,16 @@ export const addBooksController = () => async () => {
     console.log('encodedFilename', encodedFilename)
     console.log('fileExtension', fileExtension)
     console.log('subfolder', subfolder)
+    console.log('ImageDir', imageDir)
+    console.log('imageAbsoluteDir', imageAbsoluteDir)
     console.log('=================================')
 
     try {
       if (!fs.existsSync(destinationDir)) {
         fs.mkdirSync(destinationDir, { recursive: true })
+      }
+      if (!fs.existsSync(imageAbsoluteDir)) {
+        fs.mkdirSync(imageAbsoluteDir, { recursive: true })
       }
 
       fs.copyFileSync(filePath, destinationFile)
@@ -144,7 +160,24 @@ export const addBooksController = () => async () => {
         throw new Error('File type not supported')
       }
 
-      const parsed = await new filetypeParsersMap[fileExtension](file).parse()
+      const parsed: ParsedBook = await new filetypeParsersMap[fileExtension](file).parse()
+
+      let imageFile: string | null = null
+
+      if (parsed?.cover?.imageBuffer) {
+        const imageExtension = parsed.cover.archivePath.split('.').pop()
+        const imageFilename = `${encodedName}.${imageExtension}`
+        imageFile = path.join(imageDir, imageFilename)
+
+        console.log('imageFile', imageFile)
+        console.log('ABSOLUTE', path.join(imageAbsoluteDir, imageFilename))
+
+        fs.writeFileSync(
+          path.join(imageAbsoluteDir, imageFilename),
+          parsed.cover.imageBuffer,
+          'binary'
+        )
+      }
 
       const authors = parsed?.metadata.authors || []
 
@@ -165,7 +198,7 @@ export const addBooksController = () => async () => {
       book.description = parsed?.metadata.description || null
       book.lang = parsed?.metadata.language || null
       book.publisher = parsed?.metadata.publisher || null
-      book.cover = parsed?.metadata.coverImage || null
+      book.cover = imageFile
       book.readingProgress = null
       book.score = null
       book.authors = authorsList
@@ -183,9 +216,6 @@ export const addBooksController = () => async () => {
 
       await Promise.all(addingBookIds)
 
-      console.log('=================================')
-      console.log('UPDATING LOADER', filePath)
-      console.log('=================================')
       await mainWindow.webContents.send('loader:update-item', {
         id: encodedFilename,
         label: 'loadingStatusesToast_bookAdded_label',

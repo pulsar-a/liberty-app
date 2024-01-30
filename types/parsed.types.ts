@@ -1,5 +1,6 @@
 export type ParsedBook = {
   metadata: BookMetadata
+  cover?: BookCoverData | null
 }
 
 export type BookIdentifier = {
@@ -15,5 +16,9 @@ export type BookMetadata = {
   language: string
   description: string
   subjects: string[]
-  coverImage: string | null
+}
+
+export type BookCoverData = {
+  archivePath: string
+  imageBuffer?: Buffer | null
 }
