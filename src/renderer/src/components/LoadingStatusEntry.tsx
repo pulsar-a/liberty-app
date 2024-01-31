@@ -48,7 +48,7 @@ export const LoadingStatusEntry: React.FC<LoadingStatusEntryProps> = ({ item }) 
       <div className="flex-grow py-1">
         <div
           className={clsx(
-            'line-clamp-2 select-text overflow-hidden text-xs text-gray-950 dark:text-gray-50',
+            'line-clamp-2 select-text overflow-hidden break-all text-xs text-gray-950 dark:text-gray-50',
             item.status === 'error' && 'text-red-800 dark:text-red-300'
           )}
           title={item.label}

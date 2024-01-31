@@ -12,6 +12,7 @@ type BookTileProps = {
 }
 export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) => {
   const placeholders = [placeholderGreen, placeholderPink, placeholderBlue]
+  const [isImageAvailable, setImageAvailable] = React.useState(true)
 
   const hasReadingProgress = book.readingProgress !== null && book.readingProgress !== undefined
 
@@ -26,27 +27,37 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) 
       )}
       onClick={onClick}
     >
-      <div className="relative aspect-2/3 h-96 w-full overflow-hidden rounded-t-lg">
+      <div
+        className="relative aspect-2/3 h-96 w-full overflow-hidden rounded-t-lg"
+        style={{
+          backgroundImage: `url(${placeholders[Math.floor(Math.random() * placeholders.length)]})`,
+          backgroundSize: 'cover',
+        }}
+      >
         {hasReadingProgress && (
           <div className="absolute right-2 top-2 bg-amber-950/70 p-1 text-sm text-white">
             {book.readingProgress}%
           </div>
         )}
-        <img
-          src={book.cover || placeholders[Math.floor(Math.random() * placeholders.length)]}
-          alt=""
-          className="h-full w-full object-cover object-center"
-        />
+        {isImageAvailable && (
+          <img
+            src={'file://' + book.cover}
+            onError={() => {
+              setImageAvailable(false)
+            }}
+            alt=""
+            className="h-full w-full object-fill object-center"
+          />
+        )}
 
         {/* IF NO COVER AVAILABLE */}
-        {!book.cover && (
+        {!book.cover || !isImageAvailable ? (
           <>
             <div className="absolute left-14 right-0 top-20 bg-amber-950/50 px-4 py-2">
               <div className="line-clamp-6 break-words text-right text-xl font-semibold text-orange-300">
                 {book.name}
               </div>
             </div>
-            {book.cover}
             {hasAuthors && (
               <div className="absolute bottom-10 left-0 mr-14 bg-amber-950/50 px-4 py-2">
                 <div className="line-clamp-3 text-sm text-gray-100">
@@ -57,7 +68,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) 
               </div>
             )}
           </>
-        )}
+        ) : null}
       </div>
 
       <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-white">

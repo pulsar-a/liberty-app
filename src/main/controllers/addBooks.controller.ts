@@ -19,7 +19,7 @@ export const addBooksController = () => async () => {
     filters: [
       {
         name: 'Books',
-        extensions: ['pdf', 'epub'], //, 'mobi', 'fb2', 'fb3', 'djvu', 'txt'],
+        extensions: ['pdf', 'epub', 'mobi', 'fb2', 'fb3', 'djvu', 'txt'],
       },
       {
         name: 'PDF',
@@ -167,7 +167,7 @@ export const addBooksController = () => async () => {
       if (parsed?.cover?.imageBuffer) {
         const imageExtension = parsed.cover.archivePath.split('.').pop()
         const imageFilename = `${encodedName}.${imageExtension}`
-        imageFile = path.join(imageDir, imageFilename)
+        imageFile = path.join(imageAbsoluteDir, imageFilename)
 
         console.log('imageFile', imageFile)
         console.log('ABSOLUTE', path.join(imageAbsoluteDir, imageFilename))
@@ -201,6 +201,7 @@ export const addBooksController = () => async () => {
       book.cover = imageFile
       book.readingProgress = null
       book.score = null
+      book.bookHash = uuidv4()
       book.authors = authorsList
 
       const createdBook = await booksQuery.createBook(book)

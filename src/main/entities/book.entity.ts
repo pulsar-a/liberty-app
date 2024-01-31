@@ -49,6 +49,9 @@ export default class BookEntity {
   @Column('integer', { nullable: true })
   score: number | null
 
+  @Column('text')
+  bookHash: string
+
   @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date
 

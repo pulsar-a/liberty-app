@@ -28,6 +28,8 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
+      // FIXME: enable webSecurity. Currently disabled to serve locally loaded images
+      webSecurity: false,
     },
   })
 

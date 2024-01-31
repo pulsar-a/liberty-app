@@ -58,7 +58,7 @@ export class EpubParser extends AbstractParser {
       return null
     }
 
-    const cover = await this.getBookCoverData(xmlString)
+    const cover = await this.getBookCoverData(xmlString, contentOpfPath)
 
     this.parsedCache = {
       metadata,
@@ -153,8 +153,13 @@ export class EpubParser extends AbstractParser {
     )
   }
 
-  private async getBookCoverData(xmlString: string): Promise<BookCoverData> {
-    const coverImagePath = this.getBookCoverImagePath(xmlString)
+  private async getBookCoverData(
+    xmlString: string,
+    contentOpfPath: string
+  ): Promise<BookCoverData> {
+    const coverImagePath = this.getBookCoverImagePath(xmlString, contentOpfPath)
+
+    console.log('==== COVER IMAGE PATH:', coverImagePath)
 
     return {
       archivePath: coverImagePath || '',
@@ -162,13 +167,14 @@ export class EpubParser extends AbstractParser {
     }
   }
 
-  private getBookCoverImagePath(xmlString: string): string | null {
+  private getBookCoverImagePath(xmlString: string, contentOpfPath: string): string | null {
     const opfDocument = new DOMParser().parseFromString(xmlString, 'text/xml')
+    const opfDocumentDir = contentOpfPath.split('/').slice(0, -1).join('/')
 
-    // console.log(
-    //   '==== OPF DOCUMENT:',
-    //   opfDocument.getElementById('coverimage')?.getAttribute('href')
-    // )
+    console.log(
+      '==== OPF DOCUMENT COVER IMAGE:',
+      opfDocument.getElementById('coverimage')?.getAttribute('href')
+    )
 
     // const coverMeta = contentOpfRaw?.package?.metadata?.[0]?.meta?.find(
     //   (meta: { $: { name: string } }) => meta.$?.name === 'cover'
@@ -184,7 +190,11 @@ export class EpubParser extends AbstractParser {
       return null
     }
 
-    return opfDocument.getElementById(coverItemId)?.getAttribute('href') || null
+    const coverImage = opfDocument.getElementById(coverItemId)?.getAttribute('href')
+
+    const fullPath = (opfDocumentDir ? opfDocumentDir + '/' : '') + coverImage
+
+    return coverImage ? fullPath : null
   }
 }
 
