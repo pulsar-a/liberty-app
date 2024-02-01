@@ -6,7 +6,6 @@ import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
 import { libraryRoute } from '@/routes/routes'
 import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Outlet } from '@tanstack/react-router'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
@@ -100,7 +99,6 @@ export const LibraryView: React.FC = () => {
 
   return (
     <>
-      <Outlet />
       <ThreeSectionsLayout
         content={
           <div className="max-w-full px-4 pb-36 lg:px-8">

@@ -1,13 +1,7 @@
 import logoDark from '@/assets/images/logos/logo-dark.svg'
 import logoLight from '@/assets/images/logos/logo-light.svg'
-import {
-  faCog,
-  faFolder,
-  faHome,
-  // faPowerOff,
-  faTabletScreenButton,
-} from '@fortawesome/free-solid-svg-icons'
-import { Outlet } from '@tanstack/react-router'
+import { faCog, faFolder, faHome, faTabletScreenButton } from '@fortawesome/free-solid-svg-icons'
+import { Outlet, ScrollRestoration } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
 import { GlobalSearch } from './parts/GlobalSearch'
@@ -84,6 +78,7 @@ export const LibraryLayout = () => {
         <GlobalSearch />
         {/* /SEARCH BAR */}
 
+        <ScrollRestoration />
         <Outlet />
       </div>
     </>

@@ -16,7 +16,12 @@ export const TiledBooksList: React.FC<BooksListProps> = ({ books }) => {
       return
     }
 
-    navigate({ to: '/book/$bookId', params: { bookId: book.id } })
+    navigate({
+      to: '/book/$bookId',
+      params: { bookId: book.id },
+      search: { flyout: true },
+      mask: { to: '/' },
+    })
       .then()
       .catch(console.error)
   }
@@ -32,6 +37,7 @@ export const TiledBooksList: React.FC<BooksListProps> = ({ books }) => {
         <BookTile
           book={book}
           key={book.id}
+          withGutter
           onClick={() => {
             handleBookClick(book)
           }}

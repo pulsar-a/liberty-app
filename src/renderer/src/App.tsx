@@ -5,6 +5,7 @@ import { LoadingStatusesToast } from './components/LoadingStatusesToast'
 import { useIpc } from './hooks/useIpc'
 import { useSettings } from './hooks/useSettings'
 import { usePlatformStore } from './store/usePlatformStore'
+import { setDateLocale } from './utils/localeHandler'
 
 export const App = () => {
   const {
@@ -23,7 +24,9 @@ export const App = () => {
   const { getSetting } = useSettings()
 
   useEffect(() => {
-    changeLanguage(getSetting('language') as string)
+    const locale = getSetting('language') as string
+    changeLanguage(locale)
+    setDateLocale(locale)
   }, [])
 
   return (

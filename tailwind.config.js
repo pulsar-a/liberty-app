@@ -91,5 +91,6 @@ module.exports = {
       addVariant('not-last', '&:not(:last-child)')
       addVariant('not-first', '&:not(:first-child)')
     }),
+    require('@tailwindcss/aspect-ratio'),
   ],
 }

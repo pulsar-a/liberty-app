@@ -5,12 +5,24 @@ import { SettingsAboutView } from '@/views/SettingsAboutView'
 import { SettingsAppearanceView } from '@/views/SettingsAppearanceView'
 import { SettingsGeneralView } from '@/views/SettingsGeneralView'
 import { SettingsView } from '@/views/SettingsView'
-import { createHashHistory, RootRoute, Route, Router } from '@tanstack/react-router'
+import {
+  createHashHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from '@tanstack/react-router'
 import { z } from 'zod'
 import { BookDetailsView } from '../views/BookDetailsView'
 import { MyCollectionsView } from '../views/MyCollectionsView'
 import { ReaderView } from '../views/ReaderView'
 import { SettingsFilesView } from '../views/SettingsFilesView'
+
+declare module '@tanstack/react-router' {
+  interface StaticDataRouteOption {
+    flyout: boolean
+    flyoutSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  }
+}
 
 // Devtools
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -27,7 +39,7 @@ import { SettingsFilesView } from '../views/SettingsFilesView'
 //         }))
 //       )
 
-const rootRoute = new RootRoute({
+const rootRoute = createRootRoute({
   component: () => (
     <>
       <App />
@@ -35,13 +47,19 @@ const rootRoute = new RootRoute({
     </>
   ),
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
 
-const libraryLayoutRoute = new Route({
+const libraryLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   component: () => <LibraryLayout />,
   pendingComponent: () => <div>Loading...</div>,
   id: 'library-layout',
+  staticData: {
+    flyout: false,
+  },
 })
 
 const authorSearchSchema = z.object({
@@ -52,77 +70,111 @@ const collectionsSearchSchema = z.object({
   collectionId: z.number().optional(),
 })
 
-export const libraryRoute = new Route({
+export const libraryRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
   path: '/',
   component: () => <LibraryView />,
   pendingComponent: () => <div>Loading...</div>,
   validateSearch: authorSearchSchema,
+  staticData: {
+    flyout: false,
+  },
 })
 
-export const bookDetailsRoute = new Route({
+export const bookDetailsRoute = createRoute({
   getParentRoute: () => libraryRoute,
   path: '/book/$bookId',
   component: () => <BookDetailsView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: true,
+    flyoutSize: 'md',
+  },
 })
 
-export const myCollectionsRoute = new Route({
+export const myCollectionsRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
   path: '/my-collections',
   component: () => <MyCollectionsView />,
   pendingComponent: () => <div>Loading...</div>,
   validateSearch: collectionsSearchSchema,
+  staticData: {
+    flyout: false,
+  },
 })
 
-const readerRoute = new Route({
+const readerRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
   path: '/reader',
   component: () => <ReaderView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
 
-const settingsRoute = new Route({
+const settingsRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
   id: 'settings',
   component: () => <SettingsView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
-const settingsGeneralRoute = new Route({
+const settingsGeneralRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings',
   component: () => <SettingsGeneralView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
-const settingsAppearanceRoute = new Route({
+const settingsAppearanceRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings/appearance',
   component: () => <SettingsAppearanceView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
-const settingsReadingRoute = new Route({
+const settingsReadingRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings/reading',
   component: () => <SettingsAboutView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
-const settingsPluginsRoute = new Route({
+const settingsPluginsRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings/plugins',
   component: () => <SettingsAboutView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
-const settingsFilesRoute = new Route({
+const settingsFilesRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings/files',
   component: () => <SettingsFilesView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
-const settingsAboutRoute = new Route({
+const settingsAboutRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings/about',
   component: () => <SettingsAboutView />,
   pendingComponent: () => <div>Loading...</div>,
+  staticData: {
+    flyout: false,
+  },
 })
 
 const routeTree = rootRoute.addChildren([
@@ -143,7 +195,7 @@ const routeTree = rootRoute.addChildren([
 
 const history = createHashHistory()
 
-export const router = new Router({ routeTree, history })
+export const router = createRouter({ routeTree, history })
 
 declare module '@tanstack/react-router' {
   interface AppRoutes {

@@ -14,7 +14,7 @@ import BookIdEntity from './bookId.entity'
 @Entity('books')
 export default class BookEntity {
   @PrimaryGeneratedColumn()
-  id: number | null
+  id: number
 
   @Column('text')
   name: string
@@ -51,6 +51,9 @@ export default class BookEntity {
 
   @Column('text')
   bookHash: string
+
+  @Column('integer', { nullable: true })
+  fileSize: number | null
 
   @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date

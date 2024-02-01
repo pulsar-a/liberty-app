@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '../hooks/useSettings'
+import { setDateLocale } from '../utils/localeHandler'
 import { Select } from './Select'
 
 export const LanguageSelector: React.FC = () => {
@@ -27,6 +28,7 @@ export const LanguageSelector: React.FC = () => {
   const handleLanguageChange = async (value: string | undefined) => {
     setSelectedLanguage(value)
     setSetting('language', value || 'en')
+    setDateLocale(value || 'en')
     return changeLanguage(value)
   }
 

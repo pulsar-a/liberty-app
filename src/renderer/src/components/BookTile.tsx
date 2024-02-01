@@ -4,19 +4,26 @@ import BookEntity from '../../../main/entities/book.entity'
 import placeholderBlue from '../assets/images/placeholder-blue.jpg'
 import placeholderGreen from '../assets/images/placeholder-green.jpg'
 import placeholderPink from '../assets/images/placeholder-pink.jpg'
+import { getStableOptionForHash } from '../utils/hashSelector'
 
 type BookTileProps = {
   book: BookEntity
   className?: string
+  withGutter?: boolean
   onClick?: () => void
 }
-export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) => {
-  const placeholders = [placeholderGreen, placeholderPink, placeholderBlue]
+export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, onClick, className }) => {
   const [isImageAvailable, setImageAvailable] = React.useState(true)
 
   const hasReadingProgress = book.readingProgress !== null && book.readingProgress !== undefined
 
   const hasAuthors = book.authors.length > 0
+
+  const placeholder = getStableOptionForHash(book.id.toString(), [
+    placeholderGreen,
+    placeholderPink,
+    placeholderBlue,
+  ])
 
   return (
     <div
@@ -28,9 +35,12 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) 
       onClick={onClick}
     >
       <div
-        className="relative aspect-2/3 h-96 w-full overflow-hidden rounded-t-lg"
+        className={clsx(
+          'relative aspect-2/3 h-96 w-full overflow-hidden',
+          withGutter ? 'rounded-t-lg' : 'rounded-lg'
+        )}
         style={{
-          backgroundImage: `url(${placeholders[Math.floor(Math.random() * placeholders.length)]})`,
+          backgroundImage: `url(${placeholder})`,
           backgroundSize: 'cover',
         }}
       >
@@ -70,14 +80,17 @@ export const BookTile: React.FC<BookTileProps> = ({ book, onClick, className }) 
           </>
         ) : null}
       </div>
+      {withGutter && (
+        <>
+          <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-white">
+            {book.name}
+          </h3>
 
-      <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-white">
-        {book.name}
-      </h3>
-
-      <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-white">
-        {book.authors.map((author) => author.name).join(', ')}
-      </div>
+          <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-white">
+            {book.authors.map((author) => author.name).join(', ')}
+          </div>
+        </>
+      )}
     </div>
   )
 }
