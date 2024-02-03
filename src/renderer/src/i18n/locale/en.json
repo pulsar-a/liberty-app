@@ -20,6 +20,8 @@
     "bookDetailsView_lastModified_label": "Last modified",
     "bookDetailsView_fileName_label": "File name",
     "bookDetailsView_addId_title": "Add ID",
+    "bookDetailsView_addToCollection_title": "Add to collection",
+    "bookDetailsView_noDescription": "No description",
     "searchbar_placeholder": "Search...",
     "mainMenu_submenu_system_title": "System",
     "mainMenu_allBooks_title": "Library",

@@ -20,6 +20,8 @@
     "bookDetailsView_lastModified_label": "Последнее изменение",
     "bookDetailsView_fileName_label": "Имя файла",
     "bookDetailsView_addId_title": "Добавить идентификатор",
+    "bookDetailsView_addToCollection_title": "Добавить в коллекцию",
+    "bookDetailsView_noDescription": "Нет описания",
     "searchbar_placeholder": "Искать...",
     "mainMenu_submenu_system_title": "Система",
     "mainMenu_allBooks_title": "Библиотека",

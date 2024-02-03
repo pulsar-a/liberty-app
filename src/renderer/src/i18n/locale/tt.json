@@ -20,6 +20,8 @@
     "bookDetailsView_lastModified_label": "Соңгы үзгәртелгән датасы",
     "bookDetailsView_fileName_label": "Файл исеме",
     "bookDetailsView_addId_title": "ID өстәү",
+    "bookDetailsView_addToCollection_title": "Коллекцияга өстәү",
+    "bookDetailsView_noDescription": "Тасвирламасы юк",
     "searchbar_placeholder": "Эзләү...",
     "mainMenu_submenu_system_title": "Система",
     "mainMenu_allBooks_title": "Китапханә",

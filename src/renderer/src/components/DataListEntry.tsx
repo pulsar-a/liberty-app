@@ -18,7 +18,7 @@ export const DataListEntry: React.FC<DataListEntryProps> = ({
 }) => {
   return (
     <div className={clsx('flex justify-between py-3 text-sm font-medium', className)}>
-      <dt className="text-gray-500 dark:text-gray-300">{label}</dt>
+      <dt className="text-gray-700 dark:text-gray-300">{label}</dt>
       <dd
         className={clsx('max-w-[50%] text-gray-900 dark:text-gray-100', breakable && 'break-all')}
       >

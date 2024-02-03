@@ -1,6 +1,7 @@
 import logoDark from '@/assets/images/logos/logo-dark.svg'
 import logoLight from '@/assets/images/logos/logo-light.svg'
-import { faCog, faFolder, faHome, faTabletScreenButton } from '@fortawesome/free-solid-svg-icons'
+import { faHeart } from '@fortawesome/free-regular-svg-icons'
+import { faBook, faCog, faTabletScreenButton } from '@fortawesome/free-solid-svg-icons'
 import { Outlet, ScrollRestoration } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
@@ -11,12 +12,12 @@ export const LibraryLayout = () => {
   const { t } = useTranslation()
 
   const navigation = [
-    { id: 'all-books', name: t('mainMenu_allBooks_title'), to: '/', icon: faHome, current: true },
+    { id: 'all-books', name: t('mainMenu_allBooks_title'), to: '/', icon: faBook, current: true },
     {
       id: 'my-collections',
       name: t('mainMenu_myCollections_title'),
       to: '/my-collections',
-      icon: faFolder,
+      icon: faHeart,
     },
     {
       id: '',
@@ -33,15 +34,6 @@ export const LibraryLayout = () => {
       to: '/settings',
       icon: faCog,
     },
-    // {
-    //   id: 'quit',
-    //   name: t('mainMenu_quit_title'),
-    //   fn: () => {
-    //     window.close()
-    //   },
-    //   icon: faPowerOff,
-    //   current: false,
-    // },
   ]
 
   return (

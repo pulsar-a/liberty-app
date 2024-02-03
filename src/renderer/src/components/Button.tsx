@@ -1,3 +1,5 @@
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { clsx } from 'clsx'
 import React from 'react'
 import { LoadingSpinner } from './LoadingSpinner'
@@ -8,8 +10,8 @@ type ButtonProps = {
   variant?: 'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'link'
   shape?: 'tile' | 'rounded' | 'pill' | 'circle'
   disabled?: boolean
-  leadingIcon?: React.ReactNode
-  trailingIcon?: React.ReactNode
+  leadingIcon?: IconDefinition
+  trailingIcon?: IconDefinition
   isLoading?: boolean
   type?: 'button' | 'submit' | 'reset'
   block?: boolean
@@ -38,7 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
         disabled={disabled}
         onClick={!disabled && onClick ? onClick : undefined}
         className={clsx(
-          'flex cursor-default justify-center gap-x-1 font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
+          'flex cursor-default items-center justify-center gap-x-1 font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
           {
             'rounded-md': shape === 'rounded',
             'rounded-full': ['pill', 'circle'].includes(shape),
@@ -69,9 +71,22 @@ export const Button: React.FC<ButtonProps> = ({
           <LoadingSpinner size="sm" className={clsx('text-white')} />
         ) : (
           <>
-            {leadingIcon && <span className="-ml-0.5 h-5 w-5">{leadingIcon}</span>}
+            {leadingIcon && (
+              <FontAwesomeIcon
+                icon={leadingIcon}
+                className={clsx('mr-0.5 h-4 w-4', !label && '-mr-0.5')}
+                aria-hidden="true"
+              />
+            )}
             {label}
-            {trailingIcon && <span className="-ml-0.5 h-5 w-5">{trailingIcon}</span>}
+            {/*-ml-0.5*/}
+            {trailingIcon && (
+              <FontAwesomeIcon
+                icon={trailingIcon}
+                className={clsx('ml-0.5 h-3 w-3', !label && '-ml-0.5')}
+                aria-hidden="true"
+              />
+            )}
           </>
         )}
       </button>

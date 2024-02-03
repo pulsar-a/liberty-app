@@ -5,7 +5,6 @@ import { SubmenuEntries } from '@/layouts/parts/SubmenuEntries'
 import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
 import { libraryRoute } from '@/routes/routes'
 import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
@@ -119,7 +118,7 @@ export const LibraryView: React.FC = () => {
           <div className="px-2">
             <Button
               label={t('libraryView_addBooks_button')}
-              leadingIcon={<FontAwesomeIcon icon={faPlus} />}
+              leadingIcon={faPlus}
               variant="primary"
               shape="rounded"
               block

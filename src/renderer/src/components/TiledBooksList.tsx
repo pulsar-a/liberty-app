@@ -37,7 +37,7 @@ export const TiledBooksList: React.FC<BooksListProps> = ({ books }) => {
         <BookTile
           book={book}
           key={book.id}
-          withGutter={false}
+          withGutter
           onClick={() => {
             handleBookClick(book)
           }}
