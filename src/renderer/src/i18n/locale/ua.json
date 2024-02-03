@@ -12,6 +12,7 @@
     "bookDetailsView_notFound_details": "Помилка завантаження книги",
     "bookDetailsView_description_title": "Опис",
     "bookDetailsView_information_title": "Інформація",
+    "bookDetailsView_inCollections_title": "У колекціях",
     "bookDetailsView_bookIds_title": "Ідентифікатори книги",
     "bookDetailsView_bookFormat_label": "Формат книги",
     "bookDetailsView_fileSize_label": "Розмір файлу",

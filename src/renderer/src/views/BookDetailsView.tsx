@@ -6,7 +6,7 @@ import { useIpc } from '@/hooks/useIpc'
 import { formatDateDistance } from '@/utils/dateFormatter'
 import { formatFileSize } from '@/utils/fileFormatter'
 import { faEdit, faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faClose, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faBook, faClose, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
@@ -62,8 +62,13 @@ export const BookDetailsView: React.FC = () => {
         </div>
       </div>
       <div>
-        <h3 className="cursor-default font-medium text-gray-900 dark:text-indigo-50">
+        <h3 className="flex cursor-default items-center justify-between font-medium text-gray-900 dark:text-indigo-50">
           {t('bookDetailsView_description_title')}
+          <FontAwesomeIcon
+            icon={faBook}
+            className="h-4 w-4 pr-2 text-blue-600"
+            aria-hidden="true"
+          />
         </h3>
         <div className="mt-2 flex items-center justify-between border-t border-gray-200 dark:border-indigo-400">
           {book.description ? (
@@ -93,8 +98,13 @@ export const BookDetailsView: React.FC = () => {
         </div>
       </div>
       <div>
-        <h3 className="cursor-default font-medium text-gray-900 dark:text-indigo-50">
+        <h3 className="flex cursor-default items-center justify-between font-medium text-gray-900 dark:text-indigo-50">
           {t('bookDetailsView_information_title')}
+          <FontAwesomeIcon
+            icon={faTable}
+            className="h-4 w-4 pr-2 text-gray-400"
+            aria-hidden="true"
+          />
         </h3>
         <dl className="mt-2 divide-y divide-gray-200 border-b border-t border-gray-200 dark:divide-mako-700 dark:border-indigo-400">
           <DataListEntry label={t('bookDetailsView_bookFormat_label')}>
@@ -121,8 +131,50 @@ export const BookDetailsView: React.FC = () => {
       </div>
 
       <div className="mt-16">
-        <h3 className="cursor-default font-medium text-gray-900 dark:text-indigo-50">
+        <h3 className="flex cursor-default items-center justify-between font-medium text-gray-900 dark:text-indigo-50">
+          {t('bookDetailsView_inCollections_title')}
+          <FontAwesomeIcon
+            icon={faHeart}
+            className="h-4 w-4 pr-2 text-red-600"
+            aria-hidden="true"
+          />
+        </h3>
+        <ul
+          role="list"
+          className="mt-2 divide-y divide-gray-200 border-b border-t border-gray-200 dark:divide-mako-700 dark:border-indigo-400"
+        >
+          {book.bookIds.map((bookId) => (
+            <li className="flex items-center justify-between gap-4 py-3" key={bookId.id}>
+              <div>&bull;</div>
+              <div className="flex flex-grow flex-col justify-center">
+                <span className="text-xs uppercase dark:text-indigo-300">{bookId.idType}</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-indigo-50">
+                  {bookId.idVal}
+                </p>
+              </div>
+              <FontAwesomeIcon icon={faClose} />
+            </li>
+          ))}
+          <li className="flex items-center justify-center py-2">
+            <Button
+              label={t('bookDetailsView_addId_title')}
+              variant={'primary'}
+              shape="rounded"
+              className="group -ml-1"
+              leadingIcon={<FontAwesomeIcon icon={faPlus} className="h-5 w-5" aria-hidden="true" />}
+            />
+          </li>
+        </ul>
+      </div>
+
+      <div className="mt-16">
+        <h3 className="flex cursor-default items-center justify-between font-medium text-gray-900 dark:text-indigo-50">
           {t('bookDetailsView_bookIds_title')}
+          <FontAwesomeIcon
+            icon={faFingerprint}
+            className="h-4 w-4 pr-2 text-green-600"
+            aria-hidden="true"
+          />
         </h3>
         <ul
           role="list"

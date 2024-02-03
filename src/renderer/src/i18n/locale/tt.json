@@ -12,6 +12,7 @@
     "bookDetailsView_notFound_details": "Китап детальләрен йөкләүдә хата",
     "bookDetailsView_description_title": "Тасвирлама",
     "bookDetailsView_information_title": "Мәгълүмат",
+    "bookDetailsView_inCollections_title": "Коллекцияларда",
     "bookDetailsView_bookIds_title": "Китап IDлары",
     "bookDetailsView_bookFormat_label": "Китап форматы",
     "bookDetailsView_fileSize_label": "Файл үлчәме",

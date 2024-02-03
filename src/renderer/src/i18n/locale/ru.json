@@ -12,6 +12,7 @@
     "bookDetailsView_notFound_details": "Ошибка загрузки книги",
     "bookDetailsView_description_title": "Описание",
     "bookDetailsView_information_title": "Информация",
+    "bookDetailsView_inCollections_title": "В коллекциях",
     "bookDetailsView_bookIds_title": "Идентификаторы книги",
     "bookDetailsView_bookFormat_label": "Формат книги",
     "bookDetailsView_fileSize_label": "Размер файла",

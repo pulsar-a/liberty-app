@@ -12,6 +12,7 @@
     "bookDetailsView_notFound_details": "Error loading book details",
     "bookDetailsView_description_title": "Description",
     "bookDetailsView_information_title": "Information",
+    "bookDetailsView_inCollections_title": "In collections",
     "bookDetailsView_bookIds_title": "Book IDs",
     "bookDetailsView_bookFormat_label": "Book format",
     "bookDetailsView_fileSize_label": "File size",

@@ -12,6 +12,7 @@
     "bookDetailsView_notFound_details": "Fehler beim Laden der Buchdetails",
     "bookDetailsView_description_title": "Beschreibung",
     "bookDetailsView_information_title": "Information",
+    "bookDetailsView_inCollections_title": "In Sammlungen",
     "bookDetailsView_bookIds_title": "Buch-IDs",
     "bookDetailsView_bookFormat_label": "Buchformat",
     "bookDetailsView_fileSize_label": "Dateigröße",
