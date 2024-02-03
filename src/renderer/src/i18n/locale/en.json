@@ -8,6 +8,17 @@
     "myCollectionView_createCollection_button": "Create collection",
     "myCollectionsView_title": "My collections",
     "settingsView_config_language_title": "Language",
+    "bookDetailsView_notFound_message": "Book not found",
+    "bookDetailsView_notFound_details": "Error loading book details",
+    "bookDetailsView_description_title": "Description",
+    "bookDetailsView_information_title": "Information",
+    "bookDetailsView_bookIds_title": "Book IDs",
+    "bookDetailsView_bookFormat_label": "Book format",
+    "bookDetailsView_fileSize_label": "File size",
+    "bookDetailsView_uploadedDate_label": "Uploaded date",
+    "bookDetailsView_lastModified_label": "Last modified",
+    "bookDetailsView_fileName_label": "File name",
+    "bookDetailsView_addId_title": "Add ID",
     "searchbar_placeholder": "Search...",
     "mainMenu_submenu_system_title": "System",
     "mainMenu_allBooks_title": "Library",
@@ -26,6 +37,9 @@
     "loadingStatusesToast_bookAdded_label": "Added \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Error adding \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "File format not supported",
-    "loadingStatusesToast_clearFinished_label": "Clear finished"
+    "loadingStatusesToast_clearFinished_label": "Clear finished",
+    "showLess": "Show less",
+    "showMore": "Show more",
+    "delete": "Delete"
   }
 }

@@ -1,6 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 import { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LoadingSpinner } from './components/LoadingSpinner'
 import { LoadingStatusesToast } from './components/LoadingStatusesToast'
 import { useIpc } from './hooks/useIpc'
 import { useSettings } from './hooks/useSettings'
@@ -31,7 +32,7 @@ export const App = () => {
 
   return (
     <>
-      <Suspense>
+      <Suspense fallback={<LoadingSpinner size="lg" block full spacing="lg" />}>
         <Outlet />
         <LoadingStatusesToast />
       </Suspense>

@@ -8,6 +8,7 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import './assets/fonts.css'
 import './assets/index.css'
+import * as superjson from 'superjson'
 import { router } from './routes/routes'
 
 const trpcReact = createTRPCReact<AppRouter>()
@@ -17,6 +18,7 @@ const Main = () => {
   const [trpcClient] = useState(() =>
     trpcReact.createClient({
       links: [ipcLink()],
+      transformer: superjson,
     })
   )
 

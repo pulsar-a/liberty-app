@@ -8,6 +8,17 @@
     "myCollectionView_createCollection_button": "Створити колекцію",
     "myCollectionsView_title": "Мої колекції",
     "settingsView_config_language_title": "Мова",
+    "bookDetailsView_notFound_message": "Книга не знайдена",
+    "bookDetailsView_notFound_details": "Помилка завантаження книги",
+    "bookDetailsView_description_title": "Опис",
+    "bookDetailsView_information_title": "Інформація",
+    "bookDetailsView_bookIds_title": "Ідентифікатори книги",
+    "bookDetailsView_bookFormat_label": "Формат книги",
+    "bookDetailsView_fileSize_label": "Розмір файлу",
+    "bookDetailsView_uploadedDate_label": "Дата завантаження",
+    "bookDetailsView_lastModified_label": "Остання зміна",
+    "bookDetailsView_fileName_label": "Ім'я файлу",
+    "bookDetailsView_addId_title": "Додати ідентифікатор",
     "searchbar_placeholder": "Пошук...",
     "mainMenu_submenu_system_title": "Система",
     "mainMenu_allBooks_title": "Бібліотека",
@@ -26,6 +37,9 @@
     "loadingStatusesToast_bookAdded_label": "Додано \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Помилка додавання \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Формат файлу не підтримується",
-    "loadingStatusesToast_clearFinished_label": "Очистити завершені"
+    "loadingStatusesToast_clearFinished_label": "Очистити завершені",
+    "showLess": "Показати менше",
+    "showMore": "Показати більше",
+    "delete": "Видалити"
   }
 }

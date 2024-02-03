@@ -29,7 +29,8 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, onClick, c
     <div
       key={book.id}
       className={clsx(
-        'group relative w-72 cursor-default rounded-lg bg-indigo-800/70 transition-all hover:opacity-95 hover:shadow-xl dark:bg-indigo-500/30',
+        'group relative w-72 cursor-default rounded-lg bg-indigo-800/70 transition-all dark:bg-indigo-500/30',
+        onClick && 'hover:opacity-85 hover:shadow-xl',
         className
       )}
       onClick={onClick}

@@ -10,7 +10,7 @@ export const Badge: React.FC<BadgeProps> = ({ label, color, className }) => {
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
+        'inline-flex cursor-default items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
         {
           'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20':
             !color || color === 'gray',

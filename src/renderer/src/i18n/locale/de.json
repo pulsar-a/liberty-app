@@ -8,6 +8,17 @@
     "myCollectionView_createCollection_button": "Sammlung erstellen",
     "myCollectionsView_title": "Meine Sammlungen",
     "settingsView_config_language_title": "Sprache",
+    "bookDetailsView_notFound_message": "Buch nicht gefunden",
+    "bookDetailsView_notFound_details": "Fehler beim Laden der Buchdetails",
+    "bookDetailsView_description_title": "Beschreibung",
+    "bookDetailsView_information_title": "Information",
+    "bookDetailsView_bookIds_title": "Buch-IDs",
+    "bookDetailsView_bookFormat_label": "Buchformat",
+    "bookDetailsView_fileSize_label": "Dateigröße",
+    "bookDetailsView_uploadedDate_label": "Hochgeladen am",
+    "bookDetailsView_lastModified_label": "Zuletzt geändert",
+    "bookDetailsView_fileName_label": "Dateiname",
+    "bookDetailsView_addId_title": "ID hinzufügen",
     "searchbar_placeholder": "Suche...",
     "mainMenu_submenu_system_title": "Systeme",
     "mainMenu_allBooks_title": "Bibliothek",
@@ -26,6 +37,9 @@
     "loadingStatusesToast_bookAdded_label": "Hinzugefügt \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "Fehler beim Hinzufügen von \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Dateiformat wird nicht unterstützt",
-    "loadingStatusesToast_clearFinished_label": "Fertige Einträge löschen"
+    "loadingStatusesToast_clearFinished_label": "Fertige Einträge löschen",
+    "showLess": "Weniger anzeigen",
+    "showMore": "Mehr anzeigen",
+    "delete": "Löschen"
   }
 }

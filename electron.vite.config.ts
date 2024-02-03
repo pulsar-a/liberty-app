@@ -1,3 +1,4 @@
+import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
 import react from '@vitejs/plugin-react'
 import {
   bytecodePlugin,
@@ -18,6 +19,7 @@ export default defineConfig({
     plugins: [
       externalizeDepsPlugin(),
       bytecodePlugin({ protectedStrings: ['**ADD YOUR TOKENS**'] }),
+      TanStackRouterVite(),
     ],
   },
   renderer: {

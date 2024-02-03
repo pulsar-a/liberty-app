@@ -1,6 +1,7 @@
 import { Outlet, useMatches, useRouter } from '@tanstack/react-router'
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { Flyout } from '../../components/Flyout'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 
 type LayoutThreeSectionsProps = {
   content: React.ReactNode
@@ -37,7 +38,9 @@ export const ThreeSectionsLayout: React.FC<LayoutThreeSectionsProps> = ({
   return (
     <>
       <Flyout open={isFlyoutOpen} size={flyoutSize} onClose={() => onBack()}>
-        <Outlet />
+        <Suspense fallback={<LoadingSpinner size="lg" block full spacing="lg" />}>
+          <Outlet />
+        </Suspense>
       </Flyout>
       <aside className="fixed inset-y-0 left-60 mt-16 flex h-[calc(100dvh-65px)] w-56 flex-col border-r border-gray-300 bg-indigo-100 dark:border-gray-800 dark:bg-bright-gray-950">
         {sidebarTop && (

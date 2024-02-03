@@ -13,7 +13,7 @@ import { NoParser } from '../parsers/noParser/NoParser'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
 
-export const addBooksController = () => async () => {
+export const addBooksController = async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections'],
     filters: [
@@ -143,6 +143,7 @@ export const addBooksController = () => async () => {
       }
 
       fs.copyFileSync(filePath, destinationFile)
+      const fileStats = fs.statSync(destinationFile)
 
       const filetypeParsersMap = {
         epub: EpubParser,
@@ -201,6 +202,7 @@ export const addBooksController = () => async () => {
       book.cover = imageFile
       book.readingProgress = null
       book.score = null
+      book.fileSize = fileStats.size
       book.bookHash = uuidv4()
       book.authors = authorsList
 

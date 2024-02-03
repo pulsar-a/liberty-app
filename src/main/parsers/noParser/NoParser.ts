@@ -15,7 +15,6 @@ export class NoParser extends AbstractParser {
         authors: [],
         title: this.file.originalFilename,
         description: '',
-        coverImage: '',
         publisher: '',
         subjects: [],
         identifiers: [],

@@ -8,6 +8,17 @@
     "myCollectionView_createCollection_button": "Коллекция ясау",
     "myCollectionsView_title": "Коллекцияларым",
     "settingsView_config_language_title": "Тел",
+    "bookDetailsView_notFound_message": "Китап табылмады",
+    "bookDetailsView_notFound_details": "Китап детальләрен йөкләүдә хата",
+    "bookDetailsView_description_title": "Тасвирлама",
+    "bookDetailsView_information_title": "Мәгълүмат",
+    "bookDetailsView_bookIds_title": "Китап IDлары",
+    "bookDetailsView_bookFormat_label": "Китап форматы",
+    "bookDetailsView_fileSize_label": "Файл үлчәме",
+    "bookDetailsView_uploadedDate_label": "Йөкләнгән датасы",
+    "bookDetailsView_lastModified_label": "Соңгы үзгәртелгән датасы",
+    "bookDetailsView_fileName_label": "Файл исеме",
+    "bookDetailsView_addId_title": "ID өстәү",
     "searchbar_placeholder": "Эзләү...",
     "mainMenu_submenu_system_title": "Система",
     "mainMenu_allBooks_title": "Китапханә",
@@ -26,6 +37,9 @@
     "loadingStatusesToast_bookAdded_label": "Өстәлде \"{{filename}}\"",
     "loadingStatusesToast_bookAddError_label": "\"{{filename}}\" файлны өстәп булмады",
     "loadingStatusesToast_bookAddError_fileFormatNotSupported_subLabel": "Файл форматы хупланмый",
-    "loadingStatusesToast_clearFinished_label": "Тамамланганларны тазалау"
+    "loadingStatusesToast_clearFinished_label": "Тамамланганларны тазалау",
+    "showLess": "Азрак күрсәтү",
+    "showMore": "Күбрәк күрсәтү",
+    "delete": "Бетерү"
   }
 }

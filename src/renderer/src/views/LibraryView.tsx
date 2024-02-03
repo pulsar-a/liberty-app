@@ -20,8 +20,12 @@ export const LibraryView: React.FC = () => {
   const { main } = useIpc()
   const { data: books, isLoading: isBooksLoading } = main.getBooks.useQuery(undefined, {
     queryKey: ['getBooks', undefined],
+    suspense: true,
   })
-  const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery()
+  const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery(undefined, {
+    suspense: true,
+  })
+
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
 
