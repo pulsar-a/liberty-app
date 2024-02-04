@@ -7,6 +7,7 @@ import { getAuthorsController } from '../controllers/getAuthors.controller'
 import { getBookByIdController } from '../controllers/getBookById.controller'
 import { getBooksController } from '../controllers/getBooks.controller'
 import { getPlatformDataController } from '../controllers/getPlatformData.controller'
+import { removeBookByIdController } from '../controllers/removeBookByIdController'
 
 const trpc = initTRPC.create({
   isServer: true,
@@ -23,6 +24,9 @@ export const router = trpc.router({
   getBookById: trpc.procedure
     .input(z.object({ id: z.union([z.number(), z.string()]) }))
     .query(getBookByIdController),
+  removeBookById: trpc.procedure
+    .input(z.object({ id: z.union([z.number(), z.string()]) }))
+    .mutation(removeBookByIdController),
   getAuthors: trpc.procedure.query(getAuthorsController),
 })
 

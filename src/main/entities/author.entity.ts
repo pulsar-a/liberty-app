@@ -31,7 +31,10 @@ export default class AuthorEntity {
   })
   updatedAt: Date
 
-  @ManyToMany(() => BookEntity)
+  @ManyToMany(() => BookEntity, undefined, {
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   @JoinTable({ name: 'author_book' })
   books: BookEntity[]
 }

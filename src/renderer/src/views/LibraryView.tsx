@@ -22,6 +22,7 @@ export const LibraryView: React.FC = () => {
     suspense: true,
   })
   const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery(undefined, {
+    queryKey: ['getAuthors', undefined],
     suspense: true,
   })
 

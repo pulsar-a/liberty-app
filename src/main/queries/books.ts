@@ -19,6 +19,21 @@ export const booksQuery = {
       },
     })
   },
+  async removeBook({ id }: { id: number }): Promise<void> {
+    const book = await booksQuery.book({ id })
+
+    if (!book) {
+      return
+    }
+
+    // Delete relations
+    book.authors = []
+    book.bookIds = []
+    await db.manager.save(book)
+
+    // Delete book
+    await db.manager.remove(book)
+  },
   async createBook(book: Omit<BookEntity, 'id'>) {
     const bookRepository = db.getRepository(BookEntity)
     const newBook = bookRepository.create(book)

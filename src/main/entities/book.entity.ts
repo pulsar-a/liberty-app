@@ -25,9 +25,6 @@ export default class BookEntity {
   @Column('text')
   originalFileName: string
 
-  @OneToMany(() => BookIdEntity, (bookId) => bookId.book)
-  bookIds: BookIdEntity[]
-
   @Column('text', { nullable: true })
   cover: string | null
 
@@ -65,7 +62,16 @@ export default class BookEntity {
   })
   updatedAt: Date
 
-  @ManyToMany(() => AuthorEntity)
+  @OneToMany(() => BookIdEntity, (bookId) => bookId.book, {
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
+  bookIds: BookIdEntity[]
+
+  @ManyToMany(() => AuthorEntity, undefined, {
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   @JoinTable({ name: 'author_book' })
   authors: AuthorEntity[]
 }

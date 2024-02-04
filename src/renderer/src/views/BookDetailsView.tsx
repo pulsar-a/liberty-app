@@ -7,6 +7,7 @@ import { formatFileSize } from '@/utils/fileFormatter'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faBook, faClose, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useNavigate } from '@tanstack/react-router'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
@@ -17,7 +18,9 @@ import { bookDetailsRoute } from '../routes/routes'
 export const BookDetailsView: React.FC = () => {
   const { t } = useTranslation()
   const { bookId } = bookDetailsRoute.useParams()
+  const navigate = useNavigate({ from: `/book/${bookId}` })
   const { main } = useIpc()
+  const utils = main.useUtils()
 
   const { data: book, isError } = main.getBookById.useQuery(
     { id: bookId },
@@ -26,6 +29,19 @@ export const BookDetailsView: React.FC = () => {
       suspense: true,
     }
   )
+
+  const deleteMutation = main.removeBookById.useMutation({
+    onSettled: async () => {
+      await navigate({ to: '/' })
+      utils.invalidate(undefined, {
+        queryKey: ['getBooks', undefined],
+      })
+    },
+  })
+
+  const onBookDelete = () => {
+    deleteMutation.mutate({ id: bookId })
+  }
 
   if (!book || isError) {
     return (
@@ -212,7 +228,14 @@ export const BookDetailsView: React.FC = () => {
         </ul>
       </div>
       <div className="flex justify-center pt-12">
-        <Button label={t('delete')} variant="danger" shape="rounded" className="w-1/2" />
+        <Button
+          label={t('delete')}
+          variant="danger"
+          shape="rounded"
+          isLoading={deleteMutation.isLoading}
+          className="w-1/2"
+          onClick={onBookDelete}
+        />
       </div>
     </div>
   )

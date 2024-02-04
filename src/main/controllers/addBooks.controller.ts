@@ -1,6 +1,6 @@
 import { app, dialog } from 'electron'
 import { getMainWindow } from 'electron-main-window'
-import fs from 'fs'
+import fs from 'node:fs/promises'
 import path from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 import { ParsedBook } from '../../../types/parsed.types'
@@ -13,6 +13,7 @@ import { NoParser } from '../parsers/noParser/NoParser'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
 
+// REFACTOR: This function is too long. It should be broken down into smaller functions.
 export const addBooksController = async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections'],
@@ -135,15 +136,15 @@ export const addBooksController = async () => {
     console.log('=================================')
 
     try {
-      if (!fs.existsSync(destinationDir)) {
-        fs.mkdirSync(destinationDir, { recursive: true })
-      }
-      if (!fs.existsSync(imageAbsoluteDir)) {
-        fs.mkdirSync(imageAbsoluteDir, { recursive: true })
-      }
+      await fs.mkdir(destinationDir, { recursive: true })
+      await fs.mkdir(imageAbsoluteDir, { recursive: true })
+    } catch (error) {
+      console.log('Book directory already exists', error)
+    }
 
-      fs.copyFileSync(filePath, destinationFile)
-      const fileStats = fs.statSync(destinationFile)
+    try {
+      await fs.copyFile(filePath, destinationFile)
+      const fileStats = await fs.stat(destinationFile)
 
       const filetypeParsersMap = {
         epub: EpubParser,
@@ -173,7 +174,7 @@ export const addBooksController = async () => {
         console.log('imageFile', imageFile)
         console.log('ABSOLUTE', path.join(imageAbsoluteDir, imageFilename))
 
-        fs.writeFileSync(
+        await fs.writeFile(
           path.join(imageAbsoluteDir, imageFilename),
           parsed.cover.imageBuffer,
           'binary'
@@ -193,7 +194,7 @@ export const addBooksController = async () => {
 
       const book = new BookEntity()
       book.name = parsed?.metadata.title || originalFilename
-      book.fileName = fileName
+      book.fileName = destinationFile
       book.originalFileName = originalFilename
       book.fileFormat = path.extname(filePath).slice(1)
       book.description = parsed?.metadata.description || null
@@ -230,7 +231,18 @@ export const addBooksController = async () => {
 
       // return createdBook
     } catch (error) {
-      // TODO: DELETE FILE WITH ERROR
+      try {
+        await fs.unlink(destinationFile)
+      } catch (error) {
+        console.warn('Book File doesnt exist. Ignoring.', error)
+      }
+
+      try {
+        await fs.unlink(imageAbsoluteDir)
+      } catch (error) {
+        console.warn('Cover file doesnt exist. Ignoring.', error)
+      }
+
       await mainWindow.webContents.send('loader:update-item', {
         id: encodedFilename,
         label: 'loadingStatusesToast_bookAddError_label',
@@ -240,21 +252,6 @@ export const addBooksController = async () => {
         },
         status: 'error',
       })
-      // return null
     }
   }
-
-  // const result: Promise<BookEntity | null>[] = files.map(
-  //   async ({
-  //     filePath,
-  //     destinationFile,
-  //     fileName,
-  //     destinationDir,
-  //     encodedFilename,
-  //     subfolder,
-  //     originalFilename,
-  //   }) => {}
-  // )
-  //
-  // return await Promise.all(result)
 }
