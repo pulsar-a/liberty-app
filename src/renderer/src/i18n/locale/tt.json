@@ -22,7 +22,7 @@
     "bookDetailsView_addId_title": "ID өстәү",
     "bookDetailsView_addToCollection_title": "Коллекцияга өстәү",
     "bookDetailsView_noDescription": "Тасвирламасы юк",
-    "bookDetailsView_bookDeleteConfirmation_title": "Китапты бетерү",
+    "bookDetailsView_bookDeleteConfirmation_title": "Китапны бетерү",
     "bookDetailsView_bookDeleteConfirmation_message": "Сез бу китапны бетерергә телисезме?",
     "searchbar_placeholder": "Эзләү...",
     "mainMenu_submenu_system_title": "Система",
@@ -50,7 +50,7 @@
     "ok": "OK",
     "close": "Ябу",
     "save": "Саклау",
-    "yes": "Эйе",
+    "yes": "Әйе",
     "no": "Юк"
   }
 }

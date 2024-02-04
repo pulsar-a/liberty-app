@@ -1,8 +1,4 @@
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { TiledBooksList } from '@/components/TiledBooksList'
 import { useIpc } from '@/hooks/useIpc'
-import { SubmenuEntries } from '@/layouts/parts/SubmenuEntries'
-import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
 import { libraryRoute } from '@/routes/routes'
 import {
   faBars,
@@ -13,14 +9,20 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
 import BookEntity from '../../../main/entities/book.entity'
+import { BooksGrid } from '../components/BooksGrid'
+import { BooksList } from '../components/BooksList'
 import { Button } from '../components/Button'
 import { ButtonGroup } from '../components/ButtonGroup'
-import { ListedBooksList } from '../components/ListedBooksList'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import { PageTitle } from '../components/PageTitle'
 import { TextInput } from '../components/TextInput'
+import { useSettings } from '../hooks/useSettings'
+import { SubmenuEntries } from '../layouts/parts/SubmenuEntries'
+import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
 
 export const LibraryView: React.FC = () => {
   const { t } = useTranslation()
+  const { getSetting, setSetting } = useSettings()
   const { authorId } = libraryRoute.useSearch()
   const { main } = useIpc()
   const { data: books, isLoading: isBooksLoading } = main.getBooks.useQuery(undefined, {
@@ -34,7 +36,14 @@ export const LibraryView: React.FC = () => {
 
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
-  const [listStyle, setListStyle] = useState<'tiled' | 'listed'>('tiled')
+  const [listStyle, setListStyle] = useState<'grid' | 'list'>(
+    getSetting('libraryViewStyle', 'grid') as 'grid' | 'list'
+  )
+
+  const updateListStyle = (value: 'grid' | 'list') => {
+    setListStyle(value)
+    setSetting('libraryViewStyle', value)
+  }
 
   const mutation = main.addBooks.useMutation({
     onSettled: () => {
@@ -123,13 +132,13 @@ export const LibraryView: React.FC = () => {
                   items={[
                     {
                       icon: faTableCellsLarge,
-                      active: listStyle === 'tiled',
-                      onClick: () => setListStyle('tiled'),
+                      active: listStyle === 'grid',
+                      onClick: () => updateListStyle('grid'),
                     },
                     {
                       icon: faBars,
-                      active: listStyle === 'listed',
-                      onClick: () => setListStyle('listed'),
+                      active: listStyle === 'list',
+                      onClick: () => updateListStyle('list'),
                     },
                   ]}
                 />
@@ -141,11 +150,11 @@ export const LibraryView: React.FC = () => {
               </div>
             )}
 
-            {listStyle === 'tiled' && !isLoading && books && (
-              <TiledBooksList books={filteredBooks || []} />
+            {listStyle === 'grid' && !isLoading && books && (
+              <BooksGrid books={filteredBooks || []} />
             )}
-            {listStyle === 'listed' && !isLoading && books && (
-              <ListedBooksList books={filteredBooks || []} />
+            {listStyle === 'list' && !isLoading && books && (
+              <BooksList books={filteredBooks || []} />
             )}
           </div>
         }

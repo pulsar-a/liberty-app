@@ -6,7 +6,7 @@ type BooksListProps = {
   books: BookEntity[]
 }
 
-export const ListedBooksList: React.FC<BooksListProps> = ({ books }) => {
+export const BooksList: React.FC<BooksListProps> = ({ books }) => {
   return (
     <ul
       role="list"

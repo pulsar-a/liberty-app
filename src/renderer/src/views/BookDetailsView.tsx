@@ -57,7 +57,7 @@ export const BookDetailsView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-12 pb-16">
+    <div className="space-y-16 pb-16">
       <div>
         <div className="block w-full overflow-hidden rounded-lg">
           <BookCover book={book} size="lg" withTitle />
@@ -129,15 +129,11 @@ export const BookDetailsView: React.FC = () => {
             aria-hidden="true"
           />
         </h3>
-        <ul
-          role="list"
-          className="mt-2 divide-y divide-gray-400 border-b border-t border-indigo-600 dark:divide-mako-700 dark:border-indigo-400"
-        >
+        <ul role="list" className="mt-2 border-t border-indigo-600 dark:border-indigo-400">
           {book.bookIds.map((bookId) => (
             <li className="flex items-center justify-between gap-4 py-3" key={bookId.id}>
-              <div>&bull;</div>
+              <div className="text-3xl">&bull;</div>
               <div className="flex flex-grow flex-col justify-center">
-                <span className="text-xs uppercase dark:text-indigo-300">{bookId.idType}</span>
                 <p className="text-sm font-medium text-gray-900 dark:text-indigo-50">
                   {bookId.idVal}
                 </p>
@@ -148,7 +144,7 @@ export const BookDetailsView: React.FC = () => {
               />
             </li>
           ))}
-          <li className="flex items-center py-2">
+          <li className="flex items-center justify-center py-2">
             <Button
               label={t('bookDetailsView_addToCollection_title')}
               variant={'primary'}
@@ -170,7 +166,7 @@ export const BookDetailsView: React.FC = () => {
             aria-hidden="true"
           />
         </h3>
-        <dl className="mt-2 divide-y divide-gray-400 border-b border-t border-indigo-600 dark:divide-mako-700 dark:border-indigo-400">
+        <dl className="mt-2 divide-y divide-gray-400 border-t border-indigo-600 dark:divide-mako-900 dark:border-indigo-400">
           <DataListEntry label={t('bookDetailsView_bookFormat_label')}>
             <Badge label="epub" color="yellow" />
           </DataListEntry>
@@ -203,13 +199,10 @@ export const BookDetailsView: React.FC = () => {
             aria-hidden="true"
           />
         </h3>
-        <ul
-          role="list"
-          className="mt-2 divide-y divide-gray-400 border-b border-t border-indigo-600 dark:divide-mako-700 dark:border-indigo-400"
-        >
+        <ul role="list" className="mt-2 border-t border-indigo-600 dark:border-indigo-400">
           {book.bookIds.map((bookId) => (
             <li className="flex items-center justify-between gap-4 py-3" key={bookId.id}>
-              <div>&bull;</div>
+              <div className="text-3xl">&bull;</div>
               <div className="flex flex-grow flex-col justify-center">
                 <span className="text-xs uppercase dark:text-indigo-300">{bookId.idType}</span>
                 <p className="text-sm font-medium text-gray-900 dark:text-indigo-50">

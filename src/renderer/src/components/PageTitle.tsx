@@ -6,8 +6,8 @@ type PageTitleProps = {
 
 export const PageTitle: React.FC<PageTitleProps> = ({ title, subtitle, actions }) => {
   return (
-    <div className="flex items-center justify-between pb-2">
-      <h2 className="flex gap-4 text-2xl font-semibold">
+    <div className="flex items-center justify-between gap-x-4 pb-2">
+      <h2 className="flex gap-4 font-semibold lg:text-2xl">
         {title}
         <span>.</span>
         {subtitle && (

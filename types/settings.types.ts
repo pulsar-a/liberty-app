@@ -3,6 +3,7 @@ export type SettingsType = {
   theme: 'light' | 'dark'
   userFilesDir: string
   currentlyReading: number | null
+  libraryViewStyle: 'list' | 'grid'
 }
 
 export type SettingKeys = keyof SettingsType

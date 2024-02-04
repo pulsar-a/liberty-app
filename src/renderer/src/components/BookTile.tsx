@@ -53,7 +53,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
     >
       <div
         className={clsx(
-          'relative aspect-2/3 h-96 w-full overflow-hidden',
+          'relative aspect-2/3 w-72 overflow-hidden',
           withGutter ? 'rounded-t-lg' : 'rounded-lg'
         )}
         style={{
