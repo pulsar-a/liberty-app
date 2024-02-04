@@ -10,5 +10,6 @@ export type RouteEntry = {
   disabled?: boolean
   icon?: IconDefinition
   hash?: string
+  active?: boolean
   children?: RouteEntry[]
 }

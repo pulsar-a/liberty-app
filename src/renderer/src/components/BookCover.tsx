@@ -14,7 +14,6 @@ type BookCoverProps = {
 
 export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'md' }) => {
   const [isImageAvailable, setImageAvailable] = React.useState(true)
-
   const placeholder = getStableOptionForHash(book.id.toString(), [
     placeholderGreen,
     placeholderPink,
@@ -40,12 +39,12 @@ export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'm
     >
       <div
         className={clsx(
-          'absolute bottom-0 top-0 border-l-2 border-mako-600',
-          size === 'xl' && 'left-4 rounded-lg',
-          size === 'lg' && 'left-3 rounded-lg',
-          size === 'md' && 'left-2 rounded-lg',
-          size === 'sm' && 'left-1 rounded-sm',
-          size === 'xs' && 'left-1 rounded-sm'
+          'absolute bottom-0 top-0 border-gray-900/30',
+          size === 'xl' && 'left-4 rounded-lg border-l-4',
+          size === 'lg' && 'left-3 rounded-lg border-l-4',
+          size === 'md' && 'border-l-3 left-2 rounded-lg',
+          size === 'sm' && 'left-1 rounded-sm border-l-2',
+          size === 'xs' && 'left-1 rounded-sm border-l-2'
         )}
       ></div>
       {isImageAvailable && (

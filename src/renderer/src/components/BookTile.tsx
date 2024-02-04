@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import BookEntity from '../../../main/entities/book.entity'
@@ -14,7 +14,9 @@ type BookTileProps = {
   withGutter?: boolean
 }
 export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className }) => {
-  const navigate = useNavigate({ from: '/' })
+  const router = useRouter()
+  const location = router.parseLocation()
+  const navigate = useNavigate({ from: location.pathname })
 
   const [isImageAvailable, setImageAvailable] = React.useState(true)
 
@@ -32,7 +34,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
     await navigate({
       to: '/book/$bookId',
       params: { bookId: book.id },
-      search: { flyout: true },
+      search: { flyout: true, ...location.search },
       mask: { to: '/' },
     })
       .then()

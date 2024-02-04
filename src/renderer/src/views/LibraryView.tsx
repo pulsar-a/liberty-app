@@ -4,12 +4,17 @@ import { useIpc } from '@/hooks/useIpc'
 import { SubmenuEntries } from '@/layouts/parts/SubmenuEntries'
 import { ThreeSectionsLayout } from '@/layouts/parts/ThreeSectionsLayout'
 import { libraryRoute } from '@/routes/routes'
-import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
+import {
+  faBars,
+  faPlusCircle as faPlus,
+  faTableCellsLarge,
+} from '@fortawesome/free-solid-svg-icons'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
 import BookEntity from '../../../main/entities/book.entity'
 import { Button } from '../components/Button'
+import { ButtonGroup } from '../components/ButtonGroup'
 import { ListedBooksList } from '../components/ListedBooksList'
 import { PageTitle } from '../components/PageTitle'
 import { TextInput } from '../components/TextInput'
@@ -67,6 +72,7 @@ export const LibraryView: React.FC = () => {
               id: 'no-author',
               name: t('libraryView_noAuthor_label'),
               to: '/',
+              active: authorId === null,
               search: { authorId: null },
             } as RouteEntry,
           ]
@@ -82,11 +88,12 @@ export const LibraryView: React.FC = () => {
         .map((author) => ({
           id: author.id.toString(),
           name: author.name,
+          active: authorId === author.id,
           to: '/',
           search: { authorId: author.id },
         })) || []
     )
-  }, [authors, authorSearchTerm, books])
+  }, [authors, authorSearchTerm, books, authorId])
 
   const selectedAuthorName = useMemo(() => {
     if (authorId === null) {
@@ -108,7 +115,26 @@ export const LibraryView: React.FC = () => {
       <ThreeSectionsLayout
         content={
           <div className="max-w-full px-4 pb-36 lg:px-8">
-            <PageTitle title={t('libraryView_title')} subtitle={selectedAuthorName} />
+            <PageTitle
+              title={t('libraryView_title')}
+              subtitle={selectedAuthorName}
+              actions={
+                <ButtonGroup
+                  items={[
+                    {
+                      icon: faTableCellsLarge,
+                      active: listStyle === 'tiled',
+                      onClick: () => setListStyle('tiled'),
+                    },
+                    {
+                      icon: faBars,
+                      active: listStyle === 'listed',
+                      onClick: () => setListStyle('listed'),
+                    },
+                  ]}
+                />
+              }
+            />
             {isLoading && (
               <div className="flex h-full items-center justify-center">
                 <LoadingSpinner size="lg" />
