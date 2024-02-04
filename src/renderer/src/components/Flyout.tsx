@@ -73,7 +73,7 @@ export const Flyout: React.FC<FlyoutProps> = ({ children, open, size, onClose })
                       </button>
                     </div>
                   </Transition.Child>
-                  <div className="h-full overflow-y-auto bg-gray-100 p-8 text-gray-900 dark:bg-bright-gray-950 dark:text-indigo-50">
+                  <div className="h-full overflow-y-auto bg-gray-100 p-8 text-gray-900 shadow-xl dark:bg-bright-gray-950 dark:text-indigo-50">
                     {children}
                   </div>
                 </Dialog.Panel>

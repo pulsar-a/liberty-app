@@ -16,6 +16,7 @@ export default class CreateBooks implements Seeder {
           fileName: 'shurale.epub',
           originalFileName: 'shurale.epub',
           fileFormat: 'epub',
+          bookHash: 'f362387a-fcb7-4ca9-9d7b-67ec9ea073cd',
         },
         {
           id: 2,
@@ -23,6 +24,7 @@ export default class CreateBooks implements Seeder {
           fileName: 'langoliers.epub',
           originalFileName: 'langoliers.epub',
           fileFormat: 'epub',
+          bookHash: 'f362387a-fcb7-4ca9-9d7b-67ec9ea634cd',
         },
         {
           id: 3,
@@ -30,6 +32,7 @@ export default class CreateBooks implements Seeder {
           fileName: 'reliquary.mobi',
           originalFileName: 'reliquary.mobi',
           fileFormat: 'mobi',
+          bookHash: 'f362387a-fcb7-4ca9-9d7b-67ec9ea0562cd',
         },
         {
           id: 4,
@@ -37,6 +40,7 @@ export default class CreateBooks implements Seeder {
           fileName: 'kobzar.epub',
           originalFileName: 'kobzar.epub',
           fileFormat: 'epub',
+          bookHash: 'f362387a-fcb7-4ca9-9d7b-67ec9ea0432cd',
         },
         {
           id: 5,
@@ -44,6 +48,7 @@ export default class CreateBooks implements Seeder {
           fileName: 'faust.fb2',
           originalFileName: 'faust.fb2',
           fileFormat: 'fb2',
+          bookHash: 'f362387a-fcb7-4ca9-9d7b-67ec9ea073cd',
         },
         {
           id: 6,
@@ -51,6 +56,7 @@ export default class CreateBooks implements Seeder {
           fileName: 'cosmos.pdf',
           originalFileName: 'cosmos.pdf',
           fileFormat: 'pdf',
+          bookHash: 'f362387a-fcb7-4ca9-9d7b-67ec9e4293cd',
         },
       ])
       .execute()

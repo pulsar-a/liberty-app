@@ -1,5 +1,4 @@
 import { Badge } from '@/components/Badge'
-import { BookTile } from '@/components/BookTile'
 import { Button } from '@/components/Button'
 import { useIpc } from '@/hooks/useIpc'
 import { formatDateDistance } from '@/utils/dateFormatter'
@@ -11,6 +10,7 @@ import { useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
+import { BookCover } from '../components/BookCover'
 import { ConfirmationDialog } from '../components/ConfirmationDialog'
 import { DataListEntry } from '../components/DataListEntry'
 import { EmptyState } from '../components/EmptyState'
@@ -60,7 +60,7 @@ export const BookDetailsView: React.FC = () => {
     <div className="space-y-12 pb-16">
       <div>
         <div className="block w-full overflow-hidden rounded-lg">
-          <BookTile book={book} />
+          <BookCover book={book} size="lg" withTitle />
         </div>
         <div className="mt-4 flex items-start justify-between">
           <div>

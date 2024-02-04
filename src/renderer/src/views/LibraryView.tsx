@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
 import BookEntity from '../../../main/entities/book.entity'
 import { Button } from '../components/Button'
+import { ListedBooksList } from '../components/ListedBooksList'
 import { PageTitle } from '../components/PageTitle'
 import { TextInput } from '../components/TextInput'
 
@@ -28,6 +29,7 @@ export const LibraryView: React.FC = () => {
 
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
+  const [listStyle, setListStyle] = useState<'tiled' | 'listed'>('listed')
 
   const mutation = main.addBooks.useMutation({
     onSettled: () => {
@@ -112,7 +114,13 @@ export const LibraryView: React.FC = () => {
                 <LoadingSpinner size="lg" />
               </div>
             )}
-            {!isLoading && books && <TiledBooksList books={filteredBooks || []} />}
+
+            {listStyle === 'tiled' && !isLoading && books && (
+              <TiledBooksList books={filteredBooks || []} />
+            )}
+            {listStyle === 'listed' && !isLoading && books && (
+              <ListedBooksList books={filteredBooks || []} />
+            )}
           </div>
         }
         sidebarTop={

@@ -45,7 +45,7 @@ export const DialogWindow: React.FC<DialogWindowProps> = ({
             >
               <Dialog.Panel
                 className={clsx(
-                  'relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6 dark:bg-slate-800',
+                  'relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6 dark:bg-slate-800',
                   className
                 )}
               >

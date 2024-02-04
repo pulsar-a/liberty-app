@@ -7,12 +7,6 @@ module.exports = {
     '@electron-toolkit/eslint-config-prettier'
   ],
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    "project": [
-      "./tsconfig.node.json",
-      "./tsconfig.web.json"
-    ],
-  },
   settings: {
     "import/resolver": {
       "typescript": {}

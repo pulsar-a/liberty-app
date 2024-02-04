@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import BookEntity from '../../../main/entities/book.entity'
@@ -10,9 +11,10 @@ type BookTileProps = {
   book: BookEntity
   className?: string
   withGutter?: boolean
-  onClick?: () => void
 }
-export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, onClick, className }) => {
+export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className }) => {
+  const navigate = useNavigate({ from: '/' })
+
   const [isImageAvailable, setImageAvailable] = React.useState(true)
 
   const hasReadingProgress = book.readingProgress !== null && book.readingProgress !== undefined
@@ -25,15 +27,26 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, onClick, c
     placeholderBlue,
   ])
 
+  const openBookDetails = async () => {
+    await navigate({
+      to: '/book/$bookId',
+      params: { bookId: book.id },
+      search: { flyout: true },
+      mask: { to: '/' },
+    })
+      .then()
+      .catch(console.error)
+  }
+
   return (
     <div
       key={book.id}
       className={clsx(
         'group relative w-72 cursor-default rounded-lg bg-indigo-800/70 transition-all dark:bg-indigo-500/30',
-        onClick && 'hover:opacity-85 hover:shadow-xl',
+        'hover:opacity-85 hover:shadow-xl',
         className
       )}
-      onClick={onClick}
+      onClick={openBookDetails}
     >
       <div
         className={clsx(
