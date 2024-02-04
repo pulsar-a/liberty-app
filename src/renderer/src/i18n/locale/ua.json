@@ -22,6 +22,8 @@
     "bookDetailsView_addId_title": "Додати ідентифікатор",
     "bookDetailsView_addToCollection_title": "Додати до колекції",
     "bookDetailsView_noDescription": "Опис відсутній",
+    "bookDetailsView_bookDeleteConfirmation_title": "Видалення книги",
+    "bookDetailsView_bookDeleteConfirmation_message": "Ви впевнені, що хочете видалити цю книгу?",
     "searchbar_placeholder": "Пошук...",
     "mainMenu_submenu_system_title": "Система",
     "mainMenu_allBooks_title": "Бібліотека",
@@ -43,6 +45,12 @@
     "loadingStatusesToast_clearFinished_label": "Очистити завершені",
     "showLess": "Показати менше",
     "showMore": "Показати більше",
-    "delete": "Видалити"
+    "delete": "Видалити",
+    "cancel": "Скасувати",
+    "ok": "OK",
+    "close": "Закрити",
+    "save": "Зберегти",
+    "yes": "Так",
+    "no": "Ні"
   }
 }

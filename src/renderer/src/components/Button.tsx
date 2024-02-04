@@ -7,7 +7,7 @@ import { LoadingSpinner } from './LoadingSpinner'
 type ButtonProps = {
   label?: string | React.ReactNode
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  variant?: 'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'link'
+  variant?: 'primary' | 'secondary' | 'danger' | 'warning' | 'success' | 'link' | 'ghost'
   shape?: 'tile' | 'rounded' | 'pill' | 'circle'
   disabled?: boolean
   leadingIcon?: IconDefinition
@@ -62,6 +62,8 @@ export const Button: React.FC<ButtonProps> = ({
           variant === 'success' &&
             'bg-green-600 text-white hover:bg-green-500 focus-visible:ring-green-500',
           variant === 'link' && 'bg-transparent hover:underline focus-visible:ring-indigo-500',
+          variant === 'ghost' &&
+            'bg-transparent text-gray-700 hover:bg-gray-100 focus-visible:ring-indigo-500 dark:text-indigo-50 dark:hover:bg-gray-600',
           (isLoading || disabled) &&
             '!hover:bg-gray-300 cursor-not-allowed !bg-gray-400 opacity-80',
           className

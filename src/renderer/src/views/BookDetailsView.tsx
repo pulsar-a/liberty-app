@@ -8,9 +8,10 @@ import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faBook, faClose, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useNavigate } from '@tanstack/react-router'
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
+import { ConfirmationDialog } from '../components/ConfirmationDialog'
 import { DataListEntry } from '../components/DataListEntry'
 import { EmptyState } from '../components/EmptyState'
 import { bookDetailsRoute } from '../routes/routes'
@@ -21,6 +22,8 @@ export const BookDetailsView: React.FC = () => {
   const navigate = useNavigate({ from: `/book/${bookId}` })
   const { main } = useIpc()
   const utils = main.useUtils()
+
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
 
   const { data: book, isError } = main.getBookById.useQuery(
     { id: bookId },
@@ -39,8 +42,8 @@ export const BookDetailsView: React.FC = () => {
     },
   })
 
-  const onBookDelete = () => {
-    deleteMutation.mutate({ id: bookId })
+  const onBookDelete = async () => {
+    return deleteMutation.mutate({ id: bookId })
   }
 
   if (!book || isError) {
@@ -104,6 +107,7 @@ export const BookDetailsView: React.FC = () => {
               <div className="flex h-8 w-full items-center text-sm italic text-gray-500">
                 {t('bookDetailsView_noDescription')}
               </div>
+              {/* INFO: Button to edit description */}
               {/*<button*/}
               {/*  type="button"*/}
               {/*  className="relative ml-4 flex h-10 w-10 cursor-default items-center justify-center rounded-full bg-white text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-bright-gray-950 dark:text-indigo-50 dark:hover:bg-bright-gray-900 dark:hover:text-indigo-100"*/}
@@ -228,13 +232,20 @@ export const BookDetailsView: React.FC = () => {
         </ul>
       </div>
       <div className="flex justify-center pt-12">
+        <ConfirmationDialog
+          title={t('bookDetailsView_bookDeleteConfirmation_title')}
+          message={t('bookDetailsView_bookDeleteConfirmation_message')}
+          open={showDeleteConfirmation}
+          onClose={() => setShowDeleteConfirmation(false)}
+          onConfirm={onBookDelete}
+        />
         <Button
           label={t('delete')}
           variant="danger"
           shape="rounded"
           isLoading={deleteMutation.isLoading}
           className="w-1/2"
-          onClick={onBookDelete}
+          onClick={() => setShowDeleteConfirmation(true)}
         />
       </div>
     </div>

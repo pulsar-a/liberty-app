@@ -22,6 +22,8 @@
     "bookDetailsView_addId_title": "Добавить идентификатор",
     "bookDetailsView_addToCollection_title": "Добавить в коллекцию",
     "bookDetailsView_noDescription": "Нет описания",
+    "bookDetailsView_bookDeleteConfirmation_title": "Удаление книги",
+    "bookDetailsView_bookDeleteConfirmation_message": "Вы уверены, что хотите удалить эту книгу?",
     "searchbar_placeholder": "Искать...",
     "mainMenu_submenu_system_title": "Система",
     "mainMenu_allBooks_title": "Библиотека",
@@ -43,6 +45,12 @@
     "loadingStatusesToast_clearFinished_label": "Очистить завершенные",
     "showLess": "Показать меньше",
     "showMore": "Показать больше",
-    "delete": "Удалить"
+    "delete": "Удалить",
+    "cancel": "Отмена",
+    "ok": "OK",
+    "close": "Закрыть",
+    "save": "Сохранить",
+    "yes": "Да",
+    "no": "Нет"
   }
 }

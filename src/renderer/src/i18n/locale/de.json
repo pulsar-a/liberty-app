@@ -22,6 +22,8 @@
     "bookDetailsView_addId_title": "ID hinzufügen",
     "bookDetailsView_addToCollection_title": "Zur Sammlung hinzufügen",
     "bookDetailsView_noDescription": "Keine Beschreibung verfügbar",
+    "bookDetailsView_bookDeleteConfirmation_title": "Buch löschen",
+    "bookDetailsView_bookDeleteConfirmation_message": "Möchten Sie das Buch wirklich löschen?",
     "searchbar_placeholder": "Suche...",
     "mainMenu_submenu_system_title": "Systeme",
     "mainMenu_allBooks_title": "Bibliothek",
@@ -43,6 +45,12 @@
     "loadingStatusesToast_clearFinished_label": "Fertige Einträge löschen",
     "showLess": "Weniger anzeigen",
     "showMore": "Mehr anzeigen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "ok": "OK",
+    "close": "Schließen",
+    "save": "Speichern",
+    "yes": "Ja",
+    "no": "Nein"
   }
 }
