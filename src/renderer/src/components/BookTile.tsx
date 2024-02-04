@@ -6,6 +6,7 @@ import placeholderBlue from '../assets/images/placeholder-blue.jpg'
 import placeholderGreen from '../assets/images/placeholder-green.jpg'
 import placeholderPink from '../assets/images/placeholder-pink.jpg'
 import { getStableOptionForHash } from '../utils/hashSelector'
+import { BookContextMenu } from './BookContextMenu'
 
 type BookTileProps = {
   book: BookEntity
@@ -58,6 +59,15 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
           backgroundSize: 'cover',
         }}
       >
+        <div
+          className="absolute right-2 top-3 flex h-8 w-8 items-center justify-center"
+          onClick={(e) => {
+            e.stopPropagation()
+          }}
+        >
+          <BookContextMenu book={book} />
+        </div>
+
         {hasReadingProgress && (
           <div className="absolute right-2 top-2 bg-amber-950/70 p-1 text-sm text-white">
             {book.readingProgress}%

@@ -26,18 +26,28 @@ export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'm
   return (
     <div
       className={clsx(
-        'relative aspect-2/3 shrink-0 grow-0 rounded-lg',
-        size === 'xs' && 'w-14',
-        size === 'sm' && 'w-14',
-        size === 'md' && 'h-56',
-        size === 'lg' && 'h-96',
-        size === 'xl' && 'w-14'
+        'relative aspect-2/3 shrink-0 grow-0',
+        size === 'xs' && 'w-14 rounded',
+        size === 'sm' && 'w-14 rounded',
+        size === 'md' && 'h-56 rounded',
+        size === 'lg' && 'h-96 rounded-lg',
+        size === 'xl' && 'h-96 rounded-lg'
       )}
       style={{
         backgroundImage: `url(${placeholder})`,
         backgroundSize: 'cover',
       }}
     >
+      <div
+        className={clsx(
+          'absolute bottom-0 top-0 border-l-2 border-mako-600',
+          size === 'xl' && 'left-4 rounded-lg',
+          size === 'lg' && 'left-3 rounded-lg',
+          size === 'md' && 'left-2 rounded-lg',
+          size === 'sm' && 'left-1 rounded-sm',
+          size === 'xs' && 'left-1 rounded-sm'
+        )}
+      ></div>
       {isImageAvailable && (
         <img
           src={'file://' + book.cover}
@@ -45,7 +55,14 @@ export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'm
             setImageAvailable(false)
           }}
           alt=""
-          className="h-full w-full rounded-lg object-fill object-center"
+          className={clsx(
+            'h-full w-full rounded-lg object-fill object-center',
+            size === 'xl' && 'rounded-lg',
+            size === 'lg' && 'rounded-lg',
+            size === 'md' && 'rounded-lg',
+            size === 'sm' && 'rounded-sm',
+            size === 'xs' && 'rounded-sm'
+          )}
         />
       )}
       {withTitle && (!book.cover || !isImageAvailable) ? (

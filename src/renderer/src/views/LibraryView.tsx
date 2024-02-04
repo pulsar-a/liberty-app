@@ -29,7 +29,7 @@ export const LibraryView: React.FC = () => {
 
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
-  const [listStyle, setListStyle] = useState<'tiled' | 'listed'>('listed')
+  const [listStyle, setListStyle] = useState<'tiled' | 'listed'>('tiled')
 
   const mutation = main.addBooks.useMutation({
     onSettled: () => {

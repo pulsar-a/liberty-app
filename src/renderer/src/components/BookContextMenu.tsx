@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BookEntity from '../../../main/entities/book.entity'
+import { useIpc } from '../hooks/useIpc'
 import { ConfirmationDialog } from './ConfirmationDialog'
 import { ContextMenu } from './ContextMenu'
 
@@ -12,6 +13,8 @@ type BookContextMenuProps = {
 export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
   const { t } = useTranslation()
   const navigate = useNavigate({ from: '/' })
+  const { main } = useIpc()
+  const utils = main.useUtils()
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
 
@@ -27,8 +30,17 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
       .catch(console.error)
   }
 
+  const removeeMutation = main.removeBookById.useMutation({
+    onSettled: async () => {
+      await navigate({ to: '/' })
+      utils.invalidate(undefined, {
+        queryKey: ['getBooks', undefined],
+      })
+    },
+  })
+
   const removeBook = async () => {
-    console.log('Removing book', book)
+    return removeeMutation.mutate({ id: book.id })
   }
 
   const menuItems = [

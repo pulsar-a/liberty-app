@@ -48,13 +48,13 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
         }}
       >
         <div className="hidden sm:flex sm:flex-col sm:items-end">
-          <p className="text-sm leading-6 text-gray-900 dark:text-gray-200">Role</p>
-          <div className="mt-1 flex items-center gap-x-1.5">
-            <div className="flex-none rounded-full bg-emerald-500/20 p-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </div>
-            <p className="text-xs leading-5 text-gray-500 dark:text-gray-200">Online</p>
-          </div>
+          {/*<p className="text-sm leading-6 text-gray-900 dark:text-gray-200">Role</p>*/}
+          {/*<div className="mt-1 flex items-center gap-x-1.5">*/}
+          {/*  <div className="flex-none rounded-full bg-emerald-500/20 p-1">*/}
+          {/*    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />*/}
+          {/*  </div>*/}
+          {/*  <p className="text-xs leading-5 text-gray-500 dark:text-gray-200">Online</p>*/}
+          {/*</div>*/}
         </div>
         <BookContextMenu book={book} />
       </div>
