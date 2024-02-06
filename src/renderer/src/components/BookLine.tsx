@@ -29,7 +29,7 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
   return (
     <li
       key={book.id}
-      className="flex justify-between gap-x-6 bg-gray-50 py-5 transition-all first:rounded-t-xl last:rounded-b-xl hover:bg-gray-50 hover:shadow-inner dark:bg-mako-950 dark:hover:bg-mako-900 dark:hover:shadow-inner"
+      className="flex justify-between gap-x-6 bg-gray-50 py-5 transition-all first:rounded-t-xl last:rounded-b-xl hover:bg-gray-50 hover:shadow-inner dark:bg-mako-950 dark:hover:bg-mako-950/90 dark:hover:shadow-inner"
       onClick={openBookDetails}
     >
       <div className="flex min-w-0 gap-x-4 pl-4">

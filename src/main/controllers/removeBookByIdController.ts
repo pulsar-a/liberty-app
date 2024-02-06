@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
 
 export const removeBookByIdController = async ({ input }): Promise<boolean> => {
@@ -24,6 +25,7 @@ export const removeBookByIdController = async ({ input }): Promise<boolean> => {
   }
 
   await booksQuery.removeBook({ id: input.id })
+  await authorsQuery.removeOrphans()
 
   return true
 }

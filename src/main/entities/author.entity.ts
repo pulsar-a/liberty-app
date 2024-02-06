@@ -21,6 +21,9 @@ export default class AuthorEntity {
   @Column('text')
   name: string
 
+  @Column('integer', { default: 0 })
+  booksCount: number
+
   @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date
 

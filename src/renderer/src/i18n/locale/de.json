@@ -4,6 +4,8 @@
     "libraryView_addBooks_button": "Bücher hinzufügen",
     "libraryView_filterAuthors_placeholder": "Autoren filtern",
     "libraryView_noAuthor_label": "Unbekannter Autor",
+    "libraryView_bookContextMenu_viewDetails_label": "Details anzeigen",
+    "libraryView_bookContextMenu_read_label": "Lesen",
     "settingsView_title": "Einstellungen",
     "myCollectionView_createCollection_button": "Sammlung erstellen",
     "myCollectionsView_title": "Meine Sammlungen",

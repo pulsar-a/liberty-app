@@ -1,4 +1,5 @@
-import { useNavigate } from '@tanstack/react-router'
+import { faBookOpen, faEye, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BookEntity from '../../../main/entities/book.entity'
@@ -12,27 +13,27 @@ type BookContextMenuProps = {
 
 export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
   const { t } = useTranslation()
-  const navigate = useNavigate({ from: '/' })
+  const router = useRouter()
+  const location = router.parseLocation()
+  const navigate = useNavigate()
   const { main } = useIpc()
   const utils = main.useUtils()
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
 
   const openBookDetails = async () => {
+    // Wait for the dropdown to close before opening the book details. Otherwise, flyout won't show.
     await new Promise((resolve) => setTimeout(resolve, 50))
     await navigate({
       to: '/book/$bookId',
       params: { bookId: book.id },
-      search: { flyout: true },
-      mask: { to: '/' },
+      search: { flyout: true, ...location.search },
     })
-      .then()
-      .catch(console.error)
   }
 
-  const removeeMutation = main.removeBookById.useMutation({
+  const removeMutation = main.removeBookById.useMutation({
     onSettled: async () => {
-      await navigate({ to: '/' })
+      await navigate({ to: '/', search: { ...location.search } })
       utils.invalidate(undefined, {
         queryKey: ['getBooks', undefined],
       })
@@ -40,18 +41,34 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
   })
 
   const removeBook = async () => {
-    return removeeMutation.mutate({ id: book.id })
+    return removeMutation.mutate({ id: book.id })
+  }
+
+  const readBook = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await navigate({
+      to: '/reader',
+    })
   }
 
   const menuItems = [
     {
       id: `view-details-${book.id}`,
-      label: 'View Details',
+      icon: faEye,
+      label: t('libraryView_bookContextMenu_viewDetails_label'),
       onClick: openBookDetails,
     },
     {
+      id: `read-${book.id}`,
+      icon: faBookOpen,
+      label: t('libraryView_bookContextMenu_read_label'),
+      onClick: readBook,
+    },
+    { id: `separator-${book.id}`, separator: true },
+    {
       id: `remove-${book.id}`,
-      label: 'Remove',
+      icon: faTrash,
+      label: t('delete'),
       onClick: () => setShowDeleteConfirmation(true),
     },
   ]

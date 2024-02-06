@@ -185,10 +185,11 @@ export const addBooksController = async () => {
 
       const authorsList = await Promise.all(
         authors.map(async (name: string) => {
-          return (
+          const authorEntity =
             (await authorsQuery.findByName(name)) ||
-            (await authorsQuery.createAuthor(new AuthorEntity({ name })))
-          )
+            (await authorsQuery.createAuthor(new AuthorEntity({ name, booksCount: 0 })))
+
+          return (await authorsQuery.incrementBooks(authorEntity.id)) as AuthorEntity
         })
       )
 

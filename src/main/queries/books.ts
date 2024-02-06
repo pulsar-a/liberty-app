@@ -1,6 +1,7 @@
 import BookEntity from '../entities/book.entity'
 import BookIdEntity from '../entities/bookId.entity'
 import { db } from '../services/db'
+import { authorsQuery } from './authors'
 
 export const booksQuery = {
   async books(): Promise<BookEntity[]> {
@@ -25,6 +26,10 @@ export const booksQuery = {
     if (!book) {
       return
     }
+
+    book.authors.map(async (author) => {
+      await authorsQuery.decrementBooks(author.id)
+    })
 
     // Delete relations
     book.authors = []

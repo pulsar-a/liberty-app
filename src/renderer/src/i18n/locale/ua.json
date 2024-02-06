@@ -4,6 +4,8 @@
     "libraryView_addBooks_button": "Додати книги",
     "libraryView_filterAuthors_placeholder": "Автори",
     "libraryView_noAuthor_label": "Невідомий автор",
+    "libraryView_bookContextMenu_viewDetails_label": "Деталі",
+    "libraryView_bookContextMenu_read_label": "Читати",
     "settingsView_title": "Налаштування",
     "myCollectionView_createCollection_button": "Створити колекцію",
     "myCollectionsView_title": "Мої колекції",

@@ -33,6 +33,7 @@ export const LibraryView: React.FC = () => {
     queryKey: ['getAuthors', undefined],
     suspense: true,
   })
+  console.log('RENDER: LibraryView')
 
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
@@ -53,7 +54,7 @@ export const LibraryView: React.FC = () => {
     },
   })
 
-  const filteredBooks = useMemo<BookEntity[]>((): BookEntity[] => {
+  const filteredBooks = ((): BookEntity[] => {
     if (!books?.items) {
       return []
     }
@@ -71,7 +72,7 @@ export const LibraryView: React.FC = () => {
       // Search by author
       return book.authors.some((author) => author.id === authorId)
     }) as unknown as BookEntity[]
-  }, [books, authorId])
+  })()
 
   const authorRouteEntries: RouteEntry[] = useMemo(() => {
     return [

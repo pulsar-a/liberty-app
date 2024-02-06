@@ -9,13 +9,13 @@ export default class CreateAuthors implements Seeder {
       .insert()
       .into(AuthorEntity)
       .values([
-        { id: 1, name: 'Габдулла Тукай' },
-        { id: 2, name: 'Тарас Шевченко' },
-        { id: 3, name: 'Carl Sagan' },
-        { id: 4, name: 'Douglas Preston' },
-        { id: 5, name: 'Lincoln Child' },
-        { id: 6, name: 'Stephen King' },
-        { id: 7, name: 'Johann Wolfgang von Göthe' },
+        { id: 1, name: 'Габдулла Тукай', booksCount: 1 },
+        { id: 2, name: 'Тарас Шевченко', booksCount: 1 },
+        { id: 3, name: 'Carl Sagan', booksCount: 1 },
+        { id: 4, name: 'Douglas Preston', booksCount: 1 },
+        { id: 5, name: 'Lincoln Child', booksCount: 1 },
+        { id: 6, name: 'Stephen King', booksCount: 1 },
+        { id: 7, name: 'Johann Wolfgang von Göthe', booksCount: 1 },
       ])
       .execute()
   }

@@ -4,6 +4,8 @@
     "libraryView_addBooks_button": "Китап өстәү",
     "libraryView_filterAuthors_placeholder": "Авторларны эзләү...",
     "libraryView_noAuthor_label": "Авторсыз",
+    "libraryView_bookContextMenu_viewDetails_label": "Детальлар",
+    "libraryView_bookContextMenu_read_label": "Укырга",
     "settingsView_title": "Көйләүләр",
     "myCollectionView_createCollection_button": "Коллекция ясау",
     "myCollectionsView_title": "Коллекцияларым",

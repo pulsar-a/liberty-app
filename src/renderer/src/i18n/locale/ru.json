@@ -4,6 +4,8 @@
     "libraryView_addBooks_button": "Добавить книги",
     "libraryView_filterAuthors_placeholder": "Фильтр по авторам",
     "libraryView_noAuthor_label": "Без автора",
+    "libraryView_bookContextMenu_viewDetails_label": "Посмотреть детали",
+    "libraryView_bookContextMenu_read_label": "Читать",
     "settingsView_title": "Настройки",
     "myCollectionView_createCollection_button": "Создать коллекцию",
     "myCollectionsView_title": "Мои коллекции",

@@ -1,31 +1,49 @@
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Listbox, Transition } from '@headlessui/react'
+import { Listbox } from '@headlessui/react'
 import { clsx } from 'clsx'
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GlobalSearchResults } from '../../components/GlobalSearchResults'
 import { grabIsMac, usePlatformStore } from '../../store/usePlatformStore'
-import { SearchDropdownBookEntry } from './SearchDropdownBookEntry'
+
+type SearchResult = {
+  books: {
+    name: string
+    cover: string
+    authors: string[]
+  }[]
+  collections: string[]
+  authors: string[]
+}
 
 export const GlobalSearch: React.FC = () => {
   const { t } = useTranslation()
   const isMac = usePlatformStore(grabIsMac)
   const [open, setOpen] = useState<boolean>(true)
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const [publishingOptions] = useState([
-    {
-      title: 'All',
-      description: 'Search all books',
-    },
-    {
-      title: 'Published',
-      description: 'Search only published books',
-    },
-    {
-      title: 'Unpublished',
-      description: 'Search only unpublished books',
-    },
-  ])
+
+  const [searchResult] = useState<SearchResult>({
+    books: [
+      {
+        name: 'Origin of species',
+        cover: 'https://images.unsplash.com/photo-1612830725323-3e3e3e3e3e3e',
+        authors: ['Charles Darwin'],
+      },
+      {
+        name: 'The art of war',
+        cover: 'https://images.unsplash.com/photo-1612830725323-3e3e3e3e3e3e',
+        authors: ['Sun Tzu'],
+      },
+      {
+        name: 'Reliquary',
+        cover: 'https://images.unsplash.com/photo-1612830725323-3e3e3e3e3e3e',
+        authors: ['Douglas Preston', 'Lincoln Child'],
+      },
+    ],
+    authors: [],
+    collections: [],
+  })
 
   useEffect(() => {
     setOpen(searchTerm.length > 0)
@@ -81,19 +99,7 @@ export const GlobalSearch: React.FC = () => {
               </div>
             </div>
           </div>
-          <Transition
-            show={open}
-            as={Fragment}
-            leave="transition ease-in duration-100"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <Listbox.Options className="absolute left-0 right-0 z-10 ml-64 mr-24 mt-16 origin-top-left divide-y divide-mako-700 overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-bright-gray-900">
-              {publishingOptions.map((option) => (
-                <SearchDropdownBookEntry option={option} key={option.title} />
-              ))}
-            </Listbox.Options>
-          </Transition>
+          <GlobalSearchResults result={searchResult} open={open} />
         </div>
       </Listbox>
     </>

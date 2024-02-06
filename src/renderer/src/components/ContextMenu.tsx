@@ -5,14 +5,29 @@ import { Menu, Transition } from '@headlessui/react'
 import { clsx } from 'clsx'
 import React, { Fragment } from 'react'
 
+interface ContextMenuItem {
+  id: string | number
+  separator?: boolean
+}
+
+interface ContextMenuLinkItem extends ContextMenuItem {
+  label: string
+  icon?: IconDefinition
+  disabled?: boolean
+  onClick?: () => void
+  separator?: never
+}
+
+interface ContextMenuSeparatorItem extends ContextMenuItem {
+  label?: never
+  icon?: never
+  disabled?: never
+  onClick?: never
+  separator: boolean
+}
+
 type ContextMenuProps = {
-  items: {
-    id: string | number
-    label: string
-    icon?: IconDefinition
-    disabled?: boolean
-    onClick?: () => void
-  }[]
+  items: (ContextMenuLinkItem | ContextMenuSeparatorItem)[]
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ items }) => {
@@ -30,21 +45,28 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ items }) => {
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none dark:bg-mako-800">
-          {items.map((item) => (
-            <Menu.Item key={item.label}>
-              <a
-                href="#"
-                className={clsx(
-                  'block cursor-default px-3 py-1 text-sm leading-6 text-gray-900 hover:bg-gray-100 hover:shadow-inner dark:text-indigo-50 dark:hover:bg-gray-700'
-                )}
-                onClick={!item.disabled ? item.onClick : undefined}
-              >
-                {item.icon && <FontAwesomeIcon icon={item.icon} className="mr-2" />}
-                {item.label}
-              </a>
-            </Menu.Item>
-          ))}
+        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-mako-100 py-2 shadow-xl ring-1 ring-gray-900/5 focus:outline-none dark:bg-mako-800">
+          {items.map((item) =>
+            item.separator ? (
+              <div
+                key={item.label}
+                className="mb-2 h-0 border-b border-gray-200 pt-2 dark:border-gray-500"
+              ></div>
+            ) : (
+              <Menu.Item key={item.label}>
+                <a
+                  href="#"
+                  className={clsx(
+                    'block cursor-default px-3 py-1 text-sm leading-6 text-gray-900 hover:bg-mako-200 hover:shadow-inner dark:text-indigo-50 dark:hover:bg-mako-900'
+                  )}
+                  onClick={!item.disabled ? item.onClick : undefined}
+                >
+                  {item.icon && <FontAwesomeIcon icon={item.icon} className="mr-2" />}
+                  {item.label}
+                </a>
+              </Menu.Item>
+            )
+          )}
         </Menu.Items>
       </Transition>
     </Menu>

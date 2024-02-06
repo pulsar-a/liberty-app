@@ -6,7 +6,7 @@ import { formatFileSize } from '@/utils/fileFormatter'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faBook, faClose, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
@@ -18,11 +18,13 @@ import { bookDetailsRoute } from '../routes/routes'
 
 export const BookDetailsView: React.FC = () => {
   const { t } = useTranslation()
+  const router = useRouter()
+  const location = router.parseLocation()
   const { bookId } = bookDetailsRoute.useParams()
   const navigate = useNavigate({ from: `/book/${bookId}` })
   const { main } = useIpc()
   const utils = main.useUtils()
-
+  console.log('RENDER: BookDetailsView')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
 
   const { data: book, isError } = main.getBookById.useQuery(
@@ -35,7 +37,7 @@ export const BookDetailsView: React.FC = () => {
 
   const deleteMutation = main.removeBookById.useMutation({
     onSettled: async () => {
-      await navigate({ to: '/' })
+      await navigate({ to: '/', search: { ...location.search } })
       utils.invalidate(undefined, {
         queryKey: ['getBooks', undefined],
       })
