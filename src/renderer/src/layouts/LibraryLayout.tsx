@@ -2,7 +2,7 @@ import logoDark from '@/assets/images/logos/logo-dark.svg'
 import logoLight from '@/assets/images/logos/logo-light.svg'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faBook, faCog, faTabletScreenButton } from '@fortawesome/free-solid-svg-icons'
-import { Outlet, ScrollRestoration } from '@tanstack/react-router'
+import { Outlet } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
 import { GlobalSearch } from './parts/GlobalSearch'
@@ -70,7 +70,6 @@ export const LibraryLayout = () => {
         <GlobalSearch />
         {/* /SEARCH BAR */}
 
-        <ScrollRestoration />
         <Outlet />
       </div>
     </>

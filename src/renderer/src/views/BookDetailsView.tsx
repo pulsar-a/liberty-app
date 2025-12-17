@@ -6,7 +6,7 @@ import { formatFileSize } from '@/utils/fileFormatter'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faBook, faClose, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
@@ -18,8 +18,7 @@ import { bookDetailsRoute } from '../routes/routes'
 
 export const BookDetailsView: React.FC = () => {
   const { t } = useTranslation()
-  const router = useRouter()
-  const location = router.parseLocation()
+  const location = useLocation()
   const { bookId } = bookDetailsRoute.useParams()
   const navigate = useNavigate({ from: `/book/${bookId}` })
   const { main } = useIpc()

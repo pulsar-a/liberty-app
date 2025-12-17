@@ -9,16 +9,34 @@ export type FileData = {
   subfolder: string
   originalFilename: string
   fileExtension: string
+  encodedName: string
+  imageDir: string
+  imageAbsoluteDir: string
+}
+
+export interface ParserResult {
+  success: boolean
+  data: ParsedBook | null
+  error?: string
 }
 
 export abstract class AbstractParser {
-  protected constructor(file: FileData) {
+  protected readonly file: FileData
+
+  constructor(file: FileData) {
     if (!file) {
       throw new Error('File data not provided')
     }
+    this.file = file
   }
 
-  parse(): Promise<ParsedBook | null> {
-    throw new Error('Method not implemented.')
-  }
+  /**
+   * Parse the book file and extract metadata
+   */
+  abstract parse(): Promise<ParsedBook | null>
+
+  /**
+   * Supported file extensions for this parser
+   */
+  static readonly supportedExtensions: string[] = []
 }

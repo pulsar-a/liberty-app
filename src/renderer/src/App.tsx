@@ -14,13 +14,16 @@ export const App = () => {
   } = useTranslation()
   const { setPlatform, platform } = usePlatformStore()
   const { main } = useIpc()
-  main.getPlatformData.useQuery(undefined, {
+  const { data: platformData } = main.getPlatformData.useQuery(undefined, {
     enabled: platform === null,
     queryKey: ['getPlatformData', undefined],
-    onSuccess: (data) => {
-      setPlatform(data.platform)
-    },
   })
+
+  useEffect(() => {
+    if (platformData?.platform) {
+      setPlatform(platformData.platform)
+    }
+  }, [platformData, setPlatform])
 
   const { getSetting } = useSettings()
 

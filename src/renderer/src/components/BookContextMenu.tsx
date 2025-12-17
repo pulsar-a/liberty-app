@@ -1,5 +1,5 @@
 import { faBookOpen, faEye, faTrash } from '@fortawesome/free-solid-svg-icons'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BookEntity from '../../../main/entities/book.entity'
@@ -13,8 +13,7 @@ type BookContextMenuProps = {
 
 export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
   const { t } = useTranslation()
-  const router = useRouter()
-  const location = router.parseLocation()
+  const location = useLocation()
   const navigate = useNavigate()
   const { main } = useIpc()
   const utils = main.useUtils()

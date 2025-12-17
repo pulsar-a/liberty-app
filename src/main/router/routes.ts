@@ -1,5 +1,5 @@
 import { initTRPC } from '@trpc/server'
-import * as superjson from 'superjson'
+import superjson from 'superjson'
 import { z } from 'zod'
 import { addBooksController } from '../controllers/addBooks.controller'
 import { changeColorSchemeController } from '../controllers/changeColorScheme.controller'

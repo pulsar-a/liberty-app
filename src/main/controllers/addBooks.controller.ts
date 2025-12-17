@@ -1,58 +1,25 @@
-import { app, dialog } from 'electron'
-import { getMainWindow } from 'electron-main-window'
+import { app, BrowserWindow, dialog } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 import { ParsedBook } from '../../../types/parsed.types'
-import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
 import BookIdEntity from '../entities/bookId.entity'
-import { EpubParser } from '../parsers/epub/EpubParser'
-import { NoParser } from '../parsers/noParser/NoParser'
+import { getParser, getSupportedFormats } from '../parsers/ParserRegistry'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
+import { logger } from '../utils/logger'
 
-// REFACTOR: This function is too long. It should be broken down into smaller functions.
 export const addBooksController = async () => {
+  const supportedFormats = getSupportedFormats()
+
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections'],
     filters: [
       {
-        name: 'Books',
-        extensions: ['pdf', 'epub', 'mobi', 'fb2', 'fb3', 'djvu', 'txt'],
-      },
-      {
-        name: 'PDF',
-        extensions: ['pdf'],
-      },
-      {
-        name: 'EPUB',
-        extensions: ['epub'],
-      },
-      {
-        name: 'MOBI',
-        extensions: ['mobi'],
-      },
-      {
-        name: 'FB2',
-        extensions: ['fb2'],
-      },
-      {
-        name: 'FB3',
-        extensions: ['fb3'],
-      },
-      {
-        name: 'DJVU',
-        extensions: ['djvu'],
-      },
-      {
-        name: 'TXT',
-        extensions: ['txt'],
-      },
-      {
-        name: 'DOC, DOCX',
-        extensions: ['doc', 'docx'],
+        name: 'Supported Books',
+        extensions: supportedFormats,
       },
       {
         name: 'All Files',
@@ -67,7 +34,7 @@ export const addBooksController = async () => {
 
   const files = filePaths.map((filePath) => {
     const encodedName = uuidv4()
-    const appDataPath = isDev ? __dirname : app.getPath('userData')
+    const appDataPath = app.getPath('userData')
     const originalFilename = path.basename(filePath)
     const fileExtension = path.extname(filePath).slice(1).toLowerCase() // Remove dot
     const encodedFilename = `${encodedName}.${fileExtension}`
@@ -94,7 +61,7 @@ export const addBooksController = async () => {
     }
   })
 
-  const mainWindow = getMainWindow()
+  const mainWindow = BrowserWindow.getAllWindows()[0] || null
 
   if (mainWindow !== null) {
     await mainWindow.webContents.send(
@@ -121,48 +88,26 @@ export const addBooksController = async () => {
       imageDir,
       imageAbsoluteDir,
     } = file
-    console.log('=================================')
-    console.log('encodedName', encodedName)
-    console.log('destinationDir', destinationDir)
-    console.log('destinationFile', destinationFile)
-    console.log('filePath', filePath)
-    console.log('fileName', fileName)
-    console.log('originalFilename', originalFilename)
-    console.log('encodedFilename', encodedFilename)
-    console.log('fileExtension', fileExtension)
-    console.log('subfolder', subfolder)
-    console.log('ImageDir', imageDir)
-    console.log('imageAbsoluteDir', imageAbsoluteDir)
-    console.log('=================================')
+    logger.debug('Processing book:', { originalFilename, fileExtension, destinationFile })
 
     try {
       await fs.mkdir(destinationDir, { recursive: true })
       await fs.mkdir(imageAbsoluteDir, { recursive: true })
     } catch (error) {
-      console.log('Book directory already exists', error)
+      logger.debug('Book directory already exists')
     }
 
     try {
       await fs.copyFile(filePath, destinationFile)
       const fileStats = await fs.stat(destinationFile)
 
-      const filetypeParsersMap = {
-        epub: EpubParser,
-        fb2: NoParser,
-        fb3: NoParser,
-        mobi: NoParser,
-        pdf: NoParser,
-        djvu: NoParser,
-        txt: NoParser,
-        doc: NoParser,
-        docx: NoParser,
+      const ParserClass = getParser(fileExtension)
+
+      if (!ParserClass) {
+        throw new Error(`File type not supported: ${fileExtension}`)
       }
 
-      if (!filetypeParsersMap[fileExtension]) {
-        throw new Error('File type not supported')
-      }
-
-      const parsed: ParsedBook = await new filetypeParsersMap[fileExtension](file).parse()
+      const parsed: ParsedBook = await new ParserClass(file).parse()
 
       let imageFile: string | null = null
 
@@ -171,8 +116,7 @@ export const addBooksController = async () => {
         const imageFilename = `${encodedName}.${imageExtension}`
         imageFile = path.join(imageAbsoluteDir, imageFilename)
 
-        console.log('imageFile', imageFile)
-        console.log('ABSOLUTE', path.join(imageAbsoluteDir, imageFilename))
+        logger.debug('Saving cover image:', imageFile)
 
         await fs.writeFile(
           path.join(imageAbsoluteDir, imageFilename),
@@ -234,14 +178,14 @@ export const addBooksController = async () => {
     } catch (error) {
       try {
         await fs.unlink(destinationFile)
-      } catch (error) {
-        console.warn('Book File doesnt exist. Ignoring.', error)
+      } catch {
+        logger.debug('Book file cleanup skipped - file does not exist')
       }
 
       try {
         await fs.unlink(imageAbsoluteDir)
-      } catch (error) {
-        console.warn('Cover file doesnt exist. Ignoring.', error)
+      } catch {
+        logger.debug('Cover file cleanup skipped - file does not exist')
       }
 
       await mainWindow.webContents.send('loader:update-item', {

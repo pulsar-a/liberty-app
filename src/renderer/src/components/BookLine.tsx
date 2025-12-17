@@ -1,4 +1,4 @@
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import React from 'react'
 import BookEntity from '../../../main/entities/book.entity'
 import { BookContextMenu } from './BookContextMenu'
@@ -11,8 +11,7 @@ type BookLineProps = {
 }
 
 export const BookLine: React.FC<BookLineProps> = ({ book }) => {
-  const router = useRouter()
-  const location = router.parseLocation()
+  const location = useLocation()
   const navigate = useNavigate({ from: location.pathname })
 
   const openBookDetails = async () => {

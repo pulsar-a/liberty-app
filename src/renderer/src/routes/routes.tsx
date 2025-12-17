@@ -194,7 +194,12 @@ const routeTree = rootRoute.addChildren([
 
 const history = createHashHistory()
 
-export const router = createRouter({ routeTree, history })
+export const router = createRouter({
+  routeTree,
+  history,
+  defaultPreloadStaleTime: 0,
+  scrollRestoration: true,
+})
 
 declare module '@tanstack/react-router' {
   interface AppRoutes {

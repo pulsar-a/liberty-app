@@ -13,7 +13,7 @@ export const SubmenuEntries: React.FC<SubmenuEntriesProps> = ({ items, className
       {items.map((item) => (
         <li key={item.id}>
           <Link
-            to={item?.to || '#'}
+            to={item?.to || '/'}
             onClick={item.fn}
             activeOptions={{ exact: true, includeSearch: true }}
             activeProps={{

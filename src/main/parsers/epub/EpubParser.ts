@@ -1,16 +1,23 @@
 import fs from 'fs'
 import NodeZip from 'node-zip'
 import xml2js from 'xml2js'
-import { DOMParser } from 'xmldom'
+import { DOMParser } from '@xmldom/xmldom'
 import {
   BookCoverData,
   BookIdentifier,
   BookMetadata,
   ParsedBook,
 } from '../../../../types/parsed.types'
+import { logger } from '../../utils/logger'
 import { AbstractParser, FileData } from '../AbstractParser'
 
+/**
+ * Parser for EPUB format e-books
+ * Extracts metadata, cover images, and identifiers from EPUB files
+ */
 export class EpubParser extends AbstractParser {
+  static readonly supportedExtensions = ['epub']
+
   private readonly filePath: string
   private xmlParser: xml2js.Parser
   private parsedCache: ParsedBook | null = null
@@ -65,7 +72,7 @@ export class EpubParser extends AbstractParser {
       cover,
     }
 
-    console.log('==== BOOK DATA:', this.parsedCache)
+    logger.debug('Parsed EPUB metadata:', metadata.title)
 
     return this.parsedCache
   }
@@ -82,7 +89,7 @@ export class EpubParser extends AbstractParser {
 
       return fileData?.asText() || null
     } catch (error) {
-      console.error('ZIP:', error)
+      logger.error('ZIP read error:', error)
       throw new Error('ZIP: Error while reading file')
     }
   }
@@ -159,7 +166,7 @@ export class EpubParser extends AbstractParser {
   ): Promise<BookCoverData> {
     const coverImagePath = this.getBookCoverImagePath(xmlString, contentOpfPath)
 
-    console.log('==== COVER IMAGE PATH:', coverImagePath)
+    logger.debug('Cover image path:', coverImagePath)
 
     return {
       archivePath: coverImagePath || '',
@@ -170,11 +177,6 @@ export class EpubParser extends AbstractParser {
   private getBookCoverImagePath(xmlString: string, contentOpfPath: string): string | null {
     const opfDocument = new DOMParser().parseFromString(xmlString, 'text/xml')
     const opfDocumentDir = contentOpfPath.split('/').slice(0, -1).join('/')
-
-    console.log(
-      '==== OPF DOCUMENT COVER IMAGE:',
-      opfDocument.getElementById('coverimage')?.getAttribute('href')
-    )
 
     // const coverMeta = contentOpfRaw?.package?.metadata?.[0]?.meta?.find(
     //   (meta: { $: { name: string } }) => meta.$?.name === 'cover'

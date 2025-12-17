@@ -49,21 +49,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ items }) => {
           {items.map((item) =>
             item.separator ? (
               <div
-                key={item.label}
+                key={item.id}
                 className="mb-2 h-0 border-b border-gray-200 pt-2 dark:border-gray-500"
               ></div>
             ) : (
-              <Menu.Item key={item.label}>
-                <a
-                  href="#"
+              <Menu.Item key={item.id}>
+                <button
+                  type="button"
                   className={clsx(
-                    'block cursor-default px-3 py-1 text-sm leading-6 text-gray-900 hover:bg-mako-200 hover:shadow-inner dark:text-indigo-50 dark:hover:bg-mako-900'
+                    'block w-full cursor-default px-3 py-1 text-left text-sm leading-6 text-gray-900 hover:bg-mako-200 hover:shadow-inner dark:text-indigo-50 dark:hover:bg-mako-900'
                   )}
                   onClick={!item.disabled ? item.onClick : undefined}
                 >
                   {item.icon && <FontAwesomeIcon icon={item.icon} className="mr-2" />}
                   {item.label}
-                </a>
+                </button>
               </Menu.Item>
             )
           )}

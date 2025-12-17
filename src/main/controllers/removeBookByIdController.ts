@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
+import { logger } from '../utils/logger'
 
 export const removeBookByIdController = async ({ input }): Promise<boolean> => {
   const book = await booksQuery.book({ id: input.id })
@@ -12,16 +13,16 @@ export const removeBookByIdController = async ({ input }): Promise<boolean> => {
   // Remove files
   try {
     await fs.unlink(book.fileName)
-  } catch (error) {
-    console.warn('Book file doesnt exist. Ignoring.')
+  } catch {
+    logger.debug('Book file cleanup skipped - file does not exist')
   }
 
   try {
     if (book.cover) {
       await fs.unlink(book.cover)
     }
-  } catch (error) {
-    console.warn('Book cover file doesnt exist. Ignoring.')
+  } catch {
+    logger.debug('Cover file cleanup skipped - file does not exist')
   }
 
   await booksQuery.removeBook({ id: input.id })

@@ -1,26 +1,13 @@
-import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
 import react from '@vitejs/plugin-react'
-import {
-  bytecodePlugin,
-  defineConfig,
-  externalizeDepsPlugin,
-  splitVendorChunkPlugin,
-} from 'electron-vite'
+import { bytecodePlugin, defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { resolve } from 'path'
 
 export default defineConfig({
   main: {
-    plugins: [
-      externalizeDepsPlugin(),
-      bytecodePlugin({ protectedStrings: ['**ADD YOUR TOKENS**'] }),
-    ],
+    plugins: [externalizeDepsPlugin(), bytecodePlugin()],
   },
   preload: {
-    plugins: [
-      externalizeDepsPlugin(),
-      bytecodePlugin({ protectedStrings: ['**ADD YOUR TOKENS**'] }),
-      TanStackRouterVite(),
-    ],
+    plugins: [externalizeDepsPlugin(), bytecodePlugin()],
   },
   renderer: {
     resolve: {
@@ -30,6 +17,6 @@ export default defineConfig({
         '@ipc-routes': resolve('src/main/router'),
       },
     },
-    plugins: [react(), splitVendorChunkPlugin()],
+    plugins: [react()],
   },
 })

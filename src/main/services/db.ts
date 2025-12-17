@@ -5,13 +5,14 @@ import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
 import BookIdEntity from '../entities/bookId.entity'
+import { logger } from '../utils/logger'
 
 const productionPath = app.getPath('userData')
 
 export const db = new DataSource({
   type: 'sqlite',
   database: path.join(isDev ? 'database' : productionPath, 'liberty-database.sqlite'),
-  synchronize: true,
+  synchronize: isDev, // Only auto-sync in development
   migrationsRun: true,
   logging: false,
   logger: 'advanced-console',
@@ -22,8 +23,8 @@ export const db = new DataSource({
 
 db.initialize()
   .then(() => {
-    console.log('Data Source has been initialized!')
+    logger.info('Database initialized successfully')
   })
   .catch((err) => {
-    console.error('Error during Data Source initialization', err)
+    logger.error('Database initialization failed:', err)
   })

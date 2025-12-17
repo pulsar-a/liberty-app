@@ -1,20 +1,34 @@
 import 'reflect-metadata'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, net, protocol, shell } from 'electron'
 import installExtension, {
   REACT_DEVELOPER_TOOLS,
   REDUX_DEVTOOLS,
 } from 'electron-devtools-installer'
 import { createIPCHandler } from 'electron-trpc/main'
 import { join } from 'path'
+import { pathToFileURL } from 'url'
 // @ts-ignore - no types
 import iconDarwin from '../../resources/app-icons/mac/app-icon.icns?asset'
 // @ts-ignore - no types
 import icon from '../../resources/app-icons/win/app-icon.ico?asset'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
+import { logger } from './utils/logger'
 
 import './services/db'
+
+// Register custom protocol for secure local file access
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'liberty-file',
+    privileges: {
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: true,
+    },
+  },
+])
 
 function createWindow(): void {
   // Create the browser window.
@@ -28,8 +42,7 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      // FIXME: enable webSecurity. Currently disabled to serve locally loaded images
-      webSecurity: false,
+      webSecurity: true,
     },
   })
 
@@ -59,7 +72,12 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()
     mainWindow.show()
-    console.log('PATH:', app.getPath('userData'))
+    logger.debug('User data path:', app.getPath('userData'))
+    
+    // Open DevTools in development
+    if (is.dev) {
+      mainWindow.webContents.openDevTools()
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -80,13 +98,19 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
+  // Register protocol handler for local files
+  protocol.handle('liberty-file', (request) => {
+    const filePath = request.url.replace('liberty-file://', '')
+    return net.fetch(pathToFileURL(decodeURIComponent(filePath)).toString())
+  })
+
   await installExtension([REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS], {
     loadExtensionOptions: {
       allowFileAccess: true,
     },
   })
-    .then((name) => console.log(`Added Extension:  ${name}`))
-    .catch((err) => console.log('An error occurred: ', err))
+    .then((name) => logger.debug('Added Extension:', name))
+    .catch((err) => logger.error('Error installing extension:', err))
 
   // IPC: Call Renderer -> main
   // ipcMain.on('counter-value', (_event, value) => {

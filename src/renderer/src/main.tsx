@@ -8,7 +8,8 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import './assets/fonts.css'
 import './assets/index.css'
-import * as superjson from 'superjson'
+import superjson from 'superjson'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { router } from './routes/routes'
 
 const trpcReact = createTRPCReact<AppRouter>()
@@ -23,13 +24,15 @@ const Main = () => {
   )
 
   return (
-    <trpcReact.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <React.StrictMode>
-          <RouterProvider router={router} />
-        </React.StrictMode>
-      </QueryClientProvider>
-    </trpcReact.Provider>
+    <ErrorBoundary>
+      <trpcReact.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <React.StrictMode>
+            <RouterProvider router={router} />
+          </React.StrictMode>
+        </QueryClientProvider>
+      </trpcReact.Provider>
+    </ErrorBoundary>
   )
 }
 

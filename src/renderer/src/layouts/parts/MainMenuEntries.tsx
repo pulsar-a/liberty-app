@@ -14,7 +14,7 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
       {items.map((item) => (
         <li key={item.name}>
           <Link
-            to={item?.to || '#'}
+            to={item?.to || '/'}
             onClick={item.fn}
             activeProps={{
               className:
