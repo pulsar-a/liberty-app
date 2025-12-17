@@ -291,12 +291,73 @@ npm run migration:revert    # Revert last migration
 
 ---
 
+## Internationalization (i18n)
+
+> **⚠️ CRITICAL:** This application is **multilingual**. When implementing ANY user-facing text, you MUST add translations for ALL supported languages.
+
+### Supported Languages
+- English (`en`)
+- Russian (`ru`)
+- Ukrainian (`ua`)
+- German (`de`)
+- Tatar (`tt`)
+
+### Translation Files Location
+All translation files are located in `src/renderer/src/i18n/locale/`:
+- `en.json` - English (primary)
+- `ru.json` - Russian
+- `ua.json` - Ukrainian
+- `de.json` - German
+- `tt.json` - Tatar
+
+### When Adding New Text
+
+1. **Never hardcode user-facing strings** - Always use the `useTranslation` hook from `react-i18next`
+2. **Add translation keys to ALL language files** - Not just English
+3. **Use descriptive, hierarchical keys** - e.g., `settings.appearance.theme`, `library.emptyState.title`
+
+**Example:**
+```tsx
+// ✅ Correct
+import { useTranslation } from 'react-i18next'
+
+function MyComponent() {
+  const { t } = useTranslation()
+  return <h1>{t('myFeature.title')}</h1>
+}
+
+// ❌ Wrong - hardcoded text
+function MyComponent() {
+  return <h1>My Feature Title</h1>
+}
+```
+
+**After adding a new key, update ALL locale files:**
+```json
+// en.json
+{ "myFeature": { "title": "My Feature Title" } }
+
+// ru.json
+{ "myFeature": { "title": "Название моей функции" } }
+
+// ua.json
+{ "myFeature": { "title": "Назва моєї функції" } }
+
+// de.json
+{ "myFeature": { "title": "Mein Feature-Titel" } }
+
+// tt.json
+{ "myFeature": { "title": "Минем функция исеме" } }
+```
+
+---
+
 ## Notes for Contributors
 
 1. **Adding new IPC procedures**: Add controller in `src/main/controllers/`, register in `src/main/router/routes.ts`
 2. **Adding new views**: Create view in `src/renderer/src/views/`, add route in `routes.tsx`
 3. **Adding new book formats**: Implement parser extending `AbstractParser`, register in `addBooks.controller.ts`
-4. **Adding translations**: Update all JSON files in `src/renderer/src/i18n/locale/`
+4. **Adding translations**: Update ALL JSON files in `src/renderer/src/i18n/locale/` - this is **mandatory** for any user-facing text
 5. **Database changes**: Entities auto-sync in development (synchronize: true). Create migrations for production.
 
 ---

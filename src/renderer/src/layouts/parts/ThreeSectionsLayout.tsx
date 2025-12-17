@@ -52,7 +52,7 @@ export const ThreeSectionsLayout: React.FC<LayoutThreeSectionsProps> = ({
       </aside>
       <main className="pl-56 pt-14">
         <div className="pl-60">
-          <div className="relative h-[calc(100dvh-65px)] max-w-full overflow-y-auto bg-indigo-200/30 pt-8 shadow-inner dark:bg-indigo-400/10">
+          <div className="relative h-[calc(100dvh-65px-28px)] max-w-full overflow-y-auto bg-indigo-200/30 pt-8 shadow-inner dark:bg-indigo-400/10">
             {content}
           </div>
         </div>

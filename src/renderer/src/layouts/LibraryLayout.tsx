@@ -5,6 +5,7 @@ import { faBook, faCog, faTabletScreenButton } from '@fortawesome/free-solid-svg
 import { Outlet } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
+import { StatusBar } from '../components/StatusBar'
 import { GlobalSearch } from './parts/GlobalSearch'
 import { MainMenuEntries } from './parts/MainMenuEntries'
 
@@ -71,6 +72,10 @@ export const LibraryLayout = () => {
         {/* /SEARCH BAR */}
 
         <Outlet />
+
+        {/* STATUS BAR */}
+        <StatusBar />
+        {/* /STATUS BAR */}
       </div>
     </>
   )

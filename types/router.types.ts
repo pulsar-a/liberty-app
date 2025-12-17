@@ -12,4 +12,5 @@ export type RouteEntry = {
   hash?: string
   active?: boolean
   children?: RouteEntry[]
+  count?: number
 }

@@ -4,7 +4,7 @@ import { useIpc } from '@/hooks/useIpc'
 import { formatDateDistance } from '@/utils/dateFormatter'
 import { formatFileSize } from '@/utils/fileFormatter'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBook, faClose, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
+import { faBook, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
@@ -130,32 +130,21 @@ export const BookDetailsView: React.FC = () => {
             aria-hidden="true"
           />
         </h3>
-        <ul role="list" className="mt-2 border-t border-indigo-600 dark:border-indigo-400">
-          {book.bookIds.map((bookId) => (
-            <li className="flex items-center justify-between gap-4 py-3" key={bookId.id}>
-              <div className="text-3xl">&bull;</div>
-              <div className="flex flex-grow flex-col justify-center">
-                <p className="text-sm font-medium text-gray-900 dark:text-indigo-50">
-                  {bookId.idVal}
-                </p>
-              </div>
-              <FontAwesomeIcon
-                icon={faClose}
-                className="cursor-pointer text-gray-900 transition-colors hover:text-indigo-500 dark:text-indigo-50 dark:hover:text-indigo-300"
-              />
-            </li>
-          ))}
-          <li className="flex items-center justify-center py-2">
+        <div className="mt-2 border-t border-indigo-600 dark:border-indigo-400">
+          <p className="py-4 text-sm italic text-gray-500 dark:text-gray-400">
+            {t('bookDetailsView_notInCollections')}
+          </p>
+          <div className="flex justify-center pb-2">
             <Button
               label={t('bookDetailsView_addToCollection_title')}
               variant={'primary'}
               shape="rounded"
               size="xs"
-              className="group -ml-1"
+              className="group"
               leadingIcon={faPlus}
             />
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -186,6 +175,11 @@ export const BookDetailsView: React.FC = () => {
           <DataListEntry
             label={t('bookDetailsView_fileName_label')}
             value={book.originalFileName}
+            breakable
+          />
+          <DataListEntry
+            label={t('bookDetailsView_fileLocation_label')}
+            value={book.fileName}
             breakable
           />
         </dl>

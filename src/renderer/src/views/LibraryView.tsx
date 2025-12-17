@@ -74,9 +74,29 @@ export const LibraryView: React.FC = () => {
     }) as unknown as BookEntity[]
   })()
 
+  const booksWithoutAuthorCount = useMemo(() => {
+    return books?.items.filter((book) => book.authors.length === 0).length || 0
+  }, [books])
+
   const authorRouteEntries: RouteEntry[] = useMemo(() => {
+    const isSearching = authorSearchTerm.trim().length > 0
+
     return [
-      ...(books?.items.some((book) => book.authors.length === 0)
+      // "All books" entry - hidden when searching
+      ...(!isSearching
+        ? [
+            {
+              id: 'all-books',
+              name: t('libraryView_allBooks_label'),
+              to: '/',
+              active: authorId === undefined,
+              search: {},
+              count: books?.items.length || 0,
+            } as RouteEntry,
+          ]
+        : []),
+      // "No author" entry for books without authors
+      ...(booksWithoutAuthorCount > 0
         ? [
             {
               id: 'no-author',
@@ -84,6 +104,7 @@ export const LibraryView: React.FC = () => {
               to: '/',
               active: authorId === null,
               search: { authorId: null },
+              count: booksWithoutAuthorCount,
             } as RouteEntry,
           ]
         : []),
@@ -101,18 +122,22 @@ export const LibraryView: React.FC = () => {
           active: authorId === author.id,
           to: '/',
           search: { authorId: author.id },
+          count: author.booksCount,
         })) || []
     )
-  }, [authors, authorSearchTerm, books, authorId])
+  }, [authors, authorSearchTerm, books, authorId, booksWithoutAuthorCount])
 
   const selectedAuthorName = useMemo(() => {
     if (authorId === null) {
-      return t('libraryView_noAuthor_label')
+      return `${t('libraryView_noAuthor_label')} (${booksWithoutAuthorCount})`
     }
 
     const author = authors?.items.find((author) => author.id === authorId)
-    return author?.name
-  }, [authors, authorId])
+    if (author) {
+      return `${author.name} (${author.booksCount})`
+    }
+    return undefined
+  }, [authors, authorId, booksWithoutAuthorCount])
 
   const isLoading = isBooksLoading || isAuthorsLoading
 
