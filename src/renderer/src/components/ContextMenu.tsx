@@ -33,8 +33,8 @@ type ContextMenuProps = {
 export const ContextMenu: React.FC<ContextMenuProps> = ({ items }) => {
   return (
     <Menu as="div" className="relative flex-none">
-      <Menu.Button className="-m-2.5 block cursor-default p-2.5 text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-100 hover:dark:text-indigo-300">
-        <FontAwesomeIcon icon={faEllipsisV} className="h-5 w-5" aria-hidden="true" />
+      <Menu.Button className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white">
+        <FontAwesomeIcon icon={faEllipsisV} className="h-4 w-4" aria-hidden="true" />
       </Menu.Button>
       <Transition
         as={Fragment}

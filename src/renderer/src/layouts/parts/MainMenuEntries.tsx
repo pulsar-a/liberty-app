@@ -22,7 +22,7 @@ export const MainMenuEntries: React.FC<MainMenuEntriesProps> = ({ items }) => {
             }}
             inactiveProps={{
               className:
-                'text-gray-700 hover:bg-mako-300/50 hover:text-gray-900 dark:hover:bg-mako-600/20 dark:hover:text-indigo-500',
+                'text-gray-700 hover:bg-mako-300/50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-mako-600/30 dark:hover:text-indigo-400',
             }}
             className={clsx(
               'group flex cursor-default gap-x-3 rounded-md py-3 pl-3 pr-2 text-sm font-semibold leading-6'

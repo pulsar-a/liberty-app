@@ -107,11 +107,11 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
       </div>
       {withGutter && (
         <>
-          <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-white">
+          <h3 className="mt-4 line-clamp-3 break-words px-4 text-base font-semibold text-white drop-shadow-sm">
             {book.name}
           </h3>
 
-          <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-white">
+          <div className="mb-4 mt-2 line-clamp-2 overflow-y-hidden break-words px-4 text-sm text-white/90">
             {book.authors.map((author) => author.name).join(', ')}
           </div>
         </>

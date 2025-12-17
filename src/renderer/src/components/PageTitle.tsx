@@ -12,7 +12,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({ title, subtitle, actions }
         <span>.</span>
         {subtitle && (
           <>
-            <div className="text-indigo-900/80 dark:text-indigo-300/50">{subtitle}</div>
+            <div className="text-indigo-900/80 dark:text-indigo-300/80">{subtitle}</div>
           </>
         )}
       </h2>

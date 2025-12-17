@@ -13,7 +13,11 @@ body {
     Montserrat,
     RedHat,
     sans-serif;
-  color: #86a5b1;
+  color: #334155;
+}
+
+.dark body {
+  color: #e2e8f0;
 }
 
 * {
