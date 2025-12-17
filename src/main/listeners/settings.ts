@@ -2,8 +2,8 @@ import { app, ipcMain } from 'electron'
 import { settings } from '../settings/settings'
 
 export const initSettingsListeners = () => {
-  ipcMain.on('settings:get', async (event, val) => {
-    event.returnValue = settings.get(val)
+  ipcMain.on('settings:get', async (event, val, defaultValue) => {
+    event.returnValue = settings.get(val, defaultValue)
   })
 
   ipcMain.on('settings:getAll', async (event) => {

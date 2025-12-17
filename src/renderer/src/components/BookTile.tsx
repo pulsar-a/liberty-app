@@ -76,7 +76,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
         )}
         {isImageAvailable && (
           <img
-            src={'liberty-file://' + book.cover}
+            src={'liberty-file://' + encodeURIComponent(book.cover || '')}
             onError={() => {
               setImageAvailable(false)
             }}

@@ -26,6 +26,7 @@ protocol.registerSchemesAsPrivileged([
       secure: true,
       supportFetchAPI: true,
       bypassCSP: true,
+      stream: true,
     },
   },
 ])
@@ -101,7 +102,8 @@ app.whenReady().then(async () => {
   // Register protocol handler for local files
   protocol.handle('liberty-file', (request) => {
     const filePath = request.url.replace('liberty-file://', '')
-    return net.fetch(pathToFileURL(decodeURIComponent(filePath)).toString())
+    const decodedPath = decodeURIComponent(filePath)
+    return net.fetch(pathToFileURL(decodedPath).toString())
   })
 
   await installExtension([REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS], {
