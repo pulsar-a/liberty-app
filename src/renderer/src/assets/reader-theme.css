@@ -38,12 +38,19 @@
   --paper-link-color: #4a6da7;
   --paper-footnote-marker: #8b4513;
 
-  /* Page dimensions */
+  /* Typography - Dynamic variables (can be overridden via JS) */
+  --page-font-family: "Georgia", serif;
+  --page-font-size: 1.125rem;
+  --page-line-height: 1.8;
+  --page-text-align: justify;
+  --page-hyphens: auto;
+  --page-paragraph-spacing: 1.25em;
+  --page-paragraph-indent: 1.5em;
+  
+  /* Page layout - Dynamic variables (can be overridden via JS) */
   --page-padding-x: 3rem;
   --page-padding-y: 2.5rem;
   --page-max-width: 42rem;
-  --page-line-height: 1.8;
-  --page-font-size: 1.125rem;
 
   /* Transitions */
   --page-transition-duration: 300ms;
@@ -122,12 +129,14 @@
   color: var(--paper-text-primary);
   height: 100%;
   padding: var(--page-padding-y) var(--page-padding-x);
+  font-family: var(--page-font-family);
   font-size: var(--page-font-size);
   line-height: var(--page-line-height);
   overflow: hidden; /* No scrolling - content should fit the page */
   /* Use flexbox to properly contain content within padding */
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   
   /* Warmth filter - adjust with CSS filter */
   filter: sepia(calc(var(--paper-warmth) * 0.1)) 
@@ -137,7 +146,10 @@
   /* Smooth transitions for theme changes */
   transition: 
     background-color var(--page-transition-duration) var(--page-transition-easing),
-    filter var(--page-transition-duration) var(--page-transition-easing);
+    filter var(--page-transition-duration) var(--page-transition-easing),
+    font-family var(--page-transition-duration) var(--page-transition-easing),
+    font-size var(--page-transition-duration) var(--page-transition-easing),
+    line-height var(--page-transition-duration) var(--page-transition-easing);
 }
 
 /* ============================================================================
@@ -213,7 +225,7 @@
   max-width: 100%;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  hyphens: auto;
+  hyphens: var(--page-hyphens);
 }
 
 /* Force text to wrap and not overflow horizontally */
@@ -227,10 +239,10 @@
 }
 
 .page-content p {
-  margin-bottom: 1.25em;
-  text-align: justify;
-  text-indent: 1.5em;
-  hyphens: auto;
+  margin-bottom: var(--page-paragraph-spacing);
+  text-align: var(--page-text-align);
+  text-indent: var(--page-paragraph-indent);
+  hyphens: var(--page-hyphens);
 }
 
 .page-content p:first-child {
@@ -271,6 +283,27 @@
   border-left: 3px solid var(--paper-link-color);
   background: rgba(0, 0, 0, 0.02);
   font-style: italic;
+}
+
+/* When blockquote is followed by continuation, remove bottom margin for seamless flow */
+.page-content blockquote:has(+ .blockquote-continuation) {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Continuation of blockquote - seamless flow, matches blockquote style without left border */
+.page-content .blockquote-continuation {
+  margin: 0;
+  padding: 0.25em 1.5em;
+  padding-left: calc(1.5em + 3px); /* Match blockquote padding + border width */
+  background: rgba(0, 0, 0, 0.02); /* Same background as blockquote */
+  font-style: italic;
+}
+
+/* Add spacing after the last continuation element */
+.page-content .blockquote-continuation:last-child {
+  margin-bottom: 1.5em;
+  padding-bottom: 1em;
 }
 
 .page-content a {

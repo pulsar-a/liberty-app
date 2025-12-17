@@ -848,6 +848,7 @@ async function main(): Promise<void> {
 
   if (!input?.filePath || !input?.bookId) {
     sendError('Invalid worker input: missing filePath or bookId')
+    process.exit(1)
     return
   }
 
@@ -865,8 +866,12 @@ async function main(): Promise<void> {
 
     // Send result
     sendResult(content, paginatedContent)
+    
+    // Exit cleanly after sending result
+    process.exit(0)
   } catch (error) {
     sendError(error instanceof Error ? error.message : String(error))
+    process.exit(1)
   }
 }
 

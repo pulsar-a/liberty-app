@@ -22,6 +22,8 @@ export const getBookContentInputSchema = z.object({
       charsPerPage: z.number().optional(),
     })
     .optional(),
+  /** If true, skip server-side pagination - client will handle it */
+  clientSidePagination: z.boolean().optional(),
 })
 
 export const updateReadingProgressInputSchema = z.object({
@@ -47,7 +49,9 @@ export const deleteBookmarkInputSchema = z.object({
 })
 
 // Cache for parsed book content to avoid re-parsing
-const contentCache = new Map<number, { content: BookContent; paginatedContent: PaginatedContent }>()
+// Now stores raw content separately from paginated content
+const rawContentCache = new Map<number, BookContent>()
+const paginatedContentCache = new Map<number, { content: BookContent; paginatedContent: PaginatedContent }>()
 
 /**
  * Send progress update to the renderer process
@@ -60,15 +64,18 @@ function sendProgressToRenderer(bookId: number, percent: number, stage: string):
 }
 
 /**
- * Get book content with pagination
+ * Get book content with optional pagination
  * Uses a worker thread to parse the book content without blocking the main process.
+ * 
+ * When clientSidePagination is true, returns raw content without pagination.
+ * The client will handle pagination using the ContentFitter service.
  */
 export const getBookContentController = async ({
   input,
 }: {
   input: z.infer<typeof getBookContentInputSchema>
 }): Promise<GetBookContentResponse | null> => {
-  const { bookId, paginationConfig } = input
+  const { bookId, paginationConfig, clientSidePagination } = input
 
   // Get book from database
   const book = await booksQuery.book({ id: bookId })
@@ -82,14 +89,65 @@ export const getBookContentController = async ({
     charsPerPage: paginationConfig?.charsPerPage || 3000,
   }
 
-  // Check cache first - include pagination mode in cache key
+  // Client-side pagination path: return raw content only
+  if (clientSidePagination) {
+    // Check raw content cache first
+    const cachedRaw = rawContentCache.get(bookId)
+    if (cachedRaw) {
+      logger.debug(`Using cached raw content for book ${bookId}`)
+      sendProgressToRenderer(bookId, 100, 'reader_loading_complete')
+      
+      return {
+        content: cachedRaw,
+        paginatedContent: null,
+        lastReadPage: book.readingProgress || 0,
+        clientSidePagination: true,
+      }
+    }
+
+    // Send initial progress
+    sendProgressToRenderer(bookId, 0, 'reader_loading_opening')
+
+    try {
+      const onProgress = (percent: number, stage: string) => {
+        // Cap progress at 90% since client will do pagination
+        sendProgressToRenderer(bookId, Math.min(percent, 90), stage)
+      }
+
+      // Parse without pagination (still uses worker for content extraction)
+      let result: { content: BookContent; paginatedContent: PaginatedContent }
+
+      try {
+        result = await parseBookInWorker(book.fileName, bookId, config, onProgress)
+      } catch (workerError) {
+        logger.warn(`Worker parsing failed, falling back to sync: ${workerError}`)
+        result = await parseBookSync(book.fileName, bookId, config, onProgress)
+      }
+
+      // Cache the raw content
+      rawContentCache.set(bookId, result.content)
+
+      sendProgressToRenderer(bookId, 90, 'reader_loading_complete')
+
+      return {
+        content: result.content,
+        paginatedContent: null,
+        lastReadPage: book.readingProgress || 0,
+        clientSidePagination: true,
+      }
+    } catch (error) {
+      logger.error(`Failed to parse book content: ${error}`)
+      sendProgressToRenderer(bookId, -1, 'reader_loading_error')
+      return null
+    }
+  }
+
+  // Legacy server-side pagination path (for backward compatibility)
   const cacheKey = bookId
-  const cached = contentCache.get(cacheKey)
+  const cached = paginatedContentCache.get(cacheKey)
   
   if (cached) {
-    // If we have cached content but need different pagination, re-paginate
-    // For now, return cached as-is (pagination is part of content generation in worker)
-    logger.debug(`Using cached content for book ${bookId}`)
+    logger.debug(`Using cached paginated content for book ${bookId}`)
     sendProgressToRenderer(bookId, 100, 'reader_loading_paginating')
     
     return {
@@ -119,8 +177,9 @@ export const getBookContentController = async ({
       result = await parseBookSync(book.fileName, bookId, config, onProgress)
     }
 
-    // Cache the result
-    contentCache.set(cacheKey, result)
+    // Cache the results
+    paginatedContentCache.set(cacheKey, result)
+    rawContentCache.set(bookId, result.content)
 
     // Get last read page from book entity
     const lastReadPage = book.readingProgress || 0
@@ -193,20 +252,22 @@ export const deleteBookmarkController = async ({
  * Clear content cache for a book (useful when book is deleted)
  */
 export const clearContentCache = (bookId: number): void => {
-  contentCache.delete(bookId)
+  rawContentCache.delete(bookId)
+  paginatedContentCache.delete(bookId)
 }
 
 /**
  * Clear all content cache
  */
 export const clearAllContentCache = (): void => {
-  contentCache.clear()
+  rawContentCache.clear()
+  paginatedContentCache.clear()
 }
 
 /**
  * Check if a book is in the content cache
  */
 export const isBookCached = (bookId: number): boolean => {
-  return contentCache.has(bookId)
+  return rawContentCache.has(bookId) || paginatedContentCache.has(bookId)
 }
 

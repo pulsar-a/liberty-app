@@ -1,6 +1,7 @@
-import { BookPage, BookReference } from '@app-types/reader.types'
+import { BookPage, BookReference, ContainerDimensions, FittedPage } from '@app-types/reader.types'
 import { clsx } from 'clsx'
 import React, { useCallback, useEffect, useRef } from 'react'
+import { useReaderSettingsStore } from '../../store/useReaderSettingsStore'
 import { useReaderStore } from '../../store/useReaderStore'
 import '../../assets/reader-theme.css'
 
@@ -8,11 +9,19 @@ interface PageRendererProps {
   className?: string
   onReferenceClick?: (reference: BookReference) => void
   onRemoveBookmark?: (pageIndex: number) => void
+  onDimensionsChange?: (dimensions: ContainerDimensions) => void
 }
 
-export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferenceClick, onRemoveBookmark }) => {
+export const PageRenderer: React.FC<PageRendererProps> = ({ 
+  className, 
+  onReferenceClick, 
+  onRemoveBookmark,
+  onDimensionsChange,
+}) => {
   const {
     paginatedContent,
+    fittedContent,
+    useClientSidePagination,
     currentPageIndex,
     layoutMode,
     bookmarks,
@@ -22,27 +31,38 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
     openReferencesPanel,
   } = useReaderStore()
 
+  const { settings, getCssVariables } = useReaderSettingsStore()
+
   const containerRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
+
+  // Get CSS variables for dynamic styling
+  const cssVariables = getCssVariables()
 
   // Get current page(s) based on layout mode
-  const getCurrentPages = (): BookPage[] => {
-    if (!paginatedContent) return []
+  const getCurrentPages = (): (BookPage | FittedPage)[] => {
+    // Use fitted content if using client-side pagination
+    const pages = useClientSidePagination && fittedContent 
+      ? fittedContent.pages 
+      : paginatedContent?.pages
+
+    if (!pages) return []
 
     if (layoutMode === 'single') {
-      const page = paginatedContent.pages[currentPageIndex]
+      const page = pages[currentPageIndex]
       return page ? [page] : []
     }
 
     // Two-column mode: show two pages
-    const leftPage = paginatedContent.pages[currentPageIndex]
-    const rightPage = paginatedContent.pages[currentPageIndex + 1]
-    const pages: BookPage[] = []
+    const leftPage = pages[currentPageIndex]
+    const rightPage = pages[currentPageIndex + 1]
+    const result: (BookPage | FittedPage)[] = []
 
-    if (leftPage) pages.push(leftPage)
-    if (rightPage) pages.push(rightPage)
+    if (leftPage) result.push(leftPage)
+    if (rightPage) result.push(rightPage)
 
-    return pages
+    return result
   }
 
   const currentPages = getCurrentPages()
@@ -84,7 +104,11 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
           e.stopPropagation()
 
           // Find the reference
-          const currentPage = paginatedContent?.pages[currentPageIndex]
+          const pages = useClientSidePagination && fittedContent 
+            ? fittedContent.pages 
+            : paginatedContent?.pages
+          const currentPage = pages?.[currentPageIndex]
+          
           if (currentPage?.references.length) {
             const refId = href.replace('#', '')
             const reference = currentPage.references.find(
@@ -104,8 +128,32 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
         }
       }
     },
-    [currentPageIndex, paginatedContent, onReferenceClick, openReferencesPanel]
+    [currentPageIndex, paginatedContent, fittedContent, useClientSidePagination, onReferenceClick, openReferencesPanel]
   )
+
+  // Set up ResizeObserver to report dimensions
+  useEffect(() => {
+    if (!containerRef.current || !onDimensionsChange) return
+
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      const entry = entries[0]
+      if (entry) {
+        const { width, height } = entry.contentRect
+        onDimensionsChange({ width, height })
+      }
+    }
+
+    resizeObserverRef.current = new ResizeObserver(handleResize)
+    resizeObserverRef.current.observe(containerRef.current)
+
+    // Report initial dimensions
+    const rect = containerRef.current.getBoundingClientRect()
+    onDimensionsChange({ width: rect.width, height: rect.height })
+
+    return () => {
+      resizeObserverRef.current?.disconnect()
+    }
+  }, [onDimensionsChange])
 
   // Keyboard navigation
   useEffect(() => {
@@ -117,6 +165,10 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
       ) {
         return
       }
+
+      const totalPages = useClientSidePagination && fittedContent 
+        ? fittedContent.totalPages 
+        : paginatedContent?.totalPages ?? 0
 
       switch (e.key) {
         case 'ArrowRight':
@@ -136,8 +188,8 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
           break
         case 'End':
           e.preventDefault()
-          if (paginatedContent) {
-            goToPage(paginatedContent.totalPages - 1)
+          if (totalPages > 0) {
+            goToPage(totalPages - 1)
           }
           break
       }
@@ -145,7 +197,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [nextPage, previousPage, goToPage, paginatedContent])
+  }, [nextPage, previousPage, goToPage, paginatedContent, fittedContent, useClientSidePagination])
 
   // Click navigation (click on left/right side of page)
   const handlePageClick = useCallback(
@@ -171,10 +223,20 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
     [nextPage, previousPage]
   )
 
-  if (!paginatedContent || currentPages.length === 0) {
+  // Get total pages for display
+  const totalPages = useClientSidePagination && fittedContent 
+    ? fittedContent.totalPages 
+    : paginatedContent?.totalPages ?? 0
+
+  // If no pages yet, still render the container so we can measure dimensions
+  // This is crucial for client-side pagination to work
+  if (totalPages === 0 || currentPages.length === 0) {
     return (
-      <div className={clsx('flex h-full items-center justify-center', className)}>
-        <p className="text-gray-500">No content to display</p>
+      <div 
+        ref={containerRef}
+        className={clsx('flex h-full w-full items-center justify-center', className)}
+      >
+        {/* Empty container - dimensions will be reported for pagination */}
       </div>
     )
   }
@@ -187,6 +249,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
         layoutMode === 'two-column' && 'reader-spread',
         className
       )}
+      style={cssVariables as React.CSSProperties}
       onClick={handlePageClick}
     >
       {currentPages.map((page, index) => (
@@ -249,4 +312,3 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ className, onReferen
     </div>
   )
 }
-

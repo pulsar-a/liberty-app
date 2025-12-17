@@ -3,6 +3,9 @@ import {
   BookContent,
   BookPage,
   BookReference,
+  ContainerDimensions,
+  FittedContent,
+  FittedPage,
   PaginatedContent,
 } from '@app-types/reader.types'
 import { create } from 'zustand'
@@ -15,6 +18,12 @@ interface ReaderState {
   bookAuthor: string
   content: BookContent | null
   paginatedContent: PaginatedContent | null
+
+  // Client-side pagination (new)
+  fittedContent: FittedContent | null
+  useClientSidePagination: boolean
+  isPaginating: boolean
+  containerDimensions: ContainerDimensions | null
 
   // Navigation state
   currentPageIndex: number
@@ -48,13 +57,20 @@ interface ReaderActions {
     bookTitle: string
     bookAuthor: string
     content: BookContent
-    paginatedContent: PaginatedContent
+    paginatedContent: PaginatedContent | null
     lastReadPage: number
+    clientSidePagination?: boolean
   }) => void
   setLoading: (loading: boolean) => void
   setLoadingProgress: (percent: number, stage: string) => void
   setError: (error: string | null) => void
   resetReader: () => void
+
+  // Client-side pagination
+  setFittedContent: (content: FittedContent) => void
+  setContainerDimensions: (dimensions: ContainerDimensions) => void
+  setIsPaginating: (isPaginating: boolean) => void
+  clearFittedContent: () => void
 
   // Navigation
   goToPage: (pageIndex: number) => void
@@ -83,7 +99,7 @@ interface ReaderActions {
   markProgressSaved: () => void
 
   // Computed getters
-  getCurrentPage: () => BookPage | null
+  getCurrentPage: () => BookPage | FittedPage | null
   getCurrentPageReferences: () => BookReference[]
   getCurrentChapterId: () => string | null
   getCurrentChapterTitle: () => string
@@ -97,9 +113,13 @@ const initialState: ReaderState = {
   bookAuthor: '',
   content: null,
   paginatedContent: null,
+  fittedContent: null,
+  useClientSidePagination: true, // Enable by default
+  isPaginating: false,
+  containerDimensions: null,
   currentPageIndex: 0,
   totalPages: 0,
-  layoutMode: 'single',
+  layoutMode: 'single', // Two-column mode disabled - causes content overflow issues
   isLoading: false,
   error: null,
   loadingProgress: 0,
@@ -120,13 +140,20 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
       setBookData: (data) => {
         const currentState = get()
         const isNewBook = currentState.bookId !== data.bookId
-        
+        const useClientSide = data.clientSidePagination ?? true
+
+        // For client-side pagination, we'll set totalPages to 0 initially
+        // It will be updated when fitContent completes
+        const paginatedTotalPages = data.paginatedContent?.totalPages ?? 0
+
         // Determine the page to start on:
         // - If it's a new book, use lastReadPage from database
         // - If returning to same book, preserve currentPageIndex (from persisted state or session)
         // - Ensure page index is within valid bounds
         let pageIndex = isNewBook ? data.lastReadPage : currentState.currentPageIndex
-        pageIndex = Math.max(0, Math.min(pageIndex, data.paginatedContent.totalPages - 1))
+        if (paginatedTotalPages > 0) {
+          pageIndex = Math.max(0, Math.min(pageIndex, paginatedTotalPages - 1))
+        }
 
         set({
           bookId: data.bookId,
@@ -134,13 +161,16 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           bookAuthor: data.bookAuthor,
           content: data.content,
           paginatedContent: data.paginatedContent,
-          totalPages: data.paginatedContent.totalPages,
+          fittedContent: null, // Will be set by client-side pagination
+          useClientSidePagination: useClientSide,
+          isPaginating: useClientSide, // Start paginating if using client-side
+          totalPages: paginatedTotalPages,
           currentPageIndex: pageIndex,
           lastSavedPage: isNewBook ? data.lastReadPage : currentState.lastSavedPage,
           isLoading: false,
           error: null,
-          loadingProgress: 100,
-          loadingStage: '',
+          loadingProgress: useClientSide ? 90 : 100,
+          loadingStage: useClientSide ? 'reader_loading_paginating' : '',
         })
       },
 
@@ -165,6 +195,47 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           loadingStage: '',
         })
       },
+
+      // Client-side pagination methods
+      setFittedContent: (content) => {
+        const currentState = get()
+        const isNewBook = currentState.fittedContent === null
+        
+        // Restore page position when re-paginating (e.g., after font change)
+        let pageIndex = currentState.currentPageIndex
+        if (content.totalPages > 0) {
+          // Try to maintain reading position proportionally
+          if (!isNewBook && currentState.totalPages > 0) {
+            const progressRatio = currentState.currentPageIndex / currentState.totalPages
+            pageIndex = Math.round(progressRatio * content.totalPages)
+          }
+          pageIndex = Math.max(0, Math.min(pageIndex, content.totalPages - 1))
+        }
+
+        set({
+          fittedContent: content,
+          totalPages: content.totalPages,
+          currentPageIndex: pageIndex,
+          isPaginating: false,
+          loadingProgress: 100,
+          loadingStage: '',
+        })
+      },
+
+      setContainerDimensions: (dimensions) => set({ containerDimensions: dimensions }),
+
+      setIsPaginating: (isPaginating) => set({ 
+        isPaginating,
+        loadingProgress: isPaginating ? 90 : 100,
+        loadingStage: isPaginating ? 'reader_loading_paginating' : '',
+      }),
+
+      clearFittedContent: () => set({ 
+        fittedContent: null, 
+        isPaginating: true,
+        loadingProgress: 90,
+        loadingStage: 'reader_loading_paginating',
+      }),
 
     // Navigation
     goToPage: (pageIndex) => {
@@ -206,19 +277,25 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
     },
 
     goToChapter: (chapterId, anchorId?: string) => {
-      const { paginatedContent } = get()
-      if (!paginatedContent) return
+      const { fittedContent, paginatedContent, useClientSidePagination } = get()
+      
+      // Get pages from the appropriate source
+      const pages = useClientSidePagination && fittedContent 
+        ? fittedContent.pages 
+        : paginatedContent?.pages
+      
+      if (!pages) return
 
       let targetPage = null
 
       // If we have an anchor ID, search for the page containing that anchor
       if (anchorId) {
-        targetPage = paginatedContent.pages.find((p) => 
+        targetPage = pages.find((p) => 
           p.chapterId === chapterId && p.htmlContent.includes(`id="${anchorId}"`)
         )
         // Also try with single quotes and other formats
         if (!targetPage) {
-          targetPage = paginatedContent.pages.find((p) => 
+          targetPage = pages.find((p) => 
             p.chapterId === chapterId && (
               p.htmlContent.includes(`id='${anchorId}'`) ||
               p.htmlContent.includes(`name="${anchorId}"`) ||
@@ -230,7 +307,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
 
       // Fall back to first page of chapter if anchor not found
       if (!targetPage) {
-        targetPage = paginatedContent.pages.find((p) => p.chapterId === chapterId)
+        targetPage = pages.find((p) => p.chapterId === chapterId)
       }
       
       if (targetPage) {
@@ -276,22 +353,38 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
 
     // Computed getters
     getCurrentPage: () => {
-      const { paginatedContent, currentPageIndex } = get()
+      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
+      
+      if (useClientSidePagination && fittedContent) {
+        return fittedContent.pages[currentPageIndex] || null
+      }
       return paginatedContent?.pages[currentPageIndex] || null
     },
 
     getCurrentPageReferences: () => {
-      const { paginatedContent, currentPageIndex } = get()
+      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
+      
+      if (useClientSidePagination && fittedContent) {
+        return fittedContent.pages[currentPageIndex]?.references || []
+      }
       return paginatedContent?.pages[currentPageIndex]?.references || []
     },
 
     getCurrentChapterId: () => {
-      const { paginatedContent, currentPageIndex } = get()
+      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
+      
+      if (useClientSidePagination && fittedContent) {
+        return fittedContent.pages[currentPageIndex]?.chapterId || null
+      }
       return paginatedContent?.pages[currentPageIndex]?.chapterId || null
     },
 
     getCurrentChapterTitle: () => {
-      const { paginatedContent, currentPageIndex } = get()
+      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
+      
+      if (useClientSidePagination && fittedContent) {
+        return fittedContent.pages[currentPageIndex]?.chapterTitle || ''
+      }
       return paginatedContent?.pages[currentPageIndex]?.chapterTitle || ''
     },
 
@@ -315,8 +408,17 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
         bookAuthor: state.bookAuthor,
         currentPageIndex: state.currentPageIndex,
         totalPages: state.totalPages,
-        layoutMode: state.layoutMode,
+        // layoutMode removed - always use 'single' to avoid content overflow issues
       }),
+      version: 2, // Bump version to clear old persisted layoutMode
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>
+        if (version < 2) {
+          // Remove layoutMode from old persisted state, force single-column
+          delete state.layoutMode
+        }
+        return state as ReaderState & ReaderActions
+      },
     }
   )
 )
@@ -330,4 +432,11 @@ export const useIsLoading = () => useReaderStore((state) => state.isLoading)
 export const useReaderError = () => useReaderStore((state) => state.error)
 export const useLoadingProgress = () =>
   useReaderStore((state) => ({ percent: state.loadingProgress, stage: state.loadingStage }))
+
+// Client-side pagination selectors
+export const useIsPaginating = () => useReaderStore((state) => state.isPaginating)
+export const useContainerDimensions = () => useReaderStore((state) => state.containerDimensions)
+export const useFittedContent = () => useReaderStore((state) => state.fittedContent)
+export const useBookContent = () => useReaderStore((state) => state.content)
+export const useUseClientSidePagination = () => useReaderStore((state) => state.useClientSidePagination)
 
