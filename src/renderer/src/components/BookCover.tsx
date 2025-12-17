@@ -47,9 +47,9 @@ export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'm
           size === 'xs' && 'left-1 rounded-sm border-l-2'
         )}
       ></div>
-      {isImageAvailable && (
+      {book.cover && isImageAvailable && (
         <img
-          src={'liberty-file://' + encodeURIComponent(book.cover || '')}
+          src={'liberty-file://' + encodeURIComponent(book.cover)}
           onError={() => {
             setImageAvailable(false)
           }}

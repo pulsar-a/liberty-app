@@ -5,6 +5,7 @@ import { isDev } from '../constants/app'
 import AuthorEntity from '../entities/author.entity'
 import BookEntity from '../entities/book.entity'
 import BookIdEntity from '../entities/bookId.entity'
+import BookmarkEntity from '../entities/bookmark.entity'
 import { logger } from '../utils/logger'
 
 const productionPath = app.getPath('userData')
@@ -16,7 +17,7 @@ export const db = new DataSource({
   migrationsRun: true,
   logging: false,
   logger: 'advanced-console',
-  entities: [BookEntity, AuthorEntity, BookIdEntity],
+  entities: [BookEntity, AuthorEntity, BookIdEntity, BookmarkEntity],
   subscribers: [],
   migrations: ['database/migrations/*.js'],
 })

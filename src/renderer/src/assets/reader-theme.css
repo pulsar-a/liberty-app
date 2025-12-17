@@ -1,0 +1,570 @@
+/**
+ * Reader Theme Styles
+ * CSS-based paper texture for e-book reader
+ * Uses CSS variables for future customization (color temperature, tint sliders)
+ */
+
+/* ============================================================================
+   CSS Variables for Paper Theme
+   These can be adjusted via JavaScript for future slider controls
+   ============================================================================ */
+
+:root {
+  /* Paper base colors */
+  --paper-base-light: #f8f5f0;
+  --paper-base-warm: #f5f1e8;
+  --paper-base-cool: #f5f7fa;
+  --paper-base-sepia: #f4ecd8;
+
+  /* Currently active paper color (changeable) */
+  --paper-base: var(--paper-base-warm);
+
+  /* Paper texture settings */
+  --paper-grain-opacity: 0.03;
+  --paper-vignette-opacity: 0.04;
+  --paper-shadow-opacity: 0.08;
+
+  /* Warmth adjustment (0 = neutral, positive = warmer, negative = cooler) */
+  --paper-warmth: 0;
+  --paper-tint-hue: 0;
+  --paper-tint-saturation: 0%;
+
+  /* Text colors on paper */
+  --paper-text-primary: #2c2c2c;
+  --paper-text-secondary: #555555;
+  --paper-text-muted: #777777;
+
+  /* Accent colors */
+  --paper-link-color: #4a6da7;
+  --paper-footnote-marker: #8b4513;
+
+  /* Page dimensions */
+  --page-padding-x: 3rem;
+  --page-padding-y: 2.5rem;
+  --page-max-width: 42rem;
+  --page-line-height: 1.8;
+  --page-font-size: 1.125rem;
+
+  /* Transitions */
+  --page-transition-duration: 300ms;
+  --page-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode paper (for those who prefer it) */
+.dark {
+  --paper-base: #1f1f1f;
+  --paper-grain-opacity: 0.02;
+  --paper-vignette-opacity: 0.06;
+  --paper-text-primary: #e8e8e8;
+  --paper-text-secondary: #b0b0b0;
+  --paper-text-muted: #888888;
+  --paper-link-color: #7ea8d4;
+  --paper-footnote-marker: #d4a574;
+}
+
+/* ============================================================================
+   Paper Grain Texture (CSS-only, no data URIs for CSP compliance)
+   ============================================================================ */
+
+/* Subtle paper grain using layered gradients */
+.reader-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--paper-grain-opacity);
+  /* Create a subtle grain effect using multiple tiny gradients */
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.02) 2px,
+      rgba(0, 0, 0, 0.02) 4px
+    );
+  background-size: 4px 4px;
+  mix-blend-mode: multiply;
+}
+
+.dark .reader-page::before {
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.015) 2px,
+      rgba(255, 255, 255, 0.015) 4px
+    );
+  mix-blend-mode: soft-light;
+}
+
+/* ============================================================================
+   Reader Page Container
+   ============================================================================ */
+
+.reader-page {
+  position: relative;
+  background-color: var(--paper-base);
+  color: var(--paper-text-primary);
+  height: 100%;
+  padding: var(--page-padding-y) var(--page-padding-x);
+  font-size: var(--page-font-size);
+  line-height: var(--page-line-height);
+  overflow: hidden; /* No scrolling - content should fit the page */
+  /* Use flexbox to properly contain content within padding */
+  display: flex;
+  flex-direction: column;
+  
+  /* Warmth filter - adjust with CSS filter */
+  filter: sepia(calc(var(--paper-warmth) * 0.1)) 
+          hue-rotate(calc(var(--paper-tint-hue) * 1deg))
+          saturate(calc(1 + var(--paper-tint-saturation)));
+  
+  /* Smooth transitions for theme changes */
+  transition: 
+    background-color var(--page-transition-duration) var(--page-transition-easing),
+    filter var(--page-transition-duration) var(--page-transition-easing);
+}
+
+/* ============================================================================
+   Two-Column Layout (Book Spread)
+   ============================================================================ */
+
+.reader-spread {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  height: 100%;
+  overflow: hidden; /* Ensure spread container clips overflow */
+}
+
+.reader-spread .reader-page {
+  overflow: hidden; /* Each page must clip its content */
+  min-width: 0; /* Allow grid items to shrink below content size */
+}
+
+.reader-spread .reader-page {
+  position: relative;
+}
+
+/* Left page (verso) */
+.reader-spread .reader-page:first-child {
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: inset -20px 0 30px -20px rgba(0, 0, 0, var(--paper-shadow-opacity));
+}
+
+/* Right page (recto) */
+.reader-spread .reader-page:last-child {
+  box-shadow: inset 20px 0 30px -20px rgba(0, 0, 0, var(--paper-shadow-opacity));
+}
+
+/* Book spine shadow effect */
+.reader-spread::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.03) 30%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0.03) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ============================================================================
+   Page Content Typography
+   ============================================================================ */
+
+.page-content {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  /* Flex child - takes remaining space after padding */
+  flex: 1;
+  min-height: 0; /* Important: allows flex child to shrink below content size */
+  overflow: hidden; /* Content should fit within the page - hide any overflow */
+  /* Ensure content is clipped to this container */
+  position: relative;
+}
+
+/* Ensure any deeply nested content also respects overflow */
+.page-content * {
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Force text to wrap and not overflow horizontally */
+.page-content p,
+.page-content div,
+.page-content span,
+.page-content li {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.page-content p {
+  margin-bottom: 1.25em;
+  text-align: justify;
+  text-indent: 1.5em;
+  hyphens: auto;
+}
+
+.page-content p:first-child {
+  text-indent: 0;
+}
+
+.page-content h1,
+.page-content h2,
+.page-content h3,
+.page-content h4,
+.page-content h5,
+.page-content h6 {
+  margin-top: 2em;
+  margin-bottom: 1em;
+  text-indent: 0;
+  text-align: left;
+  font-weight: 600;
+  color: var(--paper-text-primary);
+}
+
+.page-content h1 {
+  font-size: 1.75em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0.5em;
+}
+
+.page-content h2 {
+  font-size: 1.5em;
+}
+
+.page-content h3 {
+  font-size: 1.25em;
+}
+
+.page-content blockquote {
+  margin: 1.5em 0;
+  padding: 1em 1.5em;
+  border-left: 3px solid var(--paper-link-color);
+  background: rgba(0, 0, 0, 0.02);
+  font-style: italic;
+}
+
+.page-content a {
+  color: var(--paper-link-color);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--paper-link-color);
+  transition: border-color 0.2s;
+}
+
+.page-content a:hover {
+  border-bottom-style: solid;
+}
+
+/* Footnote reference markers in text */
+.page-content a[href^="#fn"],
+.page-content a[href*="note"],
+.page-content sup a {
+  color: var(--paper-footnote-marker);
+  font-weight: 500;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+/* Images */
+.page-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5em auto;
+}
+
+.page-content figure {
+  margin: 2em 0;
+  text-align: center;
+}
+
+.page-content figcaption {
+  margin-top: 0.75em;
+  font-size: 0.875em;
+  color: var(--paper-text-muted);
+  font-style: italic;
+}
+
+/* Lists */
+.page-content ul,
+.page-content ol {
+  margin: 1.25em 0;
+  padding-left: 2em;
+}
+
+.page-content li {
+  margin-bottom: 0.5em;
+}
+
+/* Code blocks */
+.page-content pre,
+.page-content code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 3px;
+}
+
+.page-content code {
+  padding: 0.2em 0.4em;
+}
+
+.page-content pre {
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+
+.page-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+/* ============================================================================
+   Page Navigation Hints
+   ============================================================================ */
+
+/* Click zones for page navigation */
+.page-nav-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  z-index: 5;
+}
+
+.page-nav-zone:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.page-nav-zone--prev {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+
+.page-nav-zone--next {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 1rem;
+}
+
+.page-nav-hint {
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: var(--paper-text-muted);
+  font-size: 2.5rem;
+  user-select: none;
+  pointer-events: none;
+}
+
+.page-nav-zone:hover .page-nav-hint {
+  opacity: 0.4;
+}
+
+/* ============================================================================
+   Page Transitions
+   ============================================================================ */
+
+.page-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--page-transition-duration) var(--page-transition-easing),
+              transform var(--page-transition-duration) var(--page-transition-easing);
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity var(--page-transition-duration) var(--page-transition-easing),
+              transform var(--page-transition-duration) var(--page-transition-easing);
+}
+
+/* Reverse transitions for going backwards */
+.page-transition-reverse-enter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.page-transition-reverse-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--page-transition-duration) var(--page-transition-easing),
+              transform var(--page-transition-duration) var(--page-transition-easing);
+}
+
+.page-transition-reverse-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-transition-reverse-exit-active {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity var(--page-transition-duration) var(--page-transition-easing),
+              transform var(--page-transition-duration) var(--page-transition-easing);
+}
+
+/* ============================================================================
+   References Panel
+   ============================================================================ */
+
+.references-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--paper-base);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+  transition: transform var(--page-transition-duration) var(--page-transition-easing);
+  z-index: 50;
+  max-height: 40%;
+  overflow-y: auto;
+}
+
+.references-panel--open {
+  transform: translateY(0);
+}
+
+.references-panel__header {
+  position: sticky;
+  top: 0;
+  background: var(--paper-base);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.references-panel__content {
+  padding: 1rem 1.5rem 2rem;
+}
+
+.reference-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.reference-item:last-child {
+  border-bottom: none;
+}
+
+.reference-item__marker {
+  color: var(--paper-footnote-marker);
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.reference-item__content {
+  color: var(--paper-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ============================================================================
+   Bookmark Indicator
+   ============================================================================ */
+
+.bookmark-indicator {
+  position: absolute;
+  top: 0;
+  right: 1.5rem;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 20px solid #e53e3e;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  z-index: 10;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.bookmark-indicator:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+
+.bookmark-indicator:active {
+  transform: scale(0.95);
+}
+
+/* ============================================================================
+   Utility Classes for Theme Presets
+   ============================================================================ */
+
+/* Warm/Sepia theme preset */
+.reader-theme-sepia {
+  --paper-base: var(--paper-base-sepia);
+  --paper-warmth: 0.3;
+}
+
+/* Cool/Blue theme preset */
+.reader-theme-cool {
+  --paper-base: var(--paper-base-cool);
+  --paper-warmth: -0.1;
+  --paper-tint-hue: -5;
+}
+
+/* Pure white (modern) preset */
+.reader-theme-white {
+  --paper-base: #ffffff;
+  --paper-grain-opacity: 0.01;
+  --paper-vignette-opacity: 0.02;
+}
+
+/* Night mode (not just dark mode, but optimized for reading at night) */
+.reader-theme-night {
+  --paper-base: #1a1a1a;
+  --paper-text-primary: #c4c4c4;
+  --paper-grain-opacity: 0.015;
+}
+

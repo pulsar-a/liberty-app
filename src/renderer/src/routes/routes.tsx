@@ -102,9 +102,9 @@ export const myCollectionsRoute = createRoute({
   },
 })
 
-const readerRoute = createRoute({
+export const readerRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
-  path: '/reader',
+  path: '/reader/$bookId',
   component: () => <ReaderView />,
   pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
   staticData: {

@@ -48,6 +48,16 @@ export const api = {
     ipcRenderer.on('loader:update-item', (_event, value) => callback(value))
   },
 
+  // Reader progress IPC
+  onReaderProgress: (
+    callback: (data: { bookId: number; percent: number; stage: string }) => void
+  ) => {
+    ipcRenderer.on('reader:progress', (_event, value) => callback(value))
+  },
+  offReaderProgress: () => {
+    ipcRenderer.removeAllListeners('reader:progress')
+  },
+
   // IPC: main -> Renderer
   onUpdateCounter: (callback) =>
     ipcRenderer.on('update-counter', (_event, value) => callback(value)),

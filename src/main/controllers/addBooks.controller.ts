@@ -111,10 +111,6 @@ export const addBooksController = async () => {
 
       let imageFile: string | null = null
 
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:coverCheck',message:'Checking cover data before save',data:{hasCover:!!parsed?.cover,hasImageBuffer:!!parsed?.cover?.imageBuffer,archivePath:parsed?.cover?.archivePath,bufferType:parsed?.cover?.imageBuffer?typeof parsed.cover.imageBuffer:null,bufferLength:parsed?.cover?.imageBuffer?.length??0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H4'})}).catch(()=>{});
-      // #endregion
-
       if (parsed?.cover?.imageBuffer) {
         const imageExtension = parsed.cover.archivePath.split('.').pop()
         const imageFilename = `${encodedName}.${imageExtension}`
@@ -122,24 +118,15 @@ export const addBooksController = async () => {
 
         logger.debug('Saving cover image:', imageFile)
 
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:beforeWrite',message:'About to write cover file',data:{imageFile,imageExtension,imageFilename,bufferLength:parsed.cover.imageBuffer?.length??0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
-        // #endregion
-
         try {
           await fs.writeFile(
             path.join(imageAbsoluteDir, imageFilename),
             parsed.cover.imageBuffer,
             'binary'
           )
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:afterWrite',message:'Cover file write succeeded',data:{imageFile},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
-          // #endregion
         } catch (writeError) {
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:writeError',message:'Cover file write FAILED',data:{imageFile,error:String(writeError)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
-          // #endregion
-          imageFile = null; // Don't save cover path if write failed
+          logger.error('Failed to write cover image:', writeError)
+          imageFile = null // Don't save cover path if write failed
         }
       }
 
@@ -170,16 +157,8 @@ export const addBooksController = async () => {
       book.bookHash = uuidv4()
       book.authors = authorsList
 
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:beforeDbSave',message:'About to save book to DB',data:{bookName:book.name,coverPath:book.cover,originalFilename},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
-
       const createdBook = await booksQuery.createBook(book)
       let bookSavedSuccessfully = false
-
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:afterDbSave',message:'Book saved to DB successfully',data:{bookId:createdBook.id,bookName:createdBook.name,coverPath:createdBook.cover},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
 
       try {
         const addingBookIds =
@@ -194,9 +173,6 @@ export const addBooksController = async () => {
         await Promise.all(addingBookIds)
         bookSavedSuccessfully = true
       } catch (identifierError) {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:identifierError',message:'Failed to save identifiers, cleaning up book',data:{bookId:createdBook.id,error:String(identifierError)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5-fix'})}).catch(()=>{});
-        // #endregion
         await cleanupFailedBook(createdBook.id)
         throw identifierError
       }
@@ -217,9 +193,7 @@ export const addBooksController = async () => {
 
       // return createdBook
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:catchError',message:'Error caught in book processing',data:{originalFilename,error:String(error)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
+      logger.error('Error processing book:', originalFilename, error)
       try {
         await fs.unlink(destinationFile)
       } catch {
@@ -250,9 +224,6 @@ async function cleanupFailedBook(bookId: number | undefined): Promise<void> {
   if (bookId) {
     try {
       await booksQuery.removeBook({ id: bookId })
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'addBooks.controller.ts:cleanupFailedBook',message:'Cleaned up orphaned book from DB',data:{bookId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5-fix'})}).catch(()=>{});
-      // #endregion
     } catch {
       // Ignore cleanup errors
     }

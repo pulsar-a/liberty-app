@@ -25,6 +25,10 @@ export declare const api: {
         subLabelParams?: Record<string, string>
       }) => void
     ) => void,
+    onReaderProgress: (
+      callback: (data: { bookId: number; percent: number; stage: string }) => void
+    ) => void,
+    offReaderProgress: () => void,
 };
 
 

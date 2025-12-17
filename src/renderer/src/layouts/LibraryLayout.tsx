@@ -1,7 +1,8 @@
 import logoDark from '@/assets/images/logos/logo-dark.svg'
 import logoLight from '@/assets/images/logos/logo-light.svg'
+import { useReaderStore } from '@/store/useReaderStore'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBook, faCog, faTabletScreenButton } from '@fortawesome/free-solid-svg-icons'
+import { faBook, faBookReader, faCog } from '@fortawesome/free-solid-svg-icons'
 import { Outlet } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
@@ -11,6 +12,7 @@ import { MainMenuEntries } from './parts/MainMenuEntries'
 
 export const LibraryLayout = () => {
   const { t } = useTranslation()
+  const { bookId } = useReaderStore()
 
   const navigation = [
     { id: 'all-books', name: t('mainMenu_allBooks_title'), to: '/', icon: faBook, current: true },
@@ -20,12 +22,17 @@ export const LibraryLayout = () => {
       to: '/my-collections',
       icon: faHeart,
     },
-    {
-      id: '',
-      name: t('mainMenu_reader_title'),
-      to: '/reader',
-      icon: faTabletScreenButton,
-    },
+    // Only show Reading link if a book is currently open
+    ...(bookId
+      ? [
+          {
+            id: 'reading',
+            name: t('mainMenu_reading_title', 'Reading'),
+            to: `/reader/${bookId}`,
+            icon: faBookReader,
+          },
+        ]
+      : []),
   ]
 
   const systemNavigation = [

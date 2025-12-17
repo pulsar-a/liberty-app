@@ -1,4 +1,5 @@
 import { useIpc } from '@/hooks/useIpc'
+import { useReaderStore } from '@/store/useReaderStore'
 import { useLocation } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
@@ -17,7 +18,17 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
   const pathname = location.pathname
   const isLibrary = pathname === '/' || pathname.startsWith('/book/')
   const isMyCollections = pathname === '/my-collections'
-  const isReader = pathname === '/reader'
+  const isReader = pathname.startsWith('/reader')
+
+  // Reader store state
+  const {
+    bookTitle,
+    bookAuthor,
+    currentPageIndex,
+    totalPages,
+    getProgressPercentage,
+    getCurrentChapterTitle,
+  } = useReaderStore()
 
   // Fetch data for library stats
   const { data: books } = main.getBooks.useQuery(undefined, {
@@ -31,11 +42,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
 
   // Mock collections count (would come from API when implemented)
   const collectionsCount = 3
-
-  // Mock reader progress (would come from current book state when implemented)
-  const readerProgress = 42
-  const currentBookTitle = 'The Great Gatsby'
-  const currentBookAuthor = 'F. Scott Fitzgerald'
 
   const renderLibraryStatus = () => {
     const booksCount = books?.items.length || 0
@@ -71,6 +77,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
   }
 
   const renderReaderStatus = () => {
+    const progressPercentage = getProgressPercentage()
+    const chapterTitle = getCurrentChapterTitle()
+
+    // If no book is loaded, show nothing
+    if (!bookTitle || totalPages === 0) {
+      return null
+    }
+
     return (
       <div className="flex w-full items-center gap-4">
         {/* Progress bar and percentage */}
@@ -78,20 +92,41 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
           <div className="h-1.5 w-24 overflow-hidden rounded-full bg-gray-300 dark:bg-gray-700">
             <div
               className="h-full rounded-full bg-indigo-500 transition-all duration-300"
-              style={{ width: `${readerProgress}%` }}
+              style={{ width: `${progressPercentage}%` }}
             />
           </div>
-          <span className="font-medium tabular-nums">{readerProgress}%</span>
+          <span className="font-medium tabular-nums">{progressPercentage}%</span>
         </div>
 
-        {/* Book info - truncated on small screens */}
-        <div className="hidden min-w-0 flex-1 items-center gap-1 overflow-hidden md:flex">
+        {/* Page info */}
+        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
           <span className="h-3 w-px bg-gray-400 dark:bg-gray-600" />
-          <span className="truncate pl-2 text-gray-600 dark:text-gray-300">
-            {currentBookTitle}
+          <span className="tabular-nums">
+            {t('statusBar_page', 'Page {{current}} of {{total}}', {
+              current: currentPageIndex + 1,
+              total: totalPages,
+            })}
           </span>
-          <span className="shrink-0 text-gray-400 dark:text-gray-500">—</span>
-          <span className="truncate text-gray-500 dark:text-gray-400">{currentBookAuthor}</span>
+        </div>
+
+        {/* Chapter title */}
+        {chapterTitle && (
+          <div className="hidden min-w-0 flex-1 items-center gap-2 overflow-hidden lg:flex">
+            <span className="h-3 w-px bg-gray-400 dark:bg-gray-600" />
+            <span className="truncate text-gray-500 dark:text-gray-400">{chapterTitle}</span>
+          </div>
+        )}
+
+        {/* Book info - truncated on small screens */}
+        <div className="hidden min-w-0 items-center gap-1 overflow-hidden xl:flex">
+          <span className="h-3 w-px bg-gray-400 dark:bg-gray-600" />
+          <span className="truncate pl-2 text-gray-600 dark:text-gray-300">{bookTitle}</span>
+          {bookAuthor && (
+            <>
+              <span className="shrink-0 text-gray-400 dark:text-gray-500">—</span>
+              <span className="truncate text-gray-500 dark:text-gray-400">{bookAuthor}</span>
+            </>
+          )}
         </div>
       </div>
     )
@@ -118,4 +153,3 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
     </div>
   )
 }
-

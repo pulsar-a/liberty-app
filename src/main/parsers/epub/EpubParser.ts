@@ -169,16 +169,8 @@ export class EpubParser extends AbstractParser {
 
     logger.debug('Cover image path:', coverImagePath)
 
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverData',message:'Cover path extraction',data:{coverImagePath,contentOpfPath,archiveFiles:this.archive?Object.keys(this.archive.files).slice(0,20):null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
-
     const archiveFile = coverImagePath ? this.archive.file(coverImagePath) : null;
     const imageBuffer = archiveFile?._data ?? null;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverData',message:'Archive file lookup result',data:{coverImagePath,archiveFileExists:!!archiveFile,imageBufferExists:!!imageBuffer,imageBufferType:imageBuffer?typeof imageBuffer:null,imageBufferLength:imageBuffer?.length??0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H3'})}).catch(()=>{});
-    // #endregion
 
     return {
       archivePath: coverImagePath || '',
@@ -196,10 +188,6 @@ export class EpubParser extends AbstractParser {
       .find((meta) => meta.getAttribute('name') === 'cover')
       ?.getAttribute('content')
 
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverImagePath',message:'Cover detection method 1 (meta tag)',data:{coverItemId,metaCount:metas.length,opfDocumentDir},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
-    // #endregion
-
     if (coverItemId) {
       const coverImage = opfDocument.getElementById(coverItemId)?.getAttribute('href')
       if (coverImage) {
@@ -213,10 +201,6 @@ export class EpubParser extends AbstractParser {
     const coverImageItem = Array.from(manifestItems)
       .find((item) => item.getAttribute('properties')?.includes('cover-image'))
 
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverImagePath',message:'Cover detection method 2 (EPUB3 properties)',data:{foundCoverImageItem:!!coverImageItem,manifestItemCount:manifestItems.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
-    // #endregion
-
     if (coverImageItem) {
       const coverHref = coverImageItem.getAttribute('href')
       if (coverHref) {
@@ -229,10 +213,6 @@ export class EpubParser extends AbstractParser {
     const guideRefs = opfDocument.getElementsByTagName('reference')
     const guideCover = Array.from(guideRefs)
       .find((ref) => ref.getAttribute('type') === 'cover')
-
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverImagePath',message:'Cover detection method 3 (guide section)',data:{foundGuideCover:!!guideCover,guideRefCount:guideRefs.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
-    // #endregion
 
     if (guideCover) {
       const coverHref = guideCover.getAttribute('href')
@@ -257,17 +237,10 @@ export class EpubParser extends AbstractParser {
       ]
       for (const possiblePath of possiblePaths) {
         if (this.archive?.file(possiblePath)) {
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverImagePath',message:'Cover detection method 4 (filename fallback)',data:{foundPath:possiblePath},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
-          // #endregion
           return possiblePath
         }
       }
     }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/becba53d-c6f7-44ee-a889-dde4f95ffa43',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EpubParser.ts:getBookCoverImagePath',message:'No cover found with any method',data:{opfDocumentDir},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
-    // #endregion
 
     return null
   }

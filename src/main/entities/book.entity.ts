@@ -44,6 +44,9 @@ export default class BookEntity {
   readingProgress: number | null
 
   @Column('integer', { nullable: true })
+  totalPages: number | null
+
+  @Column('integer', { nullable: true })
   score: number | null
 
   @Column('text')

@@ -12,6 +12,7 @@ export type Book = {
   coverAlt?: string
   authors: Author[]
   readingProgress?: number
+  totalPages?: number
   score?: number
   fileFormat: string
 }
