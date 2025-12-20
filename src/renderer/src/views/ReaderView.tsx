@@ -1,8 +1,5 @@
 import { BookReference, ContainerDimensions, FittingConfig } from '@app-types/reader.types'
-import { faColumns, faFileAlt } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useNavigate } from '@tanstack/react-router'
-import { clsx } from 'clsx'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MeasurementContainer, MeasurementContainerApi } from '../components/reader/MeasurementContainer'
@@ -10,6 +7,7 @@ import { PageRenderer } from '../components/reader/PageRenderer'
 import { ReaderLoadingProgress } from '../components/reader/ReaderLoadingProgress'
 import { ReaderSidebar } from '../components/reader/ReaderSidebar'
 import { ReferencesPanel } from '../components/reader/ReferencesPanel'
+import { WasmPageRenderer } from '../components/reader/WasmPageRenderer'
 import { useIpc } from '../hooks/useIpc'
 import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
 import { readerRoute } from '../routes/routes'
@@ -354,6 +352,28 @@ export const ReaderView: React.FC = () => {
     clearFittedContent()
   }, [setLayoutMode, clearFittedContent])
 
+  // WASM-specific handlers
+  const handlePageChange = useCallback((pageIndex: number, total: number) => {
+    // Page count is managed by WASM renderer
+  }, [])
+
+  const handleLinkClick = useCallback((href: string, isInternal: boolean) => {
+    if (isInternal && href.startsWith('#')) {
+      // Internal anchor - try to navigate to it
+      const anchor = href.substring(1)
+      // TODO: Navigate to anchor in book
+      console.log('[ReaderView] Navigate to anchor:', anchor)
+    } else if (!isInternal) {
+      // External link - open in browser
+      window.open(href, '_blank', 'noopener,noreferrer')
+    }
+  }, [])
+
+  const handleWasmError = useCallback((err: Error) => {
+    console.error('[ReaderView] WASM error:', err)
+    setError(err.message)
+  }, [setError])
+
   // Handle invalid book ID
   if (isNaN(bookIdNum)) {
     return (
@@ -438,8 +458,8 @@ export const ReaderView: React.FC = () => {
       }
       content={
         <div className="absolute inset-0 flex flex-col">
-          {/* Hidden measurement container for content fitting */}
-          {containerDimensions && (
+          {/* Hidden measurement container for content fitting (HTML engine only) */}
+          {settings.engine === 'html' && containerDimensions && (
             <MeasurementContainer
               ref={measurementRef}
               dimensions={containerDimensions}
@@ -451,21 +471,34 @@ export const ReaderView: React.FC = () => {
 
           {/* Page content - fills available space */}
           <div ref={contentContainerRef} className="relative flex-1 overflow-hidden">
-            {/* Always render PageRenderer to get dimensions, but show overlay when paginating */}
-            <PageRenderer 
-              onReferenceClick={handleReferenceClick} 
-              onRemoveBookmark={handleRemoveBookmarkByPage}
-              onDimensionsChange={handleDimensionsChange}
-            />
-            
-            {/* Show loading overlay while paginating */}
-            {isPaginating && !fittedContent && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10">
-                <ReaderLoadingProgress 
-                  percent={loadingProgress} 
-                  stage={loadingStage || 'reader_loading_paginating'} 
+            {/* Use WASM renderer when engine is 'wasm' */}
+            {settings.engine === 'wasm' ? (
+              <WasmPageRenderer
+                bookContent={content}
+                onPageChange={handlePageChange}
+                onReferenceClick={handleReferenceClick}
+                onLinkClick={handleLinkClick}
+                onError={handleWasmError}
+              />
+            ) : (
+              <>
+                {/* HTML-based renderer with DOM measurement */}
+                <PageRenderer 
+                  onReferenceClick={handleReferenceClick} 
+                  onRemoveBookmark={handleRemoveBookmarkByPage}
+                  onDimensionsChange={handleDimensionsChange}
                 />
-              </div>
+                
+                {/* Show loading overlay while paginating */}
+                {isPaginating && !fittedContent && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10">
+                    <ReaderLoadingProgress 
+                      percent={loadingProgress} 
+                      stage={loadingStage || 'reader_loading_paginating'} 
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
 

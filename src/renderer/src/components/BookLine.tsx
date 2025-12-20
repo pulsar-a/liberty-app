@@ -1,10 +1,12 @@
-import { faBookOpen } from '@fortawesome/free-solid-svg-icons'
+import { faHeart as faHeartOutline } from '@fortawesome/free-regular-svg-icons'
+import { faBookOpen, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import BookEntity from '../../../main/entities/book.entity'
+import { useIpc } from '../hooks/useIpc'
 import { BookContextMenu } from './BookContextMenu'
 import { BookCover } from './BookCover'
 
@@ -18,6 +20,21 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate({ from: location.pathname })
+  const { main } = useIpc()
+  const utils = main.useUtils()
+
+  const toggleFavoriteMutation = main.toggleFavorite.useMutation({
+    onSuccess: () => {
+      utils.invalidate(undefined, { queryKey: ['getBooks', undefined] })
+      utils.invalidate(undefined, { queryKey: ['getFavoriteBooks'] })
+      utils.invalidate(undefined, { queryKey: ['getFavoriteBooksCount'] })
+    },
+  })
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleFavoriteMutation.mutate({ bookId: book.id })
+  }
 
   const hasReadingProgress =
     book.readingProgress !== null &&
@@ -88,6 +105,25 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
           e.stopPropagation()
         }}
       >
+        {/* Favorite button */}
+        <button
+          onClick={handleToggleFavorite}
+          disabled={toggleFavoriteMutation.isLoading}
+          className={clsx(
+            'flex h-8 w-8 items-center justify-center rounded-full transition-all',
+            book.isFavorite
+              ? 'bg-rose-100 text-rose-500 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/60'
+              : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-500 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400',
+            toggleFavoriteMutation.isLoading && 'opacity-50'
+          )}
+          title={book.isFavorite ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites') : t('bookDetailsView_addToFavorites', 'Add to favorites')}
+        >
+          <FontAwesomeIcon
+            icon={book.isFavorite ? faHeartSolid : faHeartOutline}
+            className="h-4 w-4"
+          />
+        </button>
+
         {/* Continue/Start reading button */}
         <button
           onClick={openReader}

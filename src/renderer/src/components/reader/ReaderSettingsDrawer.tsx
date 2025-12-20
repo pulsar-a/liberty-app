@@ -29,6 +29,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
     setContentPaddingX,
     setContentPaddingY,
     setMaxContentWidth,
+    setEngine,
   } = useReaderSettingsStore()
   
   const { layoutMode, setLayoutMode, clearFittedContent } = useReaderStore()
@@ -220,6 +221,41 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
                         title={t('reader_settings_two_columns', 'Two columns')}
                       >
                         <FontAwesomeIcon icon={faColumns} className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Rendering Engine */}
+                  <div className="min-w-[100px]">
+                    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {t('reader_settings_engine', 'Engine')}
+                    </label>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setEngine('wasm')}
+                        className={clsx(
+                          'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                          settings.engine === 'wasm'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        )}
+                        title={t('reader_settings_engine_wasm', 'WASM canvas renderer - faster, consistent')}
+                      >
+                        WASM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEngine('html')}
+                        className={clsx(
+                          'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                          settings.engine === 'html'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        )}
+                        title={t('reader_settings_engine_html', 'HTML DOM renderer - traditional')}
+                      >
+                        HTML
                       </button>
                     </div>
                   </div>

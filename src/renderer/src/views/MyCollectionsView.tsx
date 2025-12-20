@@ -1,5 +1,5 @@
 import { RouteEntry } from '@app-types/router.types'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faHeart, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useNavigate } from '@tanstack/react-router'
@@ -32,6 +32,8 @@ export const MyCollectionsView: React.FC = () => {
     name: string
   } | null>(null)
 
+  const isFavoritesSelected = collectionId === 'favorites'
+
   // Fetch all collections
   const { data: collectionsData, isLoading: isLoadingCollections } = main.getCollections.useQuery(
     undefined,
@@ -40,13 +42,27 @@ export const MyCollectionsView: React.FC = () => {
     }
   )
 
-  // Fetch selected collection with books
+  // Fetch favorites count for sidebar badge
+  const { data: favoritesCount } = main.getFavoriteBooksCount.useQuery(undefined, {
+    queryKey: ['getFavoriteBooksCount'],
+  })
+
+  // Fetch favorite books when favorites is selected
+  const { data: favoriteBooks, isLoading: isLoadingFavorites } = main.getFavoriteBooks.useQuery(
+    undefined,
+    {
+      queryKey: ['getFavoriteBooks'],
+      enabled: isFavoritesSelected,
+    }
+  )
+
+  // Fetch selected collection with books (only when a real collection is selected)
   const { data: selectedCollection, isLoading: isLoadingSelected } =
     main.getCollectionById.useQuery(
-      { id: collectionId! },
+      { id: collectionId as number },
       {
         queryKey: ['getCollectionById', { id: collectionId }],
-        enabled: collectionId !== undefined,
+        enabled: collectionId !== undefined && !isFavoritesSelected,
       }
     )
 
@@ -81,18 +97,31 @@ export const MyCollectionsView: React.FC = () => {
     },
   })
 
+  // Favorites entry (always at top)
+  const favoritesEntry: RouteEntry = {
+    id: 'favorites',
+    name: t('favorites_title', 'Favorites'),
+    to: '/my-collections',
+    search: { collectionId: 'favorites' },
+    count: favoritesCount || 0,
+    icon: faHeart,
+    variant: 'favorite',
+  }
+
   // Transform collections to RouteEntry format
   const collections: RouteEntry[] = (collectionsData || []).map((collection) => ({
     id: collection.id,
     name: collection.name,
     to: '/my-collections',
     search: { collectionId: collection.id },
-    badge: collection.booksCount > 0 ? collection.booksCount.toString() : undefined,
+    count: collection.booksCount,
   }))
 
-  const selectedCollectionName = collectionId
-    ? collections.find((c) => c.id === collectionId)?.name || t('myCollectionsView_loading', 'Loading...')
-    : t('myCollectionsView_allCollections', 'All Collections')
+  const selectedCollectionName = isFavoritesSelected
+    ? t('favorites_title', 'Favorites')
+    : collectionId
+      ? collections.find((c) => c.id === collectionId)?.name || t('myCollectionsView_loading', 'Loading...')
+      : t('myCollectionsView_allCollections', 'All Collections')
 
   const handleCreateCollection = () => {
     if (newCollectionName.trim()) {
@@ -124,11 +153,32 @@ export const MyCollectionsView: React.FC = () => {
               />
             </div>
 
-            {isLoadingSelected && collectionId ? (
+            {/* Loading state */}
+            {((isLoadingSelected && collectionId && !isFavoritesSelected) ||
+              (isLoadingFavorites && isFavoritesSelected)) && (
               <div className="flex justify-center py-16">
                 <LoadingSpinner size="lg" />
               </div>
-            ) : collectionId && selectedCollection ? (
+            )}
+
+            {/* Favorites content */}
+            {isFavoritesSelected && !isLoadingFavorites && (
+              favoriteBooks && favoriteBooks.length > 0 ? (
+                <BooksGrid books={favoriteBooks} />
+              ) : (
+                <EmptyState
+                  message={t('favorites_empty', 'No favorite books yet')}
+                  details={t(
+                    'favorites_empty_hint',
+                    'Click the heart icon on any book to add it to favorites'
+                  )}
+                  type="info"
+                />
+              )
+            )}
+
+            {/* Regular collection content */}
+            {collectionId && !isFavoritesSelected && selectedCollection && !isLoadingSelected && (
               selectedCollection.books && selectedCollection.books.length > 0 ? (
                 <BooksGrid books={selectedCollection.books} />
               ) : (
@@ -141,7 +191,10 @@ export const MyCollectionsView: React.FC = () => {
                   type="info"
                 />
               )
-            ) : !collectionId ? (
+            )}
+
+            {/* No collection selected */}
+            {!collectionId && (
               <EmptyState
                 message={t('myCollectionsView_selectCollection', 'Select a collection')}
                 details={t(
@@ -150,7 +203,7 @@ export const MyCollectionsView: React.FC = () => {
                 )}
                 type="info"
               />
-            ) : null}
+            )}
           </div>
         }
         sidebar={
@@ -164,12 +217,17 @@ export const MyCollectionsView: React.FC = () => {
               onClick={() => setShowCreateDialog(true)}
             />
 
+            {/* Favorites entry - always at top */}
+            <div className="pt-4">
+              <SubmenuEntries items={[favoritesEntry]} />
+            </div>
+
             {isLoadingCollections ? (
               <div className="flex justify-center py-8">
                 <LoadingSpinner size="md" />
               </div>
             ) : collections.length > 0 ? (
-              <div className="pt-8">
+              <div className="pt-4">
                 <ul className="space-y-1">
                   {collections.map((collection) => (
                     <li key={collection.id} className="group relative">

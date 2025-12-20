@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinTable,
   ManyToMany,
   OneToMany,
@@ -17,12 +18,15 @@ export default class BookEntity {
   @PrimaryGeneratedColumn()
   id: number
 
+  @Index('idx_books_name')
   @Column('text')
   name: string
 
+  @Index('idx_books_fileName')
   @Column('text')
   fileName: string
 
+  @Index('idx_books_originalFileName')
   @Column('text')
   originalFileName: string
 
@@ -38,6 +42,7 @@ export default class BookEntity {
   @Column('text', { nullable: true })
   description: string | null
 
+  @Index('idx_books_fileFormat')
   @Column('text')
   fileFormat: string
 
@@ -55,6 +60,9 @@ export default class BookEntity {
 
   @Column('integer', { nullable: true })
   fileSize: number | null
+
+  @Column('boolean', { default: false })
+  isFavorite: boolean
 
   @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date

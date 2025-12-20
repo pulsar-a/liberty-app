@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
@@ -18,6 +19,7 @@ export default class CollectionEntity {
   @PrimaryGeneratedColumn()
   id: number
 
+  @Index('idx_collections_name')
   @Column('text')
   name: string
 

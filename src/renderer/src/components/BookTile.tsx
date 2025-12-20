@@ -1,4 +1,5 @@
-import { faBookOpen } from '@fortawesome/free-solid-svg-icons'
+import { faHeart as faHeartOutline } from '@fortawesome/free-regular-svg-icons'
+import { faBookOpen, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
@@ -8,6 +9,7 @@ import BookEntity from '../../../main/entities/book.entity'
 import placeholderBlue from '../assets/images/placeholder-blue.jpg'
 import placeholderGreen from '../assets/images/placeholder-green.jpg'
 import placeholderPink from '../assets/images/placeholder-pink.jpg'
+import { useIpc } from '../hooks/useIpc'
 import { getStableOptionForHash } from '../utils/hashSelector'
 import { BookContextMenu } from './BookContextMenu'
 
@@ -20,8 +22,23 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate({ from: location.pathname })
+  const { main } = useIpc()
+  const utils = main.useUtils()
 
   const [isImageAvailable, setImageAvailable] = React.useState(true)
+
+  const toggleFavoriteMutation = main.toggleFavorite.useMutation({
+    onSuccess: () => {
+      utils.invalidate(undefined, { queryKey: ['getBooks', undefined] })
+      utils.invalidate(undefined, { queryKey: ['getFavoriteBooks'] })
+      utils.invalidate(undefined, { queryKey: ['getFavoriteBooksCount'] })
+    },
+  })
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleFavoriteMutation.mutate({ bookId: book.id })
+  }
 
   const hasReadingProgress =
     book.readingProgress !== null &&
@@ -80,8 +97,28 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
           backgroundSize: 'cover',
         }}
       >
+        {/* Favorite button - top left */}
+        <button
+          onClick={handleToggleFavorite}
+          disabled={toggleFavoriteMutation.isLoading}
+          className={clsx(
+            'absolute left-2 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full transition-all',
+            book.isFavorite
+              ? 'bg-rose-500/90 text-white hover:bg-rose-600'
+              : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white',
+            toggleFavoriteMutation.isLoading && 'opacity-50'
+          )}
+          title={book.isFavorite ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites') : t('bookDetailsView_addToFavorites', 'Add to favorites')}
+        >
+          <FontAwesomeIcon
+            icon={book.isFavorite ? faHeartSolid : faHeartOutline}
+            className="h-4 w-4"
+          />
+        </button>
+
+        {/* Context menu - top right */}
         <div
-          className="absolute right-2 top-3 flex h-8 w-8 items-center justify-center"
+          className="absolute right-2 top-3 z-20 flex h-8 w-8 items-center justify-center"
           onClick={(e) => {
             e.stopPropagation()
           }}
@@ -91,7 +128,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
 
         {/* Reading progress badge */}
         {hasReadingProgress && (
-          <div className="absolute right-2 top-12 rounded bg-amber-950/80 px-2 py-1 text-sm font-medium text-white shadow-lg">
+          <div className="absolute right-2 top-12 z-20 rounded bg-amber-950/80 px-2 py-1 text-sm font-medium text-white shadow-lg">
             {progressPercentage}%
           </div>
         )}
@@ -138,7 +175,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
         )}
 
         {/* Continue reading button on hover */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
           <button
             onClick={openReader}
             className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-500"

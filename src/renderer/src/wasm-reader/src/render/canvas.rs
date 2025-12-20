@@ -304,6 +304,12 @@ impl Renderer {
             LayoutElement::Image { data, .. } => {
                 // Decode and render image if data is available
                 if let Some(image_data) = data {
+                    // Calculate max height as remaining space on page (accounting for bottom padding)
+                    // content_bottom is the y-coordinate where content area ends
+                    let content_bottom = canvas_height as f32 - settings.padding_y;
+                    // max_height is space from current y position to content bottom
+                    let max_height = (content_bottom - y).max(1.0) as u32;
+                    
                     self.render_image(
                         pixels,
                         canvas_width,
@@ -312,6 +318,7 @@ impl Renderer {
                         x as u32,
                         y as u32,
                         max_width as u32,
+                        max_height,
                     )?;
                 }
             }
@@ -564,6 +571,7 @@ impl Renderer {
         x: u32,
         y: u32,
         max_width: u32,
+        max_height: u32,
     ) -> Result<(), ReaderError> {
         // Try to decode the image
         let img = image::load_from_memory(image_data)
@@ -572,17 +580,26 @@ impl Renderer {
         let rgba = img.to_rgba8();
         let (img_width, img_height) = rgba.dimensions();
 
-        // Scale if needed
-        let scale = if img_width > max_width {
+        // Scale to fit both width AND height constraints while maintaining aspect ratio
+        let scale_for_width = if img_width > max_width {
             max_width as f32 / img_width as f32
         } else {
             1.0
         };
+        
+        let scale_for_height = if img_height > max_height {
+            max_height as f32 / img_height as f32
+        } else {
+            1.0
+        };
+        
+        // Use the smaller scale to ensure image fits both constraints
+        let scale = scale_for_width.min(scale_for_height);
 
         let render_width = (img_width as f32 * scale) as u32;
         let render_height = (img_height as f32 * scale) as u32;
 
-        // Center image
+        // Center image horizontally
         let offset_x = (max_width - render_width) / 2;
 
         // Copy pixels

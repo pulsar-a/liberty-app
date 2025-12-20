@@ -334,9 +334,32 @@ impl<'a> Paginator<'a> {
                 height
             }
 
-            LayoutElement::Image { height: img_height, .. } => {
-                // Use specified height or default
-                img_height.map(|h| h as f32).unwrap_or(200.0)
+            LayoutElement::Image { height: img_height, width: img_width, .. } => {
+                // Get available dimensions
+                let available_height = self.settings.content_height();
+                let content_width = self.settings.content_width();
+                
+                // Get raw dimensions or use defaults
+                let raw_height = img_height.map(|h| h as f32).unwrap_or(200.0);
+                let raw_width = img_width.map(|w| w as f32).unwrap_or(content_width);
+                
+                // Scale image to fit within page bounds while maintaining aspect ratio
+                let scale_for_width = if raw_width > content_width {
+                    content_width / raw_width
+                } else {
+                    1.0
+                };
+                
+                let scale_for_height = if raw_height > available_height {
+                    available_height / raw_height
+                } else {
+                    1.0
+                };
+                
+                let scale = scale_for_width.min(scale_for_height);
+                let final_height = raw_height * scale;
+                
+                final_height
             }
 
             LayoutElement::Figure { content, caption } => {

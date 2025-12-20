@@ -161,7 +161,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   hyphenation: true,
   paragraphSpacing: 1.25, // em
   paragraphIndent: 1.5, // em
-  engine: 'html', // Default to HTML for stability, WASM is experimental
+  engine: 'wasm', // Default to WASM for deterministic rendering
 }
 
 export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSettingsActions>()(

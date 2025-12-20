@@ -118,38 +118,57 @@ export const DEFAULT_READER_FONTS: FontToLoad[] = [
 ]
 
 /**
- * Theme color presets
+ * Theme color presets - matching READER_THEMES from useReaderSettingsStore
  */
 export const WASM_THEME_COLORS = {
+  // Light theme: #ffffff bg, #2c2c2c text
+  light: {
+    backgroundColor: { r: 255, g: 255, b: 255, a: 255 },
+    textColor: { r: 44, g: 44, b: 44, a: 255 },
+    linkColor: { r: 37, g: 99, b: 235, a: 255 },
+    headingColor: { r: 28, g: 28, b: 28, a: 255 },
+  },
+  // Warm theme: #f5f1e8 bg, #2c2c2c text
   warm: {
-    backgroundColor: { r: 253, g: 251, b: 247, a: 255 },
-    textColor: { r: 45, g: 42, b: 38, a: 255 },
+    backgroundColor: { r: 245, g: 241, b: 232, a: 255 },
+    textColor: { r: 44, g: 44, b: 44, a: 255 },
     linkColor: { r: 59, g: 130, b: 246, a: 255 },
     headingColor: { r: 30, g: 28, b: 25, a: 255 },
   },
-  cool: {
-    backgroundColor: { r: 248, g: 250, b: 252, a: 255 },
-    textColor: { r: 30, g: 41, b: 59, a: 255 },
-    linkColor: { r: 37, g: 99, b: 235, a: 255 },
-    headingColor: { r: 15, g: 23, b: 42, a: 255 },
-  },
+  // Sepia theme: #f4ecd8 bg, #5c4b37 text
   sepia: {
-    backgroundColor: { r: 249, g: 241, b: 228, a: 255 },
-    textColor: { r: 68, g: 51, b: 34, a: 255 },
+    backgroundColor: { r: 244, g: 236, b: 216, a: 255 },
+    textColor: { r: 92, g: 75, b: 55, a: 255 },
     linkColor: { r: 139, g: 90, b: 43, a: 255 },
-    headingColor: { r: 51, g: 38, b: 25, a: 255 },
+    headingColor: { r: 68, g: 51, b: 34, a: 255 },
   },
-  white: {
-    backgroundColor: { r: 255, g: 255, b: 255, a: 255 },
-    textColor: { r: 33, g: 33, b: 33, a: 255 },
-    linkColor: { r: 25, g: 118, b: 210, a: 255 },
-    headingColor: { r: 17, g: 17, b: 17, a: 255 },
-  },
-  night: {
-    backgroundColor: { r: 26, g: 26, b: 31, a: 255 },
-    textColor: { r: 204, g: 204, b: 209, a: 255 },
+  // Dark theme: #1f1f1f bg, #e8e8e8 text
+  dark: {
+    backgroundColor: { r: 31, g: 31, b: 31, a: 255 },
+    textColor: { r: 232, g: 232, b: 232, a: 255 },
     linkColor: { r: 96, g: 165, b: 250, a: 255 },
-    headingColor: { r: 229, g: 229, b: 234, a: 255 },
+    headingColor: { r: 245, g: 245, b: 245, a: 255 },
+  },
+  // Night theme: #1a1a1a bg, #c4c4c4 text
+  night: {
+    backgroundColor: { r: 26, g: 26, b: 26, a: 255 },
+    textColor: { r: 196, g: 196, b: 196, a: 255 },
+    linkColor: { r: 96, g: 165, b: 250, a: 255 },
+    headingColor: { r: 220, g: 220, b: 220, a: 255 },
+  },
+  // High contrast light: #ffffff bg, #000000 text
+  'high-contrast-light': {
+    backgroundColor: { r: 255, g: 255, b: 255, a: 255 },
+    textColor: { r: 0, g: 0, b: 0, a: 255 },
+    linkColor: { r: 0, g: 0, b: 200, a: 255 },
+    headingColor: { r: 0, g: 0, b: 0, a: 255 },
+  },
+  // High contrast dark: #000000 bg, #ffffff text
+  'high-contrast-dark': {
+    backgroundColor: { r: 0, g: 0, b: 0, a: 255 },
+    textColor: { r: 255, g: 255, b: 255, a: 255 },
+    linkColor: { r: 100, g: 180, b: 255, a: 255 },
+    headingColor: { r: 255, g: 255, b: 255, a: 255 },
   },
 } as const
 

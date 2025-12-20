@@ -50,4 +50,25 @@ export const booksQuery = {
     const newItem = repository.create(bookId)
     return await repository.save(newItem)
   },
+  async toggleFavorite(bookId: number): Promise<{ isFavorite: boolean } | null> {
+    const book = await booksQuery.book({ id: bookId })
+    if (!book) return null
+
+    book.isFavorite = !book.isFavorite
+    await db.manager.save(book)
+    return { isFavorite: book.isFavorite }
+  },
+  async getFavoriteBooks(): Promise<BookEntity[]> {
+    return db.manager.find(BookEntity, {
+      where: { isFavorite: true },
+      relations: {
+        authors: true,
+      },
+    })
+  },
+  async getFavoriteBooksCount(): Promise<number> {
+    return db.manager.count(BookEntity, {
+      where: { isFavorite: true },
+    })
+  },
 }

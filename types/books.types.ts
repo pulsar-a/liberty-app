@@ -15,6 +15,7 @@ export type Book = {
   totalPages?: number
   score?: number
   fileFormat: string
+  isFavorite: boolean
 }
 //
 // export type BookEntity = {

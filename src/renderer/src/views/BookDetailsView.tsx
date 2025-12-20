@@ -4,10 +4,11 @@ import { useIpc } from '@/hooks/useIpc'
 import { useSettings } from '@/hooks/useSettings'
 import { formatDateDistance } from '@/utils/dateFormatter'
 import { formatFileSize } from '@/utils/fileFormatter'
-import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBook, faFingerprint, faPlus, faTable, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faHeart as faHeartOutline } from '@fortawesome/free-regular-svg-icons'
+import { faBook, faFingerprint, faHeart as faHeartSolid, faPlus, faTable, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useNavigate } from '@tanstack/react-router'
+import { clsx } from 'clsx'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
@@ -67,6 +68,24 @@ export const BookDetailsView: React.FC<BookDetailsViewProps> = ({ bookId }) => {
     },
   })
 
+  const toggleFavoriteMutation = main.toggleFavorite.useMutation({
+    onSuccess: () => {
+      utils.invalidate(undefined, {
+        queryKey: ['getBookById', { id: bookId }],
+      })
+      utils.invalidate(undefined, {
+        queryKey: ['getFavoriteBooks'],
+      })
+      utils.invalidate(undefined, {
+        queryKey: ['getFavoriteBooksCount'],
+      })
+    },
+  })
+
+  const handleToggleFavorite = () => {
+    toggleFavoriteMutation.mutate({ bookId })
+  }
+
   const onBookDelete = async () => {
     return deleteMutation.mutate({ id: bookId })
   }
@@ -122,10 +141,23 @@ export const BookDetailsView: React.FC<BookDetailsViewProps> = ({ bookId }) => {
           </div>
           <button
             type="button"
-            className="relative ml-4 flex h-10 w-10 shrink-0 grow-0 cursor-default items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-bright-gray-950 dark:text-indigo-50 dark:hover:bg-bright-gray-900 dark:hover:text-indigo-100"
+            onClick={handleToggleFavorite}
+            disabled={toggleFavoriteMutation.isLoading}
+            className={clsx(
+              'relative ml-4 flex h-10 w-10 shrink-0 grow-0 cursor-default items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2',
+              book.isFavorite
+                ? 'bg-rose-100 text-rose-500 hover:bg-rose-200 hover:text-rose-600 focus:ring-rose-400 dark:bg-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/60 dark:hover:text-rose-300'
+                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-500 focus:ring-indigo-500 dark:bg-bright-gray-950 dark:text-indigo-50 dark:hover:bg-bright-gray-900 dark:hover:text-indigo-100',
+              toggleFavoriteMutation.isLoading && 'opacity-50'
+            )}
+            title={book.isFavorite ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites') : t('bookDetailsView_addToFavorites', 'Add to favorites')}
           >
             <span className="absolute -inset-1.5" />
-            <FontAwesomeIcon icon={faHeart} className="h-6 w-6" aria-hidden="true" />
+            <FontAwesomeIcon
+              icon={book.isFavorite ? faHeartSolid : faHeartOutline}
+              className={clsx('h-6 w-6', book.isFavorite && 'text-rose-500 dark:text-rose-400')}
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>
@@ -173,7 +205,7 @@ export const BookDetailsView: React.FC<BookDetailsViewProps> = ({ bookId }) => {
         <h3 className="flex cursor-default items-center justify-between font-medium text-gray-900 dark:text-indigo-50">
           {t('bookDetailsView_inCollections_title')}
           <FontAwesomeIcon
-            icon={faHeart}
+            icon={faHeartSolid}
             className="h-4 w-4 pr-2 text-red-600"
             aria-hidden="true"
           />

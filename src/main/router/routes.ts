@@ -20,7 +20,9 @@ import {
   updateReadingProgressInputSchema,
 } from '../controllers/reader.controller'
 import { removeBookByIdController } from '../controllers/removeBookByIdController'
+import { booksQuery } from '../queries/books'
 import { collectionsQuery } from '../queries/collections'
+import { searchQuery } from '../queries/search'
 
 const trpc = initTRPC.create({
   isServer: true,
@@ -41,6 +43,19 @@ export const router = trpc.router({
     .input(z.object({ id: z.union([z.number(), z.string()]) }))
     .mutation(removeBookByIdController),
   getAuthors: trpc.procedure.query(getAuthorsController),
+
+  // Favorites routes
+  toggleFavorite: trpc.procedure
+    .input(z.object({ bookId: z.number() }))
+    .mutation(async ({ input }) => {
+      return await booksQuery.toggleFavorite(input.bookId)
+    }),
+  getFavoriteBooks: trpc.procedure.query(async () => {
+    return await booksQuery.getFavoriteBooks()
+  }),
+  getFavoriteBooksCount: trpc.procedure.query(async () => {
+    return await booksQuery.getFavoriteBooksCount()
+  }),
 
   // Reader routes
   getBookContent: trpc.procedure.input(getBookContentInputSchema).query(getBookContentController),
@@ -94,6 +109,27 @@ export const router = trpc.router({
     .input(z.object({ bookId: z.number(), collectionId: z.number() }))
     .mutation(async ({ input }) => {
       return await collectionsQuery.removeBookFromCollection(input.bookId, input.collectionId)
+    }),
+
+  // Search routes
+  search: trpc.procedure
+    .input(
+      z.object({
+        query: z.string(),
+        filters: z
+          .array(z.enum(['books', 'collections', 'book_ids', 'file_names', 'internal_file_names']))
+          .optional(),
+        formats: z.array(z.enum(['epub', 'pdf', 'fb2', 'fb3', 'txt'])).optional(),
+        limit: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      return await searchQuery.search(input)
+    }),
+  quickSearch: trpc.procedure
+    .input(z.object({ query: z.string() }))
+    .query(async ({ input }) => {
+      return await searchQuery.quickSearch(input.query)
     }),
 })
 

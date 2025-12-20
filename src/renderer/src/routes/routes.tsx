@@ -16,6 +16,7 @@ import { z } from 'zod'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { MyCollectionsView } from '../views/MyCollectionsView'
 import { ReaderView } from '../views/ReaderView'
+import { SearchView } from '../views/SearchView'
 import { WasmReaderView } from '../views/WasmReaderView'
 import { SettingsFilesView } from '../views/SettingsFilesView'
 
@@ -72,7 +73,7 @@ const authorSearchSchema = z.object({
 })
 
 const collectionsSearchSchema = z.object({
-  collectionId: z.number().optional(),
+  collectionId: z.union([z.number(), z.literal('favorites')]).optional(),
 })
 
 export const libraryRoute = createRoute({
@@ -92,6 +93,16 @@ export const myCollectionsRoute = createRoute({
   component: () => <MyCollectionsView />,
   pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
   validateSearch: collectionsSearchSchema,
+  staticData: {
+    flyout: false,
+  },
+})
+
+export const searchRoute = createRoute({
+  getParentRoute: () => libraryLayoutRoute,
+  path: '/search',
+  component: () => <SearchView />,
+  pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
   staticData: {
     flyout: false,
   },
@@ -186,6 +197,7 @@ const routeTree = rootRoute.addChildren([
   libraryLayoutRoute.addChildren([
     libraryRoute,
     myCollectionsRoute,
+    searchRoute,
     readerRoute,
     wasmReaderRoute,
     settingsRoute.addChildren([

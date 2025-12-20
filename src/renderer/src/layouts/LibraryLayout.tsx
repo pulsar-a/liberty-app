@@ -2,7 +2,7 @@ import logoDark from '@/assets/images/logos/logo-dark.svg'
 import logoLight from '@/assets/images/logos/logo-light.svg'
 import { useReaderStore } from '@/store/useReaderStore'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBook, faBookReader, faCog } from '@fortawesome/free-solid-svg-icons'
+import { faBook, faBookReader, faCog, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { Outlet, useNavigate } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -37,6 +37,12 @@ export const LibraryLayout = () => {
       name: t('mainMenu_myCollections_title'),
       to: '/my-collections',
       icon: faHeart,
+    },
+    {
+      id: 'search',
+      name: t('mainMenu_search_title', 'Search'),
+      to: '/search',
+      icon: faMagnifyingGlass,
     },
     // Only show Reading link if a book is currently open
     ...(readerBookId

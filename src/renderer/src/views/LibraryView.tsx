@@ -2,6 +2,7 @@ import { useIpc } from '@/hooks/useIpc'
 import { libraryRoute } from '@/routes/routes'
 import {
   faBars,
+  faHeart,
   faPlusCircle as faPlus,
   faTableCellsLarge,
 } from '@fortawesome/free-solid-svg-icons'
@@ -32,6 +33,9 @@ export const LibraryView: React.FC = () => {
   const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery(undefined, {
     queryKey: ['getAuthors', undefined],
     suspense: true,
+  })
+  const { data: favoritesCount } = main.getFavoriteBooksCount.useQuery(undefined, {
+    queryKey: ['getFavoriteBooksCount'],
   })
   console.log('RENDER: LibraryView')
 
@@ -205,6 +209,20 @@ export const LibraryView: React.FC = () => {
         }
         sidebar={
           <div className="px-2 pb-8 pt-3">
+            {/* Favorites entry */}
+            <SubmenuEntries
+              items={[
+                {
+                  id: 'favorites',
+                  name: t('favorites_title', 'Favorites'),
+                  to: '/my-collections',
+                  search: { collectionId: 'favorites' },
+                  count: favoritesCount || 0,
+                  icon: faHeart,
+                  variant: 'favorite',
+                },
+              ]}
+            />
             <SubmenuEntries className="pt-4" items={authorRouteEntries || []} />
           </div>
         }

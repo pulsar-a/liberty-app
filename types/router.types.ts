@@ -13,4 +13,5 @@ export type RouteEntry = {
   active?: boolean
   children?: RouteEntry[]
   count?: number
+  variant?: 'default' | 'favorite'
 }
