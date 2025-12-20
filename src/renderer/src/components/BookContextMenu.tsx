@@ -24,9 +24,7 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
     // Wait for the dropdown to close before opening the book details. Otherwise, flyout won't show.
     await new Promise((resolve) => setTimeout(resolve, 50))
     await navigate({
-      to: '/book/$bookId',
-      params: { bookId: book.id },
-      search: { flyout: true, ...location.search },
+      search: { ...location.search, bookId: book.id },
     })
   }
 

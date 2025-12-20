@@ -4,6 +4,7 @@ export type SettingsType = {
   userFilesDir: string
   currentlyReading: number | null
   libraryViewStyle: 'list' | 'grid'
+  confirmRemoveFromCollection: boolean
 }
 
 export type SettingKeys = keyof SettingsType

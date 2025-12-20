@@ -10,6 +10,7 @@ import {
 } from 'typeorm'
 import AuthorEntity from './author.entity'
 import BookIdEntity from './bookId.entity'
+import CollectionEntity from './collection.entity'
 
 @Entity('books')
 export default class BookEntity {
@@ -77,4 +78,7 @@ export default class BookEntity {
   })
   @JoinTable({ name: 'author_book' })
   authors: AuthorEntity[]
+
+  @ManyToMany(() => CollectionEntity, (collection) => collection.books)
+  collections: CollectionEntity[]
 }

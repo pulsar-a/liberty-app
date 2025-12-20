@@ -13,6 +13,8 @@ type TextInputProps = {
   prefix?: string | ReactNode
   withRemove?: boolean | true
   onChange: (value: string) => void
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  autoFocus?: boolean
   className?: string
 }
 export const TextInput: React.FC<TextInputProps> = ({
@@ -20,6 +22,8 @@ export const TextInput: React.FC<TextInputProps> = ({
   prefix,
   value,
   onChange,
+  onKeyDown,
+  autoFocus,
   type,
   name,
   id,
@@ -58,11 +62,13 @@ export const TextInput: React.FC<TextInputProps> = ({
             name={name}
             id={id}
             value={value}
+            autoFocus={autoFocus}
             className={clsx(
               'flex-1 overflow-hidden border-0 bg-transparent py-1.5 text-gray-900 focus:ring-0 sm:text-sm sm:leading-6 dark:text-white',
               prefix ? 'pl-2' : 'pl-4'
             )}
             onChange={(e) => onChange(e.target.value)}
+            onKeyDown={onKeyDown}
             placeholder={placeholder}
           />
           {withRemove && value?.length !== 0 && (

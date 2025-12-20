@@ -20,6 +20,7 @@ import {
   updateReadingProgressInputSchema,
 } from '../controllers/reader.controller'
 import { removeBookByIdController } from '../controllers/removeBookByIdController'
+import { collectionsQuery } from '../queries/collections'
 
 const trpc = initTRPC.create({
   isServer: true,
@@ -49,6 +50,51 @@ export const router = trpc.router({
   getBookmarks: trpc.procedure.input(getBookmarksInputSchema).query(getBookmarksController),
   createBookmark: trpc.procedure.input(createBookmarkInputSchema).mutation(createBookmarkController),
   deleteBookmark: trpc.procedure.input(deleteBookmarkInputSchema).mutation(deleteBookmarkController),
+
+  // Collection routes
+  getCollections: trpc.procedure.query(async () => {
+    return await collectionsQuery.getAll()
+  }),
+  getCollectionById: trpc.procedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      return await collectionsQuery.getById(input.id)
+    }),
+  createCollection: trpc.procedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      return await collectionsQuery.create(input.name)
+    }),
+  updateCollection: trpc.procedure
+    .input(z.object({ id: z.number(), name: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      return await collectionsQuery.update(input.id, input.name)
+    }),
+  deleteCollection: trpc.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      return await collectionsQuery.delete(input.id)
+    }),
+  getBookCollections: trpc.procedure
+    .input(z.object({ bookId: z.number() }))
+    .query(async ({ input }) => {
+      return await collectionsQuery.getCollectionsForBook(input.bookId)
+    }),
+  getCollectionsWithBookMembership: trpc.procedure
+    .input(z.object({ bookId: z.number() }))
+    .query(async ({ input }) => {
+      return await collectionsQuery.getAllWithBookMembership(input.bookId)
+    }),
+  addBookToCollection: trpc.procedure
+    .input(z.object({ bookId: z.number(), collectionId: z.number() }))
+    .mutation(async ({ input }) => {
+      return await collectionsQuery.addBookToCollection(input.bookId, input.collectionId)
+    }),
+  removeBookFromCollection: trpc.procedure
+    .input(z.object({ bookId: z.number(), collectionId: z.number() }))
+    .mutation(async ({ input }) => {
+      return await collectionsQuery.removeBookFromCollection(input.bookId, input.collectionId)
+    }),
 })
 
 export type AppRouter = typeof router

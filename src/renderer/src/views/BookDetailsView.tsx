@@ -1,30 +1,39 @@
 import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
 import { useIpc } from '@/hooks/useIpc'
+import { useSettings } from '@/hooks/useSettings'
 import { formatDateDistance } from '@/utils/dateFormatter'
 import { formatFileSize } from '@/utils/fileFormatter'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
-import { faBook, faFingerprint, faPlus, faTable } from '@fortawesome/free-solid-svg-icons'
+import { faBook, faFingerprint, faPlus, faTable, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactShowMoreText from 'react-show-more-text'
+import { AddToCollectionDialog } from '../components/AddToCollectionDialog'
 import { BookCover } from '../components/BookCover'
 import { ConfirmationDialog } from '../components/ConfirmationDialog'
 import { DataListEntry } from '../components/DataListEntry'
 import { EmptyState } from '../components/EmptyState'
-import { bookDetailsRoute } from '../routes/routes'
 
-export const BookDetailsView: React.FC = () => {
+type BookDetailsViewProps = {
+  bookId: number
+}
+
+export const BookDetailsView: React.FC<BookDetailsViewProps> = ({ bookId }) => {
   const { t } = useTranslation()
-  const location = useLocation()
-  const { bookId } = bookDetailsRoute.useParams()
-  const navigate = useNavigate({ from: `/book/${bookId}` })
+  const navigate = useNavigate()
   const { main } = useIpc()
   const utils = main.useUtils()
+  const { getSetting, setSetting } = useSettings()
   console.log('RENDER: BookDetailsView')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
+  const [showAddToCollectionDialog, setShowAddToCollectionDialog] = useState<boolean>(false)
+  const [collectionToRemove, setCollectionToRemove] = useState<{
+    id: number
+    name: string
+  } | null>(null)
 
   const { data: book, isError } = main.getBookById.useQuery(
     { id: bookId },
@@ -36,15 +45,54 @@ export const BookDetailsView: React.FC = () => {
 
   const deleteMutation = main.removeBookById.useMutation({
     onSettled: async () => {
-      await navigate({ to: '/', search: { ...location.search } })
+      // Close the flyout by removing bookId from search params
+      await navigate({
+        search: (prev) => ({ ...prev, bookId: undefined }),
+      })
       utils.invalidate(undefined, {
         queryKey: ['getBooks', undefined],
       })
     },
   })
 
+  const removeFromCollectionMutation = main.removeBookFromCollection.useMutation({
+    onSuccess: () => {
+      utils.invalidate(undefined, {
+        queryKey: ['getBookById', { id: bookId }],
+      })
+      utils.invalidate(undefined, {
+        queryKey: ['getCollections'],
+      })
+      setCollectionToRemove(null)
+    },
+  })
+
   const onBookDelete = async () => {
     return deleteMutation.mutate({ id: bookId })
+  }
+
+  const handleRemoveFromCollection = (collectionId: number, collectionName: string) => {
+    const confirmRemove = getSetting('confirmRemoveFromCollection', true)
+    if (confirmRemove) {
+      setCollectionToRemove({ id: collectionId, name: collectionName })
+    } else {
+      removeFromCollectionMutation.mutate({ bookId, collectionId })
+    }
+  }
+
+  const confirmRemoveFromCollection = () => {
+    if (collectionToRemove) {
+      removeFromCollectionMutation.mutate({
+        bookId,
+        collectionId: collectionToRemove.id,
+      })
+    }
+  }
+
+  const handleNeverAskAgain = (value: boolean) => {
+    if (value) {
+      setSetting('confirmRemoveFromCollection', false)
+    }
   }
 
   if (!book || isError) {
@@ -131,10 +179,33 @@ export const BookDetailsView: React.FC = () => {
           />
         </h3>
         <div className="mt-2 border-t border-indigo-600 dark:border-indigo-400">
-          <p className="py-4 text-sm italic text-gray-500 dark:text-gray-400">
-            {t('bookDetailsView_notInCollections')}
-          </p>
-          <div className="flex justify-center pb-2">
+          {book.collections && book.collections.length > 0 ? (
+            <ul className="divide-y divide-gray-300 dark:divide-gray-700">
+              {book.collections.map((collection) => (
+                <li
+                  key={collection.id}
+                  className="flex items-center justify-between py-3"
+                >
+                  <span className="text-sm font-medium text-gray-900 dark:text-indigo-100">
+                    {collection.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFromCollection(collection.id, collection.name)}
+                    className="rounded p-1.5 text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                    title={t('bookDetailsView_removeFromCollection', 'Remove from collection')}
+                  >
+                    <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-4 text-sm italic text-gray-500 dark:text-gray-400">
+              {t('bookDetailsView_notInCollections')}
+            </p>
+          )}
+          <div className="flex justify-center pb-2 pt-2">
             <Button
               label={t('bookDetailsView_addToCollection_title')}
               variant={'primary'}
@@ -142,9 +213,34 @@ export const BookDetailsView: React.FC = () => {
               size="xs"
               className="group"
               leadingIcon={faPlus}
+              onClick={() => setShowAddToCollectionDialog(true)}
             />
           </div>
         </div>
+
+        <AddToCollectionDialog
+          bookId={bookId}
+          open={showAddToCollectionDialog}
+          onClose={() => setShowAddToCollectionDialog(false)}
+        />
+
+        <ConfirmationDialog
+          title={t('bookDetailsView_removeFromCollectionConfirmation_title', 'Remove from collection')}
+          message={
+            <>
+              {t('bookDetailsView_removeFromCollectionConfirmation_messagePart1', 'You really want to remove the book from the')}{' '}
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                "{collectionToRemove?.name}"
+              </span>{' '}
+              {t('bookDetailsView_removeFromCollectionConfirmation_messagePart2', 'collection?')}
+            </>
+          }
+          open={collectionToRemove !== null}
+          onClose={() => setCollectionToRemove(null)}
+          onConfirm={confirmRemoveFromCollection}
+          showNeverAskAgain
+          onNeverAskAgainChange={handleNeverAskAgain}
+        />
       </div>
 
       <div>

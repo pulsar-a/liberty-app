@@ -14,7 +14,6 @@ import {
 // Devtools
 import { z } from 'zod'
 import { LoadingSpinner } from '../components/LoadingSpinner'
-import { BookDetailsView } from '../views/BookDetailsView'
 import { MyCollectionsView } from '../views/MyCollectionsView'
 import { ReaderView } from '../views/ReaderView'
 import { WasmReaderView } from '../views/WasmReaderView'
@@ -26,6 +25,11 @@ declare module '@tanstack/react-router' {
     flyoutSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   }
 }
+
+// Global search schema with bookId for the flyout
+const globalSearchSchema = z.object({
+  bookId: z.number().optional(),
+})
 //
 // export const TanStackRouterDevtools =
 //   process.env.NODE_ENV === 'production'
@@ -52,11 +56,12 @@ const rootRoute = createRootRoute({
   },
 })
 
-const libraryLayoutRoute = createRoute({
+export const libraryLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   component: () => <LibraryLayout />,
   pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
   id: 'library-layout',
+  validateSearch: globalSearchSchema,
   staticData: {
     flyout: false,
   },
@@ -78,17 +83,6 @@ export const libraryRoute = createRoute({
   validateSearch: authorSearchSchema,
   staticData: {
     flyout: false,
-  },
-})
-
-export const bookDetailsRoute = createRoute({
-  getParentRoute: () => libraryRoute,
-  path: '/book/$bookId',
-  component: () => <BookDetailsView />,
-  pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
-  staticData: {
-    flyout: true,
-    flyoutSize: 'md',
   },
 })
 
@@ -190,7 +184,7 @@ const settingsAboutRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   libraryLayoutRoute.addChildren([
-    libraryRoute.addChildren([bookDetailsRoute]),
+    libraryRoute,
     myCollectionsRoute,
     readerRoute,
     wasmReaderRoute,

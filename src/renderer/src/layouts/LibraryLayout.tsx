@@ -3,16 +3,32 @@ import logoLight from '@/assets/images/logos/logo-light.svg'
 import { useReaderStore } from '@/store/useReaderStore'
 import { faHeart } from '@fortawesome/free-regular-svg-icons'
 import { faBook, faBookReader, faCog } from '@fortawesome/free-solid-svg-icons'
-import { Outlet } from '@tanstack/react-router'
+import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DarkModeToggle } from '../components/DarkModeToggle'
+import { Flyout } from '../components/Flyout'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import { StatusBar } from '../components/StatusBar'
+import { libraryLayoutRoute } from '../routes/routes'
+import { BookDetailsView } from '../views/BookDetailsView'
 import { GlobalSearch } from './parts/GlobalSearch'
 import { MainMenuEntries } from './parts/MainMenuEntries'
 
 export const LibraryLayout = () => {
   const { t } = useTranslation()
-  const { bookId } = useReaderStore()
+  const { bookId: readerBookId } = useReaderStore()
+  const navigate = useNavigate()
+  
+  // Get bookId from search params for the flyout
+  const { bookId: flyoutBookId } = libraryLayoutRoute.useSearch()
+  const isFlyoutOpen = flyoutBookId !== undefined
+  
+  const closeFlyout = () => {
+    navigate({
+      search: (prev) => ({ ...prev, bookId: undefined }),
+    })
+  }
 
   const navigation = [
     { id: 'all-books', name: t('mainMenu_allBooks_title'), to: '/', icon: faBook, current: true },
@@ -23,12 +39,12 @@ export const LibraryLayout = () => {
       icon: faHeart,
     },
     // Only show Reading link if a book is currently open
-    ...(bookId
+    ...(readerBookId
       ? [
           {
             id: 'reading',
             name: t('mainMenu_reading_title', 'Reading'),
-            to: `/reader/${bookId}`,
+            to: `/reader/${readerBookId}`,
             icon: faBookReader,
           },
         ]
@@ -79,6 +95,13 @@ export const LibraryLayout = () => {
         {/* /SEARCH BAR */}
 
         <Outlet />
+
+        {/* GLOBAL BOOK DETAILS FLYOUT */}
+        <Flyout open={isFlyoutOpen} size="md" onClose={closeFlyout}>
+          <Suspense fallback={<LoadingSpinner size="lg" block full spacing="lg" />}>
+            {flyoutBookId && <BookDetailsView bookId={flyoutBookId} />}
+          </Suspense>
+        </Flyout>
 
         {/* STATUS BAR */}
         <StatusBar />

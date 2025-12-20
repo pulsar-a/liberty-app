@@ -17,6 +17,7 @@ export const booksQuery = {
       relations: {
         authors: true,
         bookIds: true,
+        collections: true,
       },
     })
   },

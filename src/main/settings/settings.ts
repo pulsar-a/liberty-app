@@ -17,6 +17,10 @@ const schema = {
     type: ['number', 'null'],
     default: null,
   },
+  confirmRemoveFromCollection: {
+    type: 'boolean',
+    default: true,
+  },
 }
 
 export const settings = new Store({ schema })

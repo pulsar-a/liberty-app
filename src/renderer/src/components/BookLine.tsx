@@ -32,10 +32,7 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
 
   const openBookDetails = async () => {
     await navigate({
-      to: '/book/$bookId',
-      params: { bookId: book.id },
-      search: { flyout: true, ...location.search },
-      mask: { to: '/' },
+      search: { ...location.search, bookId: book.id },
     })
       .then()
       .catch(console.error)
@@ -75,7 +72,7 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
             {book.name}
           </p>
           <p className="mt-1 flex text-xs leading-5 text-gray-700 dark:text-gray-200">
-            {book.authors.map((author) => author.name).join(', ')}
+            {book.authors?.map((author) => author.name).join(', ')}
           </p>
           {/* Reading progress text */}
           {hasReadingProgress && (

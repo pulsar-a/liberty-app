@@ -34,7 +34,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
     ? Math.round(((book.readingProgress! + 1) / book.totalPages!) * 100)
     : 0
 
-  const hasAuthors = book.authors.length > 0
+  const hasAuthors = book.authors && book.authors.length > 0
 
   const placeholder = getStableOptionForHash(book.id.toString(), [
     placeholderGreen,
@@ -44,10 +44,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
 
   const openBookDetails = async () => {
     await navigate({
-      to: '/book/$bookId',
-      params: { bookId: book.id },
-      search: { flyout: true, ...location.search },
-      mask: { to: '/' },
+      search: { ...location.search, bookId: book.id },
     })
       .then()
       .catch(console.error)
