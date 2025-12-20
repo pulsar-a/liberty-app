@@ -659,3 +659,12 @@ Current CSS-based settings → WASM equivalents:
 - [wasm-bindgen](https://rustwasm.github.io/wasm-bindgen/) - Rust/JS interop
 - [scraper](https://github.com/causal-agent/scraper) - HTML parsing in Rust
 
+---
+
+## Related Documentation
+
+- [WASM Reader API Reference](./WASM-READER-API.md) - Complete API documentation for JavaScript/TypeScript integration
+- [WASM Reader Development Guide](./WASM-READER-DEVELOPMENT.md) - Building, testing, and extending the module
+- [WASM Reader Setup Guide](./WASM-READER-SETUP.md) - Initial setup and prerequisites
+- [WASM Reader Internals](./WASM-READER-INTERNALS.md) - Internal data structures and algorithms
+

@@ -258,6 +258,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
           ref={index === 0 ? pageRef : undefined}
           className={clsx(
             'reader-page relative h-full',
+            `reader-theme-${settings.theme}`,
             layoutMode === 'two-column' && index === 0 && 'border-r border-black/5'
           )}
         >

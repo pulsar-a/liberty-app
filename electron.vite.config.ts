@@ -26,5 +26,16 @@ export default defineConfig({
       },
     },
     plugins: [react()],
+    optimizeDeps: {
+      exclude: ['liberty-reader'],
+    },
+    build: {
+      rollupOptions: {
+        // Treat WASM files as external assets
+        external: [/\.wasm$/],
+      },
+    },
+    // Enable WASM support
+    assetsInclude: ['**/*.wasm'],
   },
 })

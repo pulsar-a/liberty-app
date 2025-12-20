@@ -574,30 +574,80 @@
    Utility Classes for Theme Presets
    ============================================================================ */
 
-/* Warm/Sepia theme preset */
+/* Light theme - clean white */
+.reader-theme-light {
+  --paper-base: #ffffff;
+  --paper-text-primary: #2c2c2c;
+  --paper-text-secondary: #555555;
+  --paper-text-muted: #777777;
+  --paper-grain-opacity: 0.01;
+  --paper-vignette-opacity: 0.02;
+  --paper-warmth: 0;
+}
+
+/* Warm theme - warm beige */
+.reader-theme-warm {
+  --paper-base: #f5f1e8;
+  --paper-text-primary: #2c2c2c;
+  --paper-text-secondary: #555555;
+  --paper-text-muted: #777777;
+  --paper-warmth: 0.15;
+}
+
+/* Sepia theme - classic sepia */
 .reader-theme-sepia {
-  --paper-base: var(--paper-base-sepia);
+  --paper-base: #f4ecd8;
+  --paper-text-primary: #5c4b37;
+  --paper-text-secondary: #6d5c48;
+  --paper-text-muted: #8a7a66;
   --paper-warmth: 0.3;
 }
 
-/* Cool/Blue theme preset */
-.reader-theme-cool {
-  --paper-base: var(--paper-base-cool);
-  --paper-warmth: -0.1;
-  --paper-tint-hue: -5;
+/* Dark theme - modern dark */
+.reader-theme-dark {
+  --paper-base: #1f1f1f;
+  --paper-text-primary: #e8e8e8;
+  --paper-text-secondary: #b0b0b0;
+  --paper-text-muted: #888888;
+  --paper-link-color: #7ea8d4;
+  --paper-footnote-marker: #d4a574;
+  --paper-grain-opacity: 0.02;
+  --paper-vignette-opacity: 0.06;
 }
 
-/* Pure white (modern) preset */
-.reader-theme-white {
-  --paper-base: #ffffff;
-  --paper-grain-opacity: 0.01;
-  --paper-vignette-opacity: 0.02;
-}
-
-/* Night mode (not just dark mode, but optimized for reading at night) */
+/* Night mode - optimized for night reading with lower contrast */
 .reader-theme-night {
   --paper-base: #1a1a1a;
   --paper-text-primary: #c4c4c4;
+  --paper-text-secondary: #999999;
+  --paper-text-muted: #777777;
+  --paper-link-color: #6a9ac4;
+  --paper-footnote-marker: #c49464;
   --paper-grain-opacity: 0.015;
+}
+
+/* High Contrast Light - maximum readability on white */
+.reader-theme-high-contrast-light {
+  --paper-base: #ffffff;
+  --paper-text-primary: #000000;
+  --paper-text-secondary: #1a1a1a;
+  --paper-text-muted: #333333;
+  --paper-link-color: #0000cc;
+  --paper-footnote-marker: #660000;
+  --paper-grain-opacity: 0;
+  --paper-vignette-opacity: 0;
+  --paper-warmth: 0;
+}
+
+/* High Contrast Dark - maximum readability on black */
+.reader-theme-high-contrast-dark {
+  --paper-base: #000000;
+  --paper-text-primary: #ffffff;
+  --paper-text-secondary: #f0f0f0;
+  --paper-text-muted: #cccccc;
+  --paper-link-color: #66b3ff;
+  --paper-footnote-marker: #ffcc66;
+  --paper-grain-opacity: 0;
+  --paper-vignette-opacity: 0;
 }
 

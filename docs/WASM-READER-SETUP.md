@@ -316,5 +316,12 @@ wasm-opt = ["-O3", "--enable-bulk-memory"]
 4. Create the canvas rendering pipeline
 5. Integrate with existing React reader components
 
-See `WASM-READER-ARCHITECTURE.md` for detailed implementation specifications.
+---
+
+## Related Documentation
+
+- [WASM Reader API Reference](./WASM-READER-API.md) - Complete API documentation for JavaScript/TypeScript integration
+- [WASM Reader Development Guide](./WASM-READER-DEVELOPMENT.md) - Building, testing, and extending the module
+- [WASM Reader Architecture](./WASM-READER-ARCHITECTURE.md) - Design decisions and high-level architecture
+- [WASM Reader Internals](./WASM-READER-INTERNALS.md) - Internal data structures and algorithms
 

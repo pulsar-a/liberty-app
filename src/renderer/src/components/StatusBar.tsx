@@ -1,9 +1,12 @@
+import { faCog } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useIpc } from '@/hooks/useIpc'
 import { useReaderStore } from '@/store/useReaderStore'
 import { useLocation } from '@tanstack/react-router'
 import { clsx } from 'clsx'
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ReaderSettingsDrawer } from './reader/ReaderSettingsDrawer'
 
 type StatusBarProps = {
   className?: string
@@ -13,6 +16,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
   const { t } = useTranslation()
   const { main } = useIpc()
   const location = useLocation()
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Check current route by pathname
   const pathname = location.pathname
@@ -143,13 +147,40 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
   if (!content) return null
 
   return (
-    <div
-      className={clsx(
-        'fixed bottom-0 left-[calc(15rem+14rem)] right-0 z-40 flex h-7 items-center border-t border-gray-300 bg-gray-100/95 px-4 text-xs backdrop-blur-sm dark:border-gray-700 dark:bg-bright-gray-900/95',
-        className
+    <>
+      <div
+        className={clsx(
+          'fixed bottom-0 left-[calc(15rem+14rem)] right-0 z-40 flex h-7 items-center justify-between border-t border-gray-300 bg-gray-100/95 px-4 text-xs backdrop-blur-sm dark:border-gray-700 dark:bg-bright-gray-900/95',
+          className
+        )}
+      >
+        {/* Left side content */}
+        <div className="flex-1 overflow-hidden">{content}</div>
+
+        {/* Right side - Settings cog (only in reader) */}
+        {isReader && (
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className={clsx(
+              'ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors',
+              isSettingsOpen
+                ? 'bg-indigo-500 text-white'
+                : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'
+            )}
+            title={t('reader_settings_title', 'Reader Settings')}
+          >
+            <FontAwesomeIcon icon={faCog} className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Reader Settings Drawer */}
+      {isReader && (
+        <ReaderSettingsDrawer
+          open={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+        />
       )}
-    >
-      {content}
-    </div>
+    </>
   )
 }

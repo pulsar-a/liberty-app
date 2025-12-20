@@ -17,6 +17,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner'
 import { BookDetailsView } from '../views/BookDetailsView'
 import { MyCollectionsView } from '../views/MyCollectionsView'
 import { ReaderView } from '../views/ReaderView'
+import { WasmReaderView } from '../views/WasmReaderView'
 import { SettingsFilesView } from '../views/SettingsFilesView'
 
 declare module '@tanstack/react-router' {
@@ -112,6 +113,17 @@ export const readerRoute = createRoute({
   },
 })
 
+// WASM-based reader route (experimental)
+export const wasmReaderRoute = createRoute({
+  getParentRoute: () => libraryLayoutRoute,
+  path: '/reader-wasm/$bookId',
+  component: () => <WasmReaderView />,
+  pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
+  staticData: {
+    flyout: false,
+  },
+})
+
 const settingsRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
   id: 'settings',
@@ -181,6 +193,7 @@ const routeTree = rootRoute.addChildren([
     libraryRoute.addChildren([bookDetailsRoute]),
     myCollectionsRoute,
     readerRoute,
+    wasmReaderRoute,
     settingsRoute.addChildren([
       settingsGeneralRoute,
       settingsAppearanceRoute,

@@ -22,7 +22,12 @@
     "build:linux": "electron-vite build && electron-builder --linux --config",
     "migration:generate": "ts-node ./node_modules/typeorm/cli.js migration:generate -d ormconfig.js",
     "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ormconfig.js",
-    "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d ormconfig.js"
+    "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d ormconfig.js",
+    "wasm:build": "cd src/renderer/src/wasm-reader && wasm-pack build --target web --release --out-dir pkg",
+    "wasm:dev": "cd src/renderer/src/wasm-reader && wasm-pack build --target web --dev --out-dir pkg",
+    "wasm:watch": "cd src/renderer/src/wasm-reader && cargo watch -w src -s \"wasm-pack build --target web --dev --out-dir pkg\"",
+    "wasm:clean": "cd src/renderer/src/wasm-reader && cargo clean && rm -rf pkg",
+    "dev:wasm": "npm run wasm:dev && concurrently -k -n \"WASM,VITE\" -c \"yellow,cyan\" \"npm run wasm:watch\" \"npm run dev\""
   },
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
@@ -79,6 +84,7 @@
     "@typescript-eslint/parser": "^8.18.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
     "electron-devtools-installer": "^3.2.0",

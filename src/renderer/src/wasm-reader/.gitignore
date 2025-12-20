@@ -1,0 +1,13 @@
+# Generated files
+/target
+/pkg
+Cargo.lock
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
