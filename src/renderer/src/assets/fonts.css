@@ -46,3 +46,28 @@
   font-weight: bold;
   src: url('./fonts/Montserrat-BoldItalic.ttf');
 }
+
+/* Reading fonts */
+@font-face {
+  font-family: 'Literata';
+  src: url('./fonts/reading/Literata_18pt-Regular.ttf');
+}
+
+@font-face {
+  font-family: 'Literata';
+  font-weight: bold;
+  src: url('./fonts/reading/Literata_18pt-Bold.ttf');
+}
+
+@font-face {
+  font-family: 'Literata';
+  font-style: italic;
+  src: url('./fonts/reading/Literata_18pt-Italic.ttf');
+}
+
+@font-face {
+  font-family: 'Literata';
+  font-style: italic;
+  font-weight: bold;
+  src: url('./fonts/reading/Literata_18pt-BoldItalic.ttf');
+}
