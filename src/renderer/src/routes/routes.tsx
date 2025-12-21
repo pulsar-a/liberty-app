@@ -4,6 +4,7 @@ import { LibraryView } from '@/views/LibraryView'
 import { SettingsAboutView } from '@/views/SettingsAboutView'
 import { SettingsAppearanceView } from '@/views/SettingsAppearanceView'
 import { SettingsGeneralView } from '@/views/SettingsGeneralView'
+import { SettingsReadingView } from '@/views/SettingsReadingView'
 import { SettingsView } from '@/views/SettingsView'
 import {
   createHashHistory,
@@ -159,7 +160,7 @@ const settingsAppearanceRoute = createRoute({
 const settingsReadingRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: '/settings/reading',
-  component: () => <SettingsAboutView />,
+  component: () => <SettingsReadingView />,
   pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
   staticData: {
     flyout: false,

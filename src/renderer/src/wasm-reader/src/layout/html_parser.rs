@@ -1,9 +1,31 @@
 //! HTML to LayoutElement parser
 
+use base64::{engine::general_purpose::STANDARD, Engine};
 use ego_tree::NodeRef;
 use scraper::{ElementRef, Html, Node, Selector};
 
 use super::document::{LayoutElement, SpanStyle, TextSpan};
+
+/// Parse a data URI and extract the binary data
+/// Format: data:[<mediatype>][;base64],<data>
+fn parse_data_uri(src: &str) -> Option<Vec<u8>> {
+    if !src.starts_with("data:") {
+        return None;
+    }
+
+    // Find the comma that separates metadata from data
+    let comma_pos = src.find(',')?;
+    let metadata = &src[5..comma_pos]; // Skip "data:"
+    let data = &src[comma_pos + 1..];
+
+    // Check if it's base64 encoded
+    if metadata.contains(";base64") {
+        STANDARD.decode(data).ok()
+    } else {
+        // URL-encoded data (less common for images)
+        None
+    }
+}
 
 /// Parse HTML content into layout elements
 pub fn parse_html_to_elements(html: &str) -> Vec<LayoutElement> {
@@ -43,8 +65,47 @@ fn parse_node(node: &NodeRef<Node>, inherited_style: &SpanStyle) -> Option<Layou
 
 fn parse_element(element: &ElementRef, tag_name: &str, inherited_style: &SpanStyle) -> Option<LayoutElement> {
     match tag_name.to_lowercase().as_str() {
+        // Divs - may contain block elements like images, so parse children recursively
+        "div" => {
+            // Check if div contains block-level elements
+            let has_block_children = element.children().any(|child| {
+                if let Some(el) = ElementRef::wrap(child) {
+                    let tag = el.value().name.local.as_ref().to_lowercase();
+                    matches!(tag.as_str(), "div" | "p" | "img" | "figure" | "blockquote" | "ul" | "ol" | "table" | "pre" | "hr" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6")
+                } else {
+                    false
+                }
+            });
+            
+            if has_block_children {
+                // Recursively parse children as separate elements
+                let children = parse_children(element, inherited_style);
+                if children.is_empty() {
+                    None
+                } else if children.len() == 1 {
+                    // Unwrap single child
+                    Some(children.into_iter().next().unwrap())
+                } else {
+                    // Return as a container (use BlockQuote as a generic container for now)
+                    // TODO: Consider adding a Container variant to LayoutElement
+                    Some(LayoutElement::BlockQuote { elements: children })
+                }
+            } else {
+                // Treat as paragraph with text content
+                let spans = collect_text_spans(element, inherited_style);
+                if spans.is_empty() {
+                    None
+                } else {
+                    Some(LayoutElement::Paragraph {
+                        spans,
+                        indent: false, // divs typically don't indent
+                    })
+                }
+            }
+        }
+        
         // Paragraphs
-        "p" | "div" => {
+        "p" => {
             let spans = collect_text_spans(element, inherited_style);
             if spans.is_empty() {
                 None
@@ -115,11 +176,14 @@ fn parse_element(element: &ElementRef, tag_name: &str, inherited_style: &SpanSty
             let alt = element.value().attr("alt").unwrap_or("").to_string();
             let width = element.value().attr("width").and_then(|w| w.parse().ok());
             let height = element.value().attr("height").and_then(|h| h.parse().ok());
+            
+            // Parse data URI if present to extract binary image data
+            let data = parse_data_uri(&src);
 
             Some(LayoutElement::Image {
                 src,
                 alt,
-                data: None, // Will be populated if it's a data URI
+                data,
                 width,
                 height,
             })

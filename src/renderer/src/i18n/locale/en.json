@@ -155,6 +155,15 @@
     "search_filter_fileNames": "File Names",
     "search_filter_internalFileNames": "Internal File Names",
     "search_formats_title": "Book Formats",
-    "search_formats_hint": "Showing only selected formats"
+    "search_formats_hint": "Showing only selected formats",
+    "settings_reading_engine_card_title": "Reader Engine",
+    "settings_reading_engine_card_description": "Choose the rendering engine for displaying book content",
+    "settings_reading_engine_label": "Rendering Engine",
+    "settings_reading_engine_description": "Select how book content is rendered on screen",
+    "settings_reading_engine_html_name": "HTML",
+    "settings_reading_engine_html_description": "Traditional browser-based rendering. Compatible with all features.",
+    "settings_reading_engine_wasm_name": "WASM Canvas",
+    "settings_reading_engine_wasm_description": "Deterministic canvas-based rendering. Faster and more consistent pagination.",
+    "settings_reading_engine_experimental": "Experimental"
   }
 }

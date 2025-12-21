@@ -47,3 +47,4 @@ export class AddSearchIndexes1734710400000 implements MigrationInterface {
   }
 }
 
+

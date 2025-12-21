@@ -2,6 +2,12 @@
  * Types for the WASM Reader module
  */
 
+// Import fonts as URLs - Vite will handle bundling correctly
+import LiterataRegular from '../assets/fonts/reading/Literata_18pt-Regular.ttf?url'
+import LiterataBold from '../assets/fonts/reading/Literata_18pt-Bold.ttf?url'
+import LiterataItalic from '../assets/fonts/reading/Literata_18pt-Italic.ttf?url'
+import LiterataBoldItalic from '../assets/fonts/reading/Literata_18pt-BoldItalic.ttf?url'
+
 /**
  * RGBA color for WASM settings
  */
@@ -108,13 +114,13 @@ export interface FontToLoad {
 
 /**
  * Default fonts bundled with the reader
- * These must match the actual font files in src/renderer/src/assets/fonts/reading/
+ * Using Vite's ?url import to get correct paths in both dev and production
  */
 export const DEFAULT_READER_FONTS: FontToLoad[] = [
-  { name: 'Literata', url: '/fonts/reading/Literata_18pt-Regular.ttf' },
-  { name: 'Literata-Bold', url: '/fonts/reading/Literata_18pt-Bold.ttf' },
-  { name: 'Literata-Italic', url: '/fonts/reading/Literata_18pt-Italic.ttf' },
-  { name: 'Literata-BoldItalic', url: '/fonts/reading/Literata_18pt-BoldItalic.ttf' },
+  { name: 'Literata', url: LiterataRegular },
+  { name: 'Literata-Bold', url: LiterataBold },
+  { name: 'Literata-Italic', url: LiterataItalic },
+  { name: 'Literata-BoldItalic', url: LiterataBoldItalic },
 ]
 
 /**
@@ -173,4 +179,3 @@ export const WASM_THEME_COLORS = {
 } as const
 
 export type WasmThemeName = keyof typeof WASM_THEME_COLORS
-

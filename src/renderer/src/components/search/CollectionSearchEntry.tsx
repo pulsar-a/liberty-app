@@ -89,3 +89,4 @@ export const CollectionSearchEntry: React.FC<CollectionSearchEntryProps> = ({
   )
 }
 
+

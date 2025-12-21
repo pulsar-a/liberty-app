@@ -22,8 +22,7 @@ export const SettingsView: React.FC = () => {
     {
       id: 'reading',
       name: t('settings_subsection_reading_title'),
-      // to: '/settings/reading',
-      disabled: true,
+      to: '/settings/reading',
     },
     {
       id: 'files',

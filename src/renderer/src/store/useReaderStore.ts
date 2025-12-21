@@ -240,6 +240,19 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
     // Navigation
     goToPage: (pageIndex) => {
       const { totalPages, currentPageIndex } = get()
+      // FIX: Ensure we don't set invalid page indices when totalPages is 0
+      if (totalPages === 0) {
+        // When WASM handles pagination, store totalPages might be 0
+        // Just set the page index directly, but clamp to >= 0
+        const clampedIndex = Math.max(0, pageIndex)
+        if (clampedIndex !== currentPageIndex) {
+          set({
+            currentPageIndex: clampedIndex,
+            progressDirty: true,
+          })
+        }
+        return
+      }
       const clampedIndex = Math.max(0, Math.min(pageIndex, totalPages - 1))
 
       if (clampedIndex !== currentPageIndex) {
@@ -252,10 +265,12 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
 
     nextPage: () => {
       const { currentPageIndex, totalPages, layoutMode } = get()
+      // If totalPages is 0, we can't navigate properly
+      if (totalPages <= 0) return
       const increment = layoutMode === 'two-column' ? 2 : 1
       const nextIndex = Math.min(currentPageIndex + increment, totalPages - 1)
 
-      if (nextIndex !== currentPageIndex) {
+      if (nextIndex !== currentPageIndex && nextIndex >= 0) {
         set({
           currentPageIndex: nextIndex,
           progressDirty: true,

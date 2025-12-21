@@ -69,3 +69,4 @@ export const selectFilters = (state: SearchState) => state.filters
 export const selectFormats = (state: SearchState) => state.formats
 export const selectIsDropdownOpen = (state: SearchState) => state.isDropdownOpen
 
+

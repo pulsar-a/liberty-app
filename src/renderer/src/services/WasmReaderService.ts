@@ -67,63 +67,120 @@ interface WasmModule {
 let wasmModule: WasmModule | null = null
 let initialized = false
 let fontsLoaded = false
+let initPromise: Promise<void> | null = null
 
 /**
  * Initialize the WASM reader module
  */
 export async function initWasmReader(): Promise<void> {
+  // If already initialized, return immediately
   if (initialized && wasmModule) {
     return
   }
 
-  try {
-    // Dynamic import of the WASM module
-    // The path will be resolved by Vite/webpack based on build configuration
-    const wasm = await import('../wasm-reader/pkg/liberty_reader')
-    await wasm.default() // Initialize WASM
-
-    wasmModule = wasm as unknown as WasmModule
-    wasmModule.init()
-    initialized = true
-
-    console.log('[WasmReader] Module initialized')
-  } catch (error) {
-    console.error('[WasmReader] Failed to initialize:', error)
-    throw error
+  // If initialization is in progress, wait for it
+  if (initPromise) {
+    return initPromise
   }
+
+  // Start initialization
+  initPromise = (async () => {
+    try {
+      // Dynamic import of the WASM module
+      // The path will be resolved by Vite/webpack based on build configuration
+      const wasm = await import('../wasm-reader/pkg/liberty_reader')
+      await wasm.default() // Initialize WASM
+
+      wasmModule = wasm as unknown as WasmModule
+      wasmModule.init()
+      initialized = true
+
+      console.log('[WasmReader] Module initialized')
+    } catch (error) {
+      console.error('[WasmReader] Failed to initialize:', error)
+      initPromise = null // Reset so we can retry
+      throw error
+    }
+  })()
+
+  return initPromise
 }
+
+let fontLoadPromise: Promise<void> | null = null
 
 /**
  * Load bundled fonts into the WASM module
+ * @param forceReload - If true, reload fonts even if already loaded (needed after unloadBook)
  */
 export async function loadBundledFonts(
-  fonts: FontToLoad[] = DEFAULT_READER_FONTS
+  fonts: FontToLoad[] = DEFAULT_READER_FONTS,
+  forceReload: boolean = false
 ): Promise<void> {
-  if (fontsLoaded) {
+  if (fontsLoaded && !forceReload) {
+    console.log('[WasmReader] Fonts already loaded, skipping')
     return
+  }
+  
+  // If force reload requested but a load is already in progress, wait for it
+  // This prevents race conditions when multiple effects call forceReload concurrently
+  if (forceReload && fontLoadPromise) {
+    return fontLoadPromise
+  }
+  
+  // Reset flag if force reloading and no load in progress
+  if (forceReload) {
+    fontsLoaded = false
+    fontLoadPromise = null
+  }
+
+  // If font loading is in progress, wait for it
+  if (fontLoadPromise) {
+    return fontLoadPromise
   }
 
   if (!wasmModule) {
     throw new Error('WASM module not initialized')
   }
 
-  for (const font of fonts) {
-    try {
-      const response = await fetch(font.url)
-      if (!response.ok) {
-        console.warn(`[WasmReader] Failed to load font ${font.name}: ${response.status}`)
-        continue
+  fontLoadPromise = (async () => {
+    console.log('[WasmReader] Loading fonts:', fonts.map(f => ({ name: f.name, url: f.url })))
+
+    let loadedCount = 0
+    const errors: string[] = []
+
+    for (const font of fonts) {
+      try {
+        console.log(`[WasmReader] Fetching font ${font.name} from ${font.url}`)
+        const response = await fetch(font.url)
+        if (!response.ok) {
+          errors.push(`${font.name}: HTTP ${response.status}`)
+          console.warn(`[WasmReader] Failed to load font ${font.name}: ${response.status}`)
+          continue
+        }
+
+        const data = await response.arrayBuffer()
+        console.log(`[WasmReader] Font ${font.name} fetched, size: ${data.byteLength} bytes`)
+        
+        wasmModule!.load_font(font.name, new Uint8Array(data))
+        loadedCount++
+        console.log(`[WasmReader] Loaded font into WASM: ${font.name}`)
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        errors.push(`${font.name}: ${errorMsg}`)
+        console.error(`[WasmReader] Error loading font ${font.name}:`, error)
       }
-
-      const data = await response.arrayBuffer()
-      wasmModule.load_font(font.name, new Uint8Array(data))
-      console.log(`[WasmReader] Loaded font: ${font.name}`)
-    } catch (error) {
-      console.error(`[WasmReader] Error loading font ${font.name}:`, error)
     }
-  }
 
-  fontsLoaded = true
+    if (loadedCount === 0) {
+      fontLoadPromise = null // Reset so we can retry
+      throw new Error(`Failed to load any fonts. Errors: ${errors.join('; ')}`)
+    }
+
+    fontsLoaded = true
+    console.log(`[WasmReader] Successfully loaded ${loadedCount}/${fonts.length} fonts`)
+  })()
+
+  return fontLoadPromise
 }
 
 /**
@@ -139,6 +196,21 @@ export async function loadCustomFont(name: string, url: string): Promise<void> {
   wasmModule.load_font(name, new Uint8Array(data))
 }
 
+// WASM-supported fonts (fonts that are bundled and loaded into WASM)
+const WASM_SUPPORTED_FONTS = ['Literata']
+
+/**
+ * Map a font family to a WASM-supported font
+ * WASM reader only has bundled fonts, so we need to fallback for unsupported fonts
+ */
+function mapToWasmFont(fontFamily: string): string {
+  if (WASM_SUPPORTED_FONTS.includes(fontFamily)) {
+    return fontFamily
+  }
+  // Fallback to default WASM font
+  return 'Literata'
+}
+
 /**
  * Convert ReaderSettings to WASM format
  */
@@ -151,9 +223,12 @@ export function convertSettingsToWasm(
   // Get theme colors
   const themeColors = WASM_THEME_COLORS[theme as WasmThemeName] || WASM_THEME_COLORS.warm
 
+  // Map font to WASM-supported font (only Literata is bundled currently)
+  const wasmFontFamily = mapToWasmFont(settings.fontFamily)
+
   return {
     // Typography - convert rem to pixels
-    fontFamily: settings.fontFamily,
+    fontFamily: wasmFontFamily,
     fontSize: settings.fontSize * baseSize,
     lineHeight: settings.lineHeight,
     letterSpacing: 0, // Not currently in settings
@@ -186,7 +261,9 @@ export function updateSettings(settings: WasmReaderSettings): WasmSettingsUpdate
     throw new Error('WASM module not initialized')
   }
 
-  return wasmModule.update_settings(JSON.stringify(settings))
+  const rawResult = wasmModule.update_settings(JSON.stringify(settings))
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  return mapToObject<WasmSettingsUpdateResult>(rawResult)
 }
 
 /**
@@ -197,7 +274,25 @@ export function loadBook(content: BookContent): WasmLoadBookResult {
     throw new Error('WASM module not initialized')
   }
 
-  return wasmModule.load_book(JSON.stringify(content))
+  const rawResult = wasmModule.load_book(JSON.stringify(content))
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  const result = mapToObject<WasmLoadBookResult>(rawResult)
+  return result
+}
+
+/**
+ * Convert a Map (from serde_wasm_bindgen) to a plain object
+ */
+function mapToObject<T>(mapOrObj: unknown): T {
+  if (mapOrObj instanceof Map) {
+    const obj: Record<string, unknown> = {}
+    mapOrObj.forEach((value, key) => {
+      // Recursively convert nested Maps
+      obj[key] = value instanceof Map ? mapToObject(value) : value
+    })
+    return obj as T
+  }
+  return mapOrObj as T
 }
 
 /**
@@ -208,7 +303,10 @@ export function paginateBook(width: number, height: number): WasmPaginationResul
     throw new Error('WASM module not initialized')
   }
 
-  return wasmModule.paginate(width, height)
+  const rawResult = wasmModule.paginate(width, height)
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  const result = mapToObject<WasmPaginationResult>(rawResult)
+  return result
 }
 
 /**
@@ -235,7 +333,9 @@ export function getPageChapter(pageIndex: number): WasmPageChapter {
     throw new Error('WASM module not initialized')
   }
 
-  return wasmModule.get_page_chapter(pageIndex)
+  const rawResult = wasmModule.get_page_chapter(pageIndex)
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  return mapToObject<WasmPageChapter>(rawResult)
 }
 
 /**
@@ -246,7 +346,12 @@ export function searchText(query: string): WasmSearchResult[] {
     throw new Error('WASM module not initialized')
   }
 
-  return wasmModule.search_text(query)
+  const rawResult = wasmModule.search_text(query)
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  if (Array.isArray(rawResult)) {
+    return rawResult.map(item => mapToObject<WasmSearchResult>(item))
+  }
+  return mapToObject<WasmSearchResult[]>(rawResult)
 }
 
 /**
@@ -280,7 +385,9 @@ export function getCurrentSettings(): WasmReaderSettings | null {
     return null
   }
 
-  return wasmModule.get_settings()
+  const rawResult = wasmModule.get_settings()
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  return mapToObject<WasmReaderSettings>(rawResult)
 }
 
 // ============================================================================
@@ -313,7 +420,9 @@ export function selectionEnd(): WasmSelectionResult | null {
     return null
   }
 
-  return wasmModule.selection_end()
+  const rawResult = wasmModule.selection_end()
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  return rawResult ? mapToObject<WasmSelectionResult>(rawResult) : null
 }
 
 /**
@@ -333,7 +442,12 @@ export function getSelectionRects(): WasmSelectionRect[] {
     return []
   }
 
-  return wasmModule.get_selection_rects()
+  const rawResult = wasmModule.get_selection_rects()
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  if (Array.isArray(rawResult)) {
+    return rawResult.map(item => mapToObject<WasmSelectionRect>(item))
+  }
+  return []
 }
 
 /**
@@ -393,7 +507,14 @@ export function getPaginationStats(): {
     return null
   }
 
-  return wasmModule.get_pagination_stats()
+  const rawResult = wasmModule.get_pagination_stats()
+  // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
+  return mapToObject<{
+    hasDocument: boolean
+    isPaginated: boolean
+    totalChapters: number
+    totalPages: number
+  }>(rawResult)
 }
 
 /**

@@ -111,7 +111,7 @@ export function parseBookInWorker(
     worker.on('message', (message: WorkerMessage) => {
       switch (message.type) {
         case 'progress':
-          logger.debug(`Parser progress: ${message.percent}% - ${message.stage}`)
+          // logger.debug(`Parser progress: ${message.percent}% - ${message.stage}`)
           onProgress?.(message.percent, message.stage)
           break
 
