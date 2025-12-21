@@ -112,29 +112,40 @@ pub fn load_font(font_name: &str, font_data: &[u8]) -> Result<(), JsError> {
 #[wasm_bindgen]
 pub fn update_settings(settings_json: &str) -> Result<JsValue, JsError> {
     with_state(|state| {
-        let new_settings: ReaderSettings = serde_json::from_str(settings_json)
+        let mut new_settings: ReaderSettings = serde_json::from_str(settings_json)
             .map_err(|e| ReaderError::InvalidSettings(e.to_string()))?;
+        
+        // CRITICAL FIX: Preserve container dimensions from existing settings
+        // The JS side doesn't pass container dimensions in settings updates,
+        // so we must preserve them to avoid re-pagination with invalid (0) dimensions
+        if new_settings.container_width == 0.0 || new_settings.container_height == 0.0 {
+            new_settings.container_width = state.settings.container_width;
+            new_settings.container_height = state.settings.container_height;
+        }
         
         state.settings = new_settings;
         state.renderer.update_settings(&state.settings);
         
-        // If we have a document, re-paginate
-        if let Some(ref doc) = state.document {
-            let paginator = Paginator::new(&state.settings, &state.font_manager);
-            let paginated = paginator.paginate(doc);
-            let result = serde_json::json!({
-                "totalPages": paginated.total_pages,
-                "repaginated": true,
-            });
-            state.paginated = Some(paginated);
-            Ok(serde_wasm_bindgen::to_value(&result)?)
-        } else {
-            let result = serde_json::json!({
-                "totalPages": 0,
-                "repaginated": false,
-            });
-            Ok(serde_wasm_bindgen::to_value(&result)?)
+        // Only re-paginate if we have valid container dimensions and a document
+        if state.settings.container_width > 0.0 && state.settings.container_height > 0.0 {
+            if let Some(ref doc) = state.document {
+                let paginator = Paginator::new(&state.settings, &state.font_manager);
+                let paginated = paginator.paginate(doc);
+                
+                let result = serde_json::json!({
+                    "totalPages": paginated.total_pages,
+                    "repaginated": true,
+                });
+                state.paginated = Some(paginated);
+                return Ok(serde_wasm_bindgen::to_value(&result)?);
+            }
         }
+        
+        let result = serde_json::json!({
+            "totalPages": state.paginated.as_ref().map(|p| p.total_pages).unwrap_or(0),
+            "repaginated": false,
+        });
+        Ok(serde_wasm_bindgen::to_value(&result)?)
     })
 }
 

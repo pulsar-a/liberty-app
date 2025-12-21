@@ -270,7 +270,7 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
         console.error('[WasmPageRenderer] Render failed:', err)
       }
     })
-  }, [currentPageIndex, dimensions, isWasmReady, isPaginated, totalPages])
+  }, [currentPageIndex, dimensions, isWasmReady, isPaginated, totalPages, settings.columns])
 
   // Notify about page/chapter changes
   useEffect(() => {

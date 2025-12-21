@@ -32,14 +32,48 @@ pub fn parse_html_to_elements(html: &str) -> Vec<LayoutElement> {
     let document = Html::parse_fragment(html);
     let mut elements = Vec::new();
 
-    for child in document.root_element().children() {
-        if let Some(element) = parse_node(&child, &SpanStyle::default()) {
-            elements.push(element);
-        }
-    }
+    // Recursively collect elements, flattening container elements
+    collect_elements_recursive(&document.root_element(), &SpanStyle::default(), &mut elements);
 
     // Filter out empty elements
     elements.into_iter().filter(|e| !e.is_empty()).collect()
+}
+
+/// Recursively collect elements, flattening semantic containers like section/article
+fn collect_elements_recursive(
+    element: &ElementRef,
+    inherited_style: &SpanStyle,
+    elements: &mut Vec<LayoutElement>,
+) {
+    for child in element.children() {
+        match child.value() {
+            Node::Element(elem) => {
+                let tag = elem.name.local.as_ref().to_lowercase();
+                
+                // Flatten semantic containers - descend into their children
+                if matches!(tag.as_str(), "section" | "article" | "aside" | "main" | "body" | "html") {
+                    if let Some(child_ref) = ElementRef::wrap(child) {
+                        collect_elements_recursive(&child_ref, inherited_style, elements);
+                    }
+                } else if let Some(child_ref) = ElementRef::wrap(child) {
+                    // Parse as a regular element
+                    if let Some(layout_elem) = parse_element(&child_ref, &tag, inherited_style) {
+                        elements.push(layout_elem);
+                    }
+                }
+            }
+            Node::Text(text) => {
+                let trimmed = text.text.trim();
+                if !trimmed.is_empty() {
+                    elements.push(LayoutElement::Paragraph {
+                        spans: vec![TextSpan::with_style(trimmed, inherited_style.clone())],
+                        indent: false,
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 fn parse_node(node: &NodeRef<Node>, inherited_style: &SpanStyle) -> Option<LayoutElement> {
@@ -309,17 +343,31 @@ fn parse_element(element: &ElementRef, tag_name: &str, inherited_style: &SpanSty
             }
         }
 
-        // Section/article containers - just extract children
-        "section" | "article" | "aside" | "header" | "footer" | "nav" | "main" => {
+        // Section/article containers - handled by collect_elements_recursive
+        // to flatten them and extract their children directly
+        "section" | "article" | "aside" | "main" | "body" => {
+            // These should be flattened by collect_elements_recursive
+            // If we get here, just parse children and return as BlockQuote
             let children = parse_children(element, inherited_style);
             if children.len() == 1 {
                 Some(children.into_iter().next().unwrap())
             } else if children.is_empty() {
                 None
             } else {
-                // Return first child, others will be handled separately
-                // This is a simplification - in a full implementation we might want to
-                // return all children
+                // Flatten: return first element, others would need special handling
+                // In practice, these containers are handled by collect_elements_recursive
+                Some(LayoutElement::BlockQuote { elements: children })
+            }
+        }
+        
+        // Header/footer/nav - skip or treat as regular containers
+        "header" | "footer" | "nav" => {
+            let children = parse_children(element, inherited_style);
+            if children.is_empty() {
+                None
+            } else if children.len() == 1 {
+                Some(children.into_iter().next().unwrap())
+            } else {
                 Some(LayoutElement::BlockQuote { elements: children })
             }
         }

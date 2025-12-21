@@ -305,8 +305,7 @@ export function paginateBook(width: number, height: number): WasmPaginationResul
 
   const rawResult = wasmModule.paginate(width, height)
   // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
-  const result = mapToObject<WasmPaginationResult>(rawResult)
-  return result
+  return mapToObject<WasmPaginationResult>(rawResult)
 }
 
 /**

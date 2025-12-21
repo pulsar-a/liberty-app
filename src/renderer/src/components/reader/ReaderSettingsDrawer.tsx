@@ -10,6 +10,7 @@ import {
   ReaderFontFamily,
   ReaderTheme,
   useReaderSettingsStore,
+  ReaderColumns,
 } from '../../store/useReaderSettingsStore'
 import { useReaderStore } from '../../store/useReaderStore'
 
@@ -29,9 +30,19 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
     setContentPaddingX,
     setContentPaddingY,
     setMaxContentWidth,
+    setColumns,
   } = useReaderSettingsStore()
   
   const { layoutMode, setLayoutMode, clearFittedContent } = useReaderStore()
+
+  // Handle layout change - update both layoutMode (for HTML renderer) and columns (for WASM renderer)
+  const handleLayoutChange = (mode: 'single' | 'two-column') => {
+    setLayoutMode(mode)
+    // Also update the columns setting for WASM renderer
+    const columns: ReaderColumns = mode === 'two-column' ? 2 : 1
+    setColumns(columns)
+    clearFittedContent()
+  }
 
   const handleFontSizeChange = (delta: number) => {
     const newSize = Math.round((settings.fontSize + delta) * 1000) / 1000
@@ -191,10 +202,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
                     <div className="flex gap-1">
                       <button
                         type="button"
-                        onClick={() => {
-                          setLayoutMode('single')
-                          clearFittedContent()
-                        }}
+                        onClick={() => handleLayoutChange('single')}
                         className={clsx(
                           'flex h-8 w-10 items-center justify-center rounded-md transition-colors',
                           layoutMode === 'single'
@@ -207,10 +215,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setLayoutMode('two-column')
-                          clearFittedContent()
-                        }}
+                        onClick={() => handleLayoutChange('two-column')}
                         className={clsx(
                           'flex h-8 w-10 items-center justify-center rounded-md transition-colors',
                           layoutMode === 'two-column'
