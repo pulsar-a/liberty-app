@@ -6,11 +6,11 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:; connect-src 'self' http://127.0.0.1:*"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: liberty-book:; font-src 'self' data: blob:; connect-src 'self' liberty-book: http://127.0.0.1:*; frame-src blob:; object-src 'none'; base-uri 'none'"
     />
   </head>
 
-  <body class="bg-woodsmoke-400/10 dark:bg-mako-950 text-gray-900 dark:text-white">
+  <body class="bg-woodsmoke-400/10 text-gray-900 dark:bg-mako-950 dark:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

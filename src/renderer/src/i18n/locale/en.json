@@ -71,6 +71,8 @@
     "settings_general_confirmations_card_title": "Confirmations",
     "settings_general_confirmations_card_description": "Control when confirmation dialogs are shown",
     "settings_general_confirmRemoveFromCollection_label": "Ask for confirmation to remove book from collection",
+    "settings_general_confirmDeleteBook_label": "Ask for confirmation before deleting a book",
+    "settings_general_confirmLastBookFileRemoval_label": "Ask what to do when removing the last available book file",
     "settings_files_storage_card_title": "File Storage",
     "settings_files_storage_card_description": "Configure where your book files are stored on your computer",
     "settings_files_folder_description": "Choose a custom folder for your book collection",

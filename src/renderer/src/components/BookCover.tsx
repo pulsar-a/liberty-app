@@ -1,13 +1,13 @@
 import { clsx } from 'clsx'
+import type { BookSummary } from '@app-types/books.types'
 import React from 'react'
-import BookEntity from '../../../main/entities/book.entity'
 import placeholderBlue from '../assets/images/placeholder-blue.jpg'
 import placeholderGreen from '../assets/images/placeholder-green.jpg'
 import placeholderPink from '../assets/images/placeholder-pink.jpg'
 import { getStableOptionForHash } from '../utils/hashSelector'
 
 type BookCoverProps = {
-  book: BookEntity
+  book: BookSummary
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   withTitle?: boolean
 }
@@ -49,7 +49,7 @@ export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'm
       ></div>
       {book.cover && isImageAvailable && (
         <img
-          src={'liberty-file://' + encodeURIComponent(book.cover)}
+          src={`liberty-book://cover/${book.id}`}
           onError={() => {
             setImageAvailable(false)
           }}

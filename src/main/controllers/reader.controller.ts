@@ -5,8 +5,10 @@ import {
   GetBookContentResponse,
   PaginatedContent,
   PaginationConfig,
+  ReaderPosition,
 } from '../../../types/reader.types'
 import BookEntity from '../entities/book.entity'
+import BookFileEntity from '../entities/bookFile.entity'
 import { bookmarksQuery } from '../queries/bookmarks'
 import { booksQuery } from '../queries/books'
 import { db } from '../services/db'
@@ -16,6 +18,7 @@ import { logger } from '../utils/logger'
 // Input schemas for validation
 export const getBookContentInputSchema = z.object({
   bookId: z.number(),
+  bookFileId: z.number().int().positive().optional(),
   paginationConfig: z
     .object({
       mode: z.enum(['single', 'two-column']).optional(),
@@ -26,10 +29,24 @@ export const getBookContentInputSchema = z.object({
   clientSidePagination: z.boolean().optional(),
 })
 
-export const updateReadingProgressInputSchema = z.object({
+const readerEngineSchema = z.enum(['html', 'wasm', 'foliate'])
+const readerPositionSchema = z.object({
+  engine: readerEngineSchema,
+  progression: z.number().min(0).max(1),
+  locator: z.union([
+    z.object({ kind: z.literal('cfi'), value: z.string().min(1) }),
+    z.object({
+      kind: z.literal('page'),
+      index: z.number().int().min(0),
+      total: z.number().int().positive(),
+    }),
+  ]),
+})
+
+export const updateReadingPositionInputSchema = z.object({
   bookId: z.number(),
-  currentPage: z.number(),
-  totalPages: z.number(),
+  bookFileId: z.number().int().positive(),
+  position: readerPositionSchema,
 })
 
 export const getBookmarksInputSchema = z.object({
@@ -38,14 +55,21 @@ export const getBookmarksInputSchema = z.object({
 
 export const createBookmarkInputSchema = z.object({
   bookId: z.number(),
-  chapterId: z.string(),
-  pageIndex: z.number(),
+  bookFileId: z.number().int().positive(),
+  position: readerPositionSchema,
+  chapterId: z.string().optional(),
+  pageIndex: z.number().int().min(0).optional(),
   label: z.string().optional(),
   selectedText: z.string().optional(),
 })
 
 export const deleteBookmarkInputSchema = z.object({
   bookmarkId: z.number(),
+})
+
+export const updateBookmarkPositionInputSchema = z.object({
+  bookmarkId: z.number(),
+  position: readerPositionSchema,
 })
 
 // Cache for parsed book content to avoid re-parsing
@@ -78,14 +102,30 @@ export const getBookContentController = async ({
 }: {
   input: z.infer<typeof getBookContentInputSchema>
 }): Promise<GetBookContentResponse | null> => {
-  const { bookId, paginationConfig, clientSidePagination } = input
+  const { bookId, bookFileId, paginationConfig, clientSidePagination } = input
 
   // Get book from database
   const book = await booksQuery.book({ id: bookId })
-  if (!book) {
-    logger.error(`Book not found: ${bookId}`)
+  const selectedFile = await booksQuery.resolveReadableFile(bookId, bookFileId)
+  if (!book || !selectedFile) {
+    logger.error(`Book or readable file not found: ${bookId}/${bookFileId || 'preferred'}`)
     return null
   }
+  selectedFile.lastOpenedAt = new Date()
+  await db.manager.save(selectedFile)
+  if (book.preferredBookFileId !== selectedFile.id) {
+    book.preferredBookFileId = selectedFile.id
+    await db.manager.save(book)
+  }
+
+  const lastReadPage =
+    selectedFile.readingPosition?.locator.kind === 'page'
+      ? selectedFile.readingPosition.locator.index
+      : 0
+  const lastReadTotalPages =
+    selectedFile.readingPosition?.locator.kind === 'page'
+      ? selectedFile.readingPosition.locator.total
+      : 0
 
   const config: PaginationConfig = {
     mode: paginationConfig?.mode || 'single',
@@ -95,16 +135,17 @@ export const getBookContentController = async ({
   // Client-side pagination path: return raw content only
   if (clientSidePagination) {
     // Check raw content cache first
-    const cachedRaw = rawContentCache.get(bookId)
+    const cachedRaw = rawContentCache.get(selectedFile.id)
     if (cachedRaw) {
       logger.debug(`Using cached raw content for book ${bookId}`)
       sendProgressToRenderer(bookId, 100, 'reader_loading_complete')
 
       return {
+        bookFileId: selectedFile.id,
         content: cachedRaw,
         paginatedContent: null,
-        lastReadPage: book.readingProgress || 0,
-        lastReadTotalPages: book.totalPages || 0,
+        lastReadPage,
+        lastReadTotalPages,
         clientSidePagination: true,
       }
     }
@@ -122,22 +163,23 @@ export const getBookContentController = async ({
       let result: { content: BookContent; paginatedContent: PaginatedContent }
 
       try {
-        result = await parseBookInWorker(book.fileName, bookId, config, onProgress)
+        result = await parseBookInWorker(selectedFile.storedPath, bookId, config, onProgress)
       } catch (workerError) {
         logger.warn(`Worker parsing failed, falling back to sync: ${workerError}`)
-        result = await parseBookSync(book.fileName, bookId, config, onProgress)
+        result = await parseBookSync(selectedFile.storedPath, bookId, config, onProgress)
       }
 
       // Cache the raw content
-      rawContentCache.set(bookId, result.content)
+      rawContentCache.set(selectedFile.id, result.content)
 
       sendProgressToRenderer(bookId, 90, 'reader_loading_complete')
 
       return {
+        bookFileId: selectedFile.id,
         content: result.content,
         paginatedContent: null,
-        lastReadPage: book.readingProgress || 0,
-        lastReadTotalPages: book.totalPages || 0,
+        lastReadPage,
+        lastReadTotalPages,
         clientSidePagination: true,
       }
     } catch (error) {
@@ -148,7 +190,7 @@ export const getBookContentController = async ({
   }
 
   // Legacy server-side pagination path (for backward compatibility)
-  const cacheKey = bookId
+  const cacheKey = selectedFile.id
   const cached = paginatedContentCache.get(cacheKey)
 
   if (cached) {
@@ -156,10 +198,11 @@ export const getBookContentController = async ({
     sendProgressToRenderer(bookId, 100, 'reader_loading_paginating')
 
     return {
+      bookFileId: selectedFile.id,
       content: cached.content,
       paginatedContent: cached.paginatedContent,
-      lastReadPage: book.readingProgress || 0,
-      lastReadTotalPages: book.totalPages || 0,
+      lastReadPage,
+      lastReadTotalPages,
     }
   }
 
@@ -176,25 +219,23 @@ export const getBookContentController = async ({
 
     try {
       // Try to use worker thread for non-blocking parsing
-      result = await parseBookInWorker(book.fileName, bookId, config, onProgress)
+      result = await parseBookInWorker(selectedFile.storedPath, bookId, config, onProgress)
     } catch (workerError) {
       // Fall back to synchronous parsing if worker fails
       logger.warn(`Worker parsing failed, falling back to sync: ${workerError}`)
-      result = await parseBookSync(book.fileName, bookId, config, onProgress)
+      result = await parseBookSync(selectedFile.storedPath, bookId, config, onProgress)
     }
 
     // Cache the results
     paginatedContentCache.set(cacheKey, result)
-    rawContentCache.set(bookId, result.content)
-
-    // Get last read page from book entity
-    const lastReadPage = book.readingProgress || 0
+    rawContentCache.set(selectedFile.id, result.content)
 
     return {
+      bookFileId: selectedFile.id,
       content: result.content,
       paginatedContent: result.paginatedContent,
       lastReadPage,
-      lastReadTotalPages: book.totalPages || 0,
+      lastReadTotalPages,
     }
   } catch (error) {
     logger.error(`Failed to parse book content: ${error}`)
@@ -204,21 +245,22 @@ export const getBookContentController = async ({
 }
 
 /**
- * Update reading progress for a book
+ * Update the engine-neutral reading position for a book.
  */
-export const updateReadingProgressController = async ({
+export const updateReadingPositionController = async ({
   input,
 }: {
-  input: z.infer<typeof updateReadingProgressInputSchema>
+  input: z.infer<typeof updateReadingPositionInputSchema>
 }): Promise<boolean> => {
-  const { bookId, currentPage, totalPages } = input
+  const { bookId, bookFileId, position } = input
 
   try {
-    await db.manager.update(
-      BookEntity,
-      { id: bookId },
-      { readingProgress: currentPage, totalPages }
-    )
+    const file = await db.manager.findOneBy(BookFileEntity, { id: bookFileId, bookId })
+    if (!file || file.removedAt) return false
+    file.readingPosition = position as ReaderPosition
+    file.lastOpenedAt = new Date()
+    await db.manager.save(file)
+    await db.manager.update(BookEntity, { id: bookId }, { readingProgression: position.progression })
     return true
   } catch (error) {
     logger.error(`Failed to update reading progress: ${error}`)
@@ -259,12 +301,23 @@ export const deleteBookmarkController = async ({
   return await bookmarksQuery.deleteBookmark(input.bookmarkId)
 }
 
+export const updateBookmarkPositionController = async ({
+  input,
+}: {
+  input: z.infer<typeof updateBookmarkPositionInputSchema>
+}) => {
+  return await bookmarksQuery.updateBookmarkPosition(
+    input.bookmarkId,
+    input.position as ReaderPosition
+  )
+}
+
 /**
  * Clear content cache for a book (useful when book is deleted)
  */
-export const clearContentCache = (bookId: number): void => {
-  rawContentCache.delete(bookId)
-  paginatedContentCache.delete(bookId)
+export const clearContentCache = (bookFileId: number): void => {
+  rawContentCache.delete(bookFileId)
+  paginatedContentCache.delete(bookFileId)
 }
 
 /**
@@ -278,6 +331,6 @@ export const clearAllContentCache = (): void => {
 /**
  * Check if a book is in the content cache
  */
-export const isBookCached = (bookId: number): boolean => {
-  return rawContentCache.has(bookId) || paginatedContentCache.has(bookId)
+export const isBookCached = (bookFileId: number): boolean => {
+  return rawContentCache.has(bookFileId) || paginatedContentCache.has(bookFileId)
 }

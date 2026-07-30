@@ -1,291 +1,139 @@
+import type {
+  BookSearchResult,
+  CollectionSearchResult,
+  SearchParams,
+  SearchResults,
+} from '../../../types/search.types'
 import BookEntity from '../entities/book.entity'
-import BookIdEntity from '../entities/bookId.entity'
 import CollectionEntity from '../entities/collection.entity'
 import { db } from '../services/db'
+import { getReadableBookFormats } from '../../../types/reader-engines'
 
-export type SearchFilter = 'books' | 'collections' | 'book_ids' | 'file_names' | 'internal_file_names'
-export type BookFormat = 'epub' | 'pdf' | 'fb2' | 'fb3' | 'txt'
+const readableFormats = new Set<string>(getReadableBookFormats())
 
-export interface SearchParams {
-  query: string
-  filters?: SearchFilter[]
-  formats?: BookFormat[]
-  limit?: number
-}
+const contains = (text: string, search: string): boolean =>
+  text.toLocaleLowerCase().includes(search.toLocaleLowerCase())
 
-export interface BookSearchResult {
-  id: number
-  name: string
-  cover: string | null
-  authors: { id: number; name: string }[]
-  fileFormat: string
-  fileName: string
-  originalFileName: string
-  matchedField?: 'title' | 'book_id' | 'file_name' | 'internal_file_name'
-  matchedBookId?: {
-    idType: string
-    idVal: string
+const baseResult = (book: BookEntity): Omit<BookSearchResult, 'matchedField'> => {
+  const activeFiles = book.files.filter((file) => !file.removedAt)
+  const cover =
+    book.files.find((file) => file.id === book.coverBookFileId)?.coverPath ||
+    book.files.find((file) => file.coverPath)?.coverPath ||
+    null
+  return {
+    id: book.id,
+    name: book.name,
+    cover,
+    authors: book.authors.map(({ id, name }) => ({ id, name })),
+    formats: [...new Set(activeFiles.map((file) => file.fileFormat.toLowerCase()))].sort(),
+    activeFileCount: activeFiles.length,
+    hasReadableFile: activeFiles.some((file) => readableFormats.has(file.fileFormat.toLowerCase())),
   }
-}
-
-export interface CollectionSearchResult {
-  id: number
-  name: string
-  booksCount: number
-}
-
-export interface SearchResults {
-  books: BookSearchResult[]
-  collections: CollectionSearchResult[]
-  totalBooks: number
-  totalCollections: number
-}
-
-/**
- * Case-insensitive string matching with full Unicode support.
- * SQLite's LIKE/LOWER only work with ASCII, so we use JavaScript's
- * toLowerCase() which properly handles Unicode (Cyrillic, etc.)
- * 
- * Reference: https://shallowdepth.online/posts/2022/01/5-ways-to-implement-case-insensitive-search-in-sqlite-with-full-unicode-support/
- */
-function unicodeCaseInsensitiveContains(text: string, search: string): boolean {
-  return text.toLowerCase().includes(search.toLowerCase())
 }
 
 export const searchQuery = {
   async search(params: SearchParams): Promise<SearchResults> {
     const { query, filters = ['books', 'collections'], formats, limit } = params
-    
-    if (!query || query.trim().length === 0) {
-      return { books: [], collections: [], totalBooks: 0, totalCollections: 0 }
-    }
+    const term = query.trim()
+    if (!term) return { books: [], collections: [], totalBooks: 0, totalCollections: 0 }
 
-    const searchTermLower = query.trim().toLowerCase()
-    const bookResults: BookSearchResult[] = []
-    const bookIds = new Set<number>()
+    const allBooks = await db.manager.find(BookEntity, {
+      relations: { authors: true, files: { identifiers: true } },
+    })
+    const results: BookSearchResult[] = []
 
-    // Search in books by title
-    if (filters.includes('books')) {
-      // Fetch all books (or with format filter) and filter in JavaScript
-      // This ensures proper Unicode case-insensitive matching
-      let qb = db.manager
-        .createQueryBuilder(BookEntity, 'book')
-        .leftJoinAndSelect('book.authors', 'author')
-
-      if (formats && formats.length > 0) {
-        qb = qb.where('book.fileFormat IN (:...formats)', { formats })
+    for (const book of allBooks) {
+      const activeFiles = book.files.filter((file) => !file.removedAt)
+      if (
+        formats?.length &&
+        !activeFiles.some((file) =>
+          (formats as readonly string[]).includes(file.fileFormat.toLowerCase())
+        )
+      ) {
+        continue
       }
 
-      const allBooks = await qb.getMany()
-
-      // Filter with Unicode-aware case-insensitive comparison
-      const matchingBooks = allBooks.filter(book => 
-        unicodeCaseInsensitiveContains(book.name, searchTermLower)
-      )
-
-      for (const book of matchingBooks) {
-        if (!bookIds.has(book.id)) {
-          bookIds.add(book.id)
-          bookResults.push({
-            id: book.id,
-            name: book.name,
-            cover: book.cover,
-            authors: book.authors.map(a => ({ id: a.id, name: a.name })),
-            fileFormat: book.fileFormat,
-            fileName: book.fileName,
-            originalFileName: book.originalFileName,
-            matchedField: 'title',
-          })
-        }
+      let result: BookSearchResult | null = null
+      if (filters.includes('books') && contains(book.name, term)) {
+        result = { ...baseResult(book), matchedField: 'title' }
       }
-    }
 
-    // Search in book IDs
-    if (filters.includes('book_ids')) {
-      const allBookIds = await db.manager.find(BookIdEntity, {
-        relations: { book: { authors: true } },
-      })
-
-      const matchingBookIds = allBookIds.filter(bookId => 
-        unicodeCaseInsensitiveContains(bookId.idVal, searchTermLower)
-      )
-
-      for (const bookIdEntity of matchingBookIds) {
-        if (bookIdEntity.book && !bookIds.has(bookIdEntity.book.id)) {
-          const book = bookIdEntity.book
-          // Check format filter
-          if (formats && formats.length > 0 && !formats.includes(book.fileFormat as BookFormat)) {
-            continue
-          }
-          bookIds.add(book.id)
-          bookResults.push({
-            id: book.id,
-            name: book.name,
-            cover: book.cover,
-            authors: book.authors.map(a => ({ id: a.id, name: a.name })),
-            fileFormat: book.fileFormat,
-            fileName: book.fileName,
-            originalFileName: book.originalFileName,
+      if (!result && filters.includes('book_ids')) {
+        const identifier = book.files
+          .flatMap((file) => file.identifiers)
+          .find((item) => contains(item.idVal, term))
+        if (identifier) {
+          result = {
+            ...baseResult(book),
             matchedField: 'book_id',
-            matchedBookId: {
-              idType: bookIdEntity.idType,
-              idVal: bookIdEntity.idVal,
-            },
-          })
+            matchedBookId: { idType: identifier.idType, idVal: identifier.idVal },
+          }
         }
       }
-    }
 
-    // Search by original file name
-    if (filters.includes('file_names')) {
-      let qb = db.manager
-        .createQueryBuilder(BookEntity, 'book')
-        .leftJoinAndSelect('book.authors', 'author')
-
-      if (formats && formats.length > 0) {
-        qb = qb.where('book.fileFormat IN (:...formats)', { formats })
-      }
-
-      const allBooks = await qb.getMany()
-
-      const matchingBooks = allBooks.filter(book => 
-        unicodeCaseInsensitiveContains(book.originalFileName, searchTermLower)
-      )
-
-      for (const book of matchingBooks) {
-        if (!bookIds.has(book.id)) {
-          bookIds.add(book.id)
-          bookResults.push({
-            id: book.id,
-            name: book.name,
-            cover: book.cover,
-            authors: book.authors.map(a => ({ id: a.id, name: a.name })),
-            fileFormat: book.fileFormat,
-            fileName: book.fileName,
-            originalFileName: book.originalFileName,
+      if (!result && filters.includes('file_names')) {
+        const file = book.files.find((item) => contains(item.originalFileName, term))
+        if (file) {
+          result = {
+            ...baseResult(book),
             matchedField: 'file_name',
-          })
+            matchedFile: {
+              id: file.id,
+              fileFormat: file.fileFormat,
+              storedPath: file.storedPath,
+              originalFileName: file.originalFileName,
+              isAvailable: !file.removedAt,
+            },
+          }
         }
       }
-    }
 
-    // Search by internal file name (UUID)
-    if (filters.includes('internal_file_names')) {
-      let qb = db.manager
-        .createQueryBuilder(BookEntity, 'book')
-        .leftJoinAndSelect('book.authors', 'author')
-
-      if (formats && formats.length > 0) {
-        qb = qb.where('book.fileFormat IN (:...formats)', { formats })
-      }
-
-      const allBooks = await qb.getMany()
-
-      const matchingBooks = allBooks.filter(book => 
-        unicodeCaseInsensitiveContains(book.fileName, searchTermLower)
-      )
-
-      for (const book of matchingBooks) {
-        if (!bookIds.has(book.id)) {
-          bookIds.add(book.id)
-          bookResults.push({
-            id: book.id,
-            name: book.name,
-            cover: book.cover,
-            authors: book.authors.map(a => ({ id: a.id, name: a.name })),
-            fileFormat: book.fileFormat,
-            fileName: book.fileName,
-            originalFileName: book.originalFileName,
+      if (!result && filters.includes('internal_file_names')) {
+        const file = book.files.find((item) => contains(item.storedPath, term))
+        if (file) {
+          result = {
+            ...baseResult(book),
             matchedField: 'internal_file_name',
-          })
+            matchedFile: {
+              id: file.id,
+              fileFormat: file.fileFormat,
+              storedPath: file.storedPath,
+              originalFileName: file.originalFileName,
+              isAvailable: !file.removedAt,
+            },
+          }
         }
       }
+      if (result) results.push(result)
     }
 
-    // Search collections
     let collectionResults: CollectionSearchResult[] = []
-    let totalCollections = 0
-
     if (filters.includes('collections')) {
-      const allCollections = await db.manager.find(CollectionEntity, {
-        order: { name: 'ASC' },
-      })
-
-      const matchingCollections = allCollections.filter(collection =>
-        unicodeCaseInsensitiveContains(collection.name, searchTermLower)
-      )
-
-      totalCollections = matchingCollections.length
-      collectionResults = matchingCollections.map(c => ({
-        id: c.id,
-        name: c.name,
-        booksCount: c.booksCount,
-      }))
+      const collections = await db.manager.find(CollectionEntity, { order: { name: 'ASC' } })
+      collectionResults = collections
+        .filter((collection) => contains(collection.name, term))
+        .map(({ id, name, booksCount }) => ({ id, name, booksCount }))
     }
-
-    // Apply limit after all filtering
-    const finalBooks = limit ? bookResults.slice(0, limit) : bookResults
-    const finalCollections = limit ? collectionResults.slice(0, limit) : collectionResults
 
     return {
-      books: finalBooks,
-      collections: finalCollections,
-      totalBooks: bookResults.length,
-      totalCollections,
+      books: limit ? results.slice(0, limit) : results,
+      collections: limit ? collectionResults.slice(0, limit) : collectionResults,
+      totalBooks: results.length,
+      totalCollections: collectionResults.length,
     }
   },
 
-  // Quick search for dropdown (limited results)
-  async quickSearch(query: string): Promise<{
-    books: BookSearchResult[]
-    collections: CollectionSearchResult[]
-    hasMoreBooks: boolean
-    hasMoreCollections: boolean
-  }> {
-    const DROPDOWN_LIMIT = 5
-
-    if (!query || query.trim().length === 0) {
-      return { books: [], collections: [], hasMoreBooks: false, hasMoreCollections: false }
-    }
-
-    const searchTermLower = query.trim().toLowerCase()
-
-    // Fetch all books and filter in JavaScript for proper Unicode support
-    const allBooks = await db.manager.find(BookEntity, {
-      relations: { authors: true },
+  async quickSearch(query: string) {
+    const results = await searchQuery.search({
+      query,
+      filters: ['books', 'collections'],
     })
-
-    const matchingBooks = allBooks.filter(book =>
-      unicodeCaseInsensitiveContains(book.name, searchTermLower)
-    )
-
-    // Fetch all collections and filter
-    const allCollections = await db.manager.find(CollectionEntity, {
-      order: { name: 'ASC' },
-    })
-
-    const matchingCollections = allCollections.filter(collection =>
-      unicodeCaseInsensitiveContains(collection.name, searchTermLower)
-    )
-
+    const limit = 5
     return {
-      books: matchingBooks.slice(0, DROPDOWN_LIMIT).map(book => ({
-        id: book.id,
-        name: book.name,
-        cover: book.cover,
-        authors: book.authors.map(a => ({ id: a.id, name: a.name })),
-        fileFormat: book.fileFormat,
-        fileName: book.fileName,
-        originalFileName: book.originalFileName,
-        matchedField: 'title' as const,
-      })),
-      collections: matchingCollections.slice(0, DROPDOWN_LIMIT).map(c => ({
-        id: c.id,
-        name: c.name,
-        booksCount: c.booksCount,
-      })),
-      hasMoreBooks: matchingBooks.length > DROPDOWN_LIMIT,
-      hasMoreCollections: matchingCollections.length > DROPDOWN_LIMIT,
+      books: results.books.slice(0, limit),
+      collections: results.collections.slice(0, limit),
+      hasMoreBooks: results.totalBooks > limit,
+      hasMoreCollections: results.totalCollections > limit,
     }
   },
 }

@@ -1,13 +1,19 @@
-import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import BookEntity from './book.entity'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import BookFileEntity from './bookFile.entity'
 
 @Entity('book_ids')
 export default class BookIdEntity {
   @PrimaryGeneratedColumn()
   id: number | null
 
-  @ManyToOne(() => BookEntity, (book) => book.bookIds)
-  book: BookEntity | null
+  @Column('integer')
+  bookFileId: number
+
+  @ManyToOne(() => BookFileEntity, (bookFile) => bookFile.identifiers, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'bookFileId' })
+  bookFile: BookFileEntity
 
   @Index('idx_book_ids_idType')
   @Column('text')
@@ -16,4 +22,8 @@ export default class BookIdEntity {
   @Index('idx_book_ids_idVal')
   @Column('text')
   idVal: string
+
+  @Index('idx_book_ids_normalizedVal')
+  @Column('text')
+  normalizedVal: string
 }

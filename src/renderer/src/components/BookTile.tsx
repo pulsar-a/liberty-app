@@ -1,11 +1,11 @@
 import { faHeart as faHeartOutline } from '@fortawesome/free-regular-svg-icons'
+import type { BookSummary } from '@app-types/books.types'
 import { faBookOpen, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import BookEntity from '../../../main/entities/book.entity'
 import placeholderBlue from '../assets/images/placeholder-blue.jpg'
 import placeholderGreen from '../assets/images/placeholder-green.jpg'
 import placeholderPink from '../assets/images/placeholder-pink.jpg'
@@ -14,7 +14,7 @@ import { getStableOptionForHash } from '../utils/hashSelector'
 import { BookContextMenu } from './BookContextMenu'
 
 type BookTileProps = {
-  book: BookEntity
+  book: BookSummary
   className?: string
   withGutter?: boolean
 }
@@ -40,16 +40,11 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
     toggleFavoriteMutation.mutate({ bookId: book.id })
   }
 
-  const hasReadingProgress =
-    book.readingProgress !== null &&
-    book.readingProgress !== undefined &&
-    book.totalPages !== null &&
-    book.totalPages !== undefined &&
-    book.totalPages > 0
-
-  const progressPercentage = hasReadingProgress
-    ? Math.round(((book.readingProgress! + 1) / book.totalPages!) * 100)
-    : 0
+  const progressPercentage =
+    book.readingProgression !== null && book.readingProgression !== undefined
+      ? Math.round(book.readingProgression * 100)
+      : 0
+  const hasReadingProgress = progressPercentage > 0
 
   const hasAuthors = book.authors && book.authors.length > 0
 
@@ -69,6 +64,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
 
   const openReader = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!book.hasReadableFile) return
     await navigate({
       to: '/reader/$bookId',
       params: { bookId: book.id.toString() },
@@ -108,7 +104,11 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
               : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white',
             toggleFavoriteMutation.isLoading && 'opacity-50'
           )}
-          title={book.isFavorite ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites') : t('bookDetailsView_addToFavorites', 'Add to favorites')}
+          title={
+            book.isFavorite
+              ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites')
+              : t('bookDetailsView_addToFavorites', 'Add to favorites')
+          }
         >
           <FontAwesomeIcon
             icon={book.isFavorite ? faHeartSolid : faHeartOutline}
@@ -135,7 +135,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
 
         {book.cover && isImageAvailable && (
           <img
-            src={'liberty-file://' + encodeURIComponent(book.cover)}
+            src={`liberty-book://cover/${book.id}`}
             onError={() => {
               setImageAvailable(false)
             }}
@@ -178,10 +178,13 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
           <button
             onClick={openReader}
+            disabled={!book.hasReadableFile}
             className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-500"
           >
             <FontAwesomeIcon icon={faBookOpen} className="h-4 w-4" />
-            {hasReadingProgress
+            {!book.hasReadableFile
+              ? t('book_no_readable_files', 'No readable files')
+              : hasReadingProgress
               ? t('book_continue_reading', 'Continue Reading')
               : t('book_start_reading', 'Start Reading')}
           </button>

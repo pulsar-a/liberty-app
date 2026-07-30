@@ -18,12 +18,20 @@ interface ReaderSidebarProps {
   className?: string
   onAddBookmark?: () => void
   onDeleteBookmark?: (bookmarkId: number) => void
+  tocEntries?: TocEntry[]
+  onNavigateToc?: (entry: TocEntry) => void
+  onNavigateBookmark?: (bookmark: Bookmark) => void
+  hasBookmarkOnCurrentLocation?: boolean
 }
 
 export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
   className,
   onAddBookmark,
   onDeleteBookmark,
+  tocEntries,
+  onNavigateToc,
+  onNavigateBookmark,
+  hasBookmarkOnCurrentLocation,
 }) => {
   const { t } = useTranslation()
   const {
@@ -38,7 +46,7 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
     getCurrentChapterId,
   } = useReaderStore()
 
-  const tableOfContents = content?.tableOfContents || []
+  const tableOfContents = tocEntries ?? content?.tableOfContents ?? []
   const currentChapterId = getCurrentChapterId()
 
   return (
@@ -85,6 +93,10 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
             entries={tableOfContents}
             currentChapterId={currentChapterId}
             onNavigate={(entry) => {
+              if (onNavigateToc) {
+                onNavigateToc(entry)
+                return
+              }
               if (!content) return
               const target = resolveTocTarget(entry, content.chapters)
               if (target) {
@@ -98,10 +110,16 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
           <BookmarksList
             bookmarks={bookmarks}
             currentPageIndex={currentPageIndex}
-            onNavigate={goToPage}
+            onNavigate={(bookmark) => {
+              if (onNavigateBookmark) {
+                onNavigateBookmark(bookmark)
+              } else if (bookmark.pageIndex !== null) {
+                goToPage(bookmark.pageIndex)
+              }
+            }}
             onAdd={onAddBookmark}
             onDelete={onDeleteBookmark}
-            hasBookmarkOnCurrentPage={hasBookmarkOnCurrentPage()}
+            hasBookmarkOnCurrentPage={hasBookmarkOnCurrentLocation ?? hasBookmarkOnCurrentPage()}
           />
         )}
       </div>
@@ -212,7 +230,7 @@ const TocEntryItem: React.FC<TocEntryItemProps> = ({ entry, currentChapterId, on
 interface BookmarksListProps {
   bookmarks: Bookmark[]
   currentPageIndex: number
-  onNavigate: (pageIndex: number) => void
+  onNavigate: (bookmark: Bookmark) => void
   onAdd?: () => void
   onDelete?: (bookmarkId: number) => void
   hasBookmarkOnCurrentPage: boolean
@@ -261,7 +279,7 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
               key={bookmark.id}
               bookmark={bookmark}
               isCurrentPage={bookmark.pageIndex === currentPageIndex}
-              onNavigate={() => onNavigate(bookmark.pageIndex)}
+              onNavigate={() => onNavigate(bookmark)}
               onDelete={() => onDelete?.(bookmark.id)}
             />
           ))}
@@ -307,7 +325,12 @@ const BookmarkItem: React.FC<BookmarkItemProps> = ({
               )}
             />
             <span className="text-sm font-medium">
-              {bookmark.label || t('reader_page_n', 'Page {{n}}', { n: bookmark.pageIndex + 1 })}
+              {bookmark.label ||
+                (bookmark.pageIndex !== null
+                  ? t('reader_page_n', 'Page {{n}}', { n: bookmark.pageIndex + 1 })
+                  : t('reader_progress_n', '{{n}}% through book', {
+                      n: Math.round((bookmark.progression ?? 0) * 100),
+                    }))}
             </span>
           </div>
 

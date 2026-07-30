@@ -71,6 +71,8 @@
     "settings_general_confirmations_card_title": "Раслаулар",
     "settings_general_confirmations_card_description": "Раслау диалоглары кайчан күрсәтелергә тиеш",
     "settings_general_confirmRemoveFromCollection_label": "Китапны коллекциядән бетергәндә раслау сорау",
+    "settings_general_confirmDeleteBook_label": "Китапны бетергәнче раслау сорау",
+    "settings_general_confirmLastBookFileRemoval_label": "Китапның соңгы булган файлын бетергәндә нәрсә эшләргә икәнен сорау",
     "settings_files_storage_card_title": "Файлларны саклау",
     "settings_files_storage_card_description": "Компьютерыгызда китап файлларын кайда саклау турында көйләгез",
     "settings_files_folder_description": "Китаплар коллекциясе өчен папка сайлагыз",

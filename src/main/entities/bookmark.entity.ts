@@ -6,7 +6,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
+import type { ReaderPosition } from '../../../types/reader.types'
 import BookEntity from './book.entity'
+import BookFileEntity from './bookFile.entity'
 
 @Entity('bookmarks')
 export default class BookmarkEntity {
@@ -20,11 +22,24 @@ export default class BookmarkEntity {
   @Column('integer')
   bookId: number
 
-  @Column('text')
-  chapterId: string
+  @ManyToOne(() => BookFileEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'bookFileId' })
+  bookFile: BookFileEntity
 
   @Column('integer')
-  pageIndex: number
+  bookFileId: number
+
+  @Column('text', { nullable: true })
+  chapterId: string | null
+
+  @Column('integer', { nullable: true })
+  pageIndex: number | null
+
+  @Column('simple-json', { nullable: true })
+  position: ReaderPosition | null
+
+  @Column('real', { nullable: true })
+  progression: number | null
 
   @Column('text', { nullable: true })
   label: string | null
@@ -35,4 +50,3 @@ export default class BookmarkEntity {
   @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date
 }
-

@@ -71,6 +71,8 @@
     "settings_general_confirmations_card_title": "Подтверждения",
     "settings_general_confirmations_card_description": "Настройте, когда показывать диалоги подтверждения",
     "settings_general_confirmRemoveFromCollection_label": "Запрашивать подтверждение при удалении книги из коллекции",
+    "settings_general_confirmDeleteBook_label": "Запрашивать подтверждение перед удалением книги",
+    "settings_general_confirmLastBookFileRemoval_label": "Спрашивать, что делать при удалении последнего доступного файла книги",
     "settings_files_storage_card_title": "Хранение файлов",
     "settings_files_storage_card_description": "Настройте место хранения ваших книг на компьютере",
     "settings_files_folder_description": "Выберите папку для вашей коллекции книг",

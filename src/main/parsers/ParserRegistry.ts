@@ -1,6 +1,7 @@
 import { AbstractParser, FileData } from './AbstractParser'
+import { getReadableBookFormats } from '../../../types/reader-engines'
 import { EpubParser } from './epub/EpubParser'
-import { NoParser } from './noParser/NoParser'
+import { FoliateMetadataParser } from './foliate/FoliateMetadataParser'
 
 type ParserConstructor = new (file: FileData) => AbstractParser
 
@@ -10,14 +11,10 @@ type ParserConstructor = new (file: FileData) => AbstractParser
  */
 const parserMap: Record<string, ParserConstructor> = {
   epub: EpubParser,
-  fb2: NoParser,
-  fb3: NoParser,
-  mobi: NoParser,
-  pdf: NoParser,
-  djvu: NoParser,
-  txt: NoParser,
-  doc: NoParser,
-  docx: NoParser,
+  fb2: FoliateMetadataParser,
+  mobi: FoliateMetadataParser,
+  azw3: FoliateMetadataParser,
+  cbz: FoliateMetadataParser,
 }
 
 /**
@@ -38,7 +35,7 @@ export function isFormatSupported(fileExtension: string): boolean {
  * Get list of all supported file extensions
  */
 export function getSupportedFormats(): string[] {
-  return Object.keys(parserMap)
+  return getReadableBookFormats().filter((format) => format in parserMap)
 }
 
 /**
@@ -47,4 +44,3 @@ export function getSupportedFormats(): string[] {
 export function registerParser(extension: string, parser: ParserConstructor): void {
   parserMap[extension.toLowerCase()] = parser
 }
-

@@ -1,4 +1,5 @@
 import CollectionEntity from '../entities/collection.entity'
+import BookEntity from '../entities/book.entity'
 import { db } from '../services/db'
 import { booksQuery } from './books'
 
@@ -15,6 +16,9 @@ export const collectionsQuery = {
       relations: {
         books: {
           authors: true,
+          files: {
+            identifiers: true,
+          },
         },
       },
     })
@@ -51,13 +55,10 @@ export const collectionsQuery = {
     if (!book) return []
 
     // Get book with collections relation
-    const bookWithCollections = await db.manager.findOne(
-      (await import('../entities/book.entity')).default,
-      {
-        where: { id: bookId },
-        relations: { collections: true },
-      }
-    )
+    const bookWithCollections = await db.manager.findOne(BookEntity, {
+      where: { id: bookId },
+      relations: { collections: true },
+    })
 
     return bookWithCollections?.collections || []
   },

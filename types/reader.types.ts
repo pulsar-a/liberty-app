@@ -3,6 +3,20 @@
  * Type definitions for the book reader functionality
  */
 
+import type { ReaderEngine } from './reader-engines'
+
+export type { BookFormat, ReaderEngine } from './reader-engines'
+
+export type ReaderLocator =
+  | { kind: 'cfi'; value: string }
+  | { kind: 'page'; index: number; total: number }
+
+export interface ReaderPosition {
+  engine: ReaderEngine
+  progression: number
+  locator: ReaderLocator
+}
+
 // ============================================================================
 // Table of Contents Types
 // ============================================================================
@@ -86,8 +100,11 @@ export interface PaginationConfig {
 export interface Bookmark {
   id: number
   bookId: number
-  chapterId: string
-  pageIndex: number
+  bookFileId: number
+  chapterId: string | null
+  pageIndex: number | null
+  position: ReaderPosition | null
+  progression: number | null
   label: string | null
   selectedText: string | null
   createdAt: Date
@@ -95,8 +112,10 @@ export interface Bookmark {
 
 export interface CreateBookmarkInput {
   bookId: number
-  chapterId: string
-  pageIndex: number
+  bookFileId: number
+  position: ReaderPosition
+  chapterId?: string
+  pageIndex?: number
   label?: string
   selectedText?: string
 }
@@ -168,10 +187,12 @@ export interface ReaderActions {
 
 export interface GetBookContentRequest {
   bookId: number
+  bookFileId?: number
   paginationConfig?: PaginationConfig
 }
 
 export interface GetBookContentResponse {
+  bookFileId: number
   content: BookContent
   paginatedContent: PaginatedContent | null
   lastReadPage: number
@@ -183,8 +204,8 @@ export interface GetBookContentResponse {
 
 export interface UpdateReadingProgressRequest {
   bookId: number
-  currentPage: number
-  totalPages: number
+  bookFileId: number
+  position: ReaderPosition
 }
 
 export interface GetBookmarksRequest {

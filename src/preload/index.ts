@@ -27,6 +27,7 @@ export const api = {
 
   // IPC: Renderer -> main
   setTitle: (title: string) => ipcRenderer.send('window:set-title', title),
+  openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
 
   // IPC: Renderer -> main + data return
   openFile: () => ipcRenderer.invoke('dialog:open-file'),

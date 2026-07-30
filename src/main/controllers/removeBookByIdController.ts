@@ -1,32 +1,26 @@
 import fs from 'node:fs/promises'
-import { authorsQuery } from '../queries/authors'
 import { booksQuery } from '../queries/books'
+import { authorsQuery } from '../queries/authors'
 import { logger } from '../utils/logger'
 
 export const removeBookByIdController = async ({ input }): Promise<boolean> => {
-  const book = await booksQuery.book({ id: input.id })
+  const book = await booksQuery.book({ id: Number(input.id) })
+  if (!book) return false
 
-  if (!book) {
-    return false
-  }
-
-  // Remove files
-  try {
-    await fs.unlink(book.fileName)
-  } catch {
-    logger.debug('Book file cleanup skipped - file does not exist')
-  }
-
-  try {
-    if (book.cover) {
-      await fs.unlink(book.cover)
-    }
-  } catch {
-    logger.debug('Cover file cleanup skipped - file does not exist')
-  }
-
-  await booksQuery.removeBook({ id: input.id })
+  const paths = [
+    ...book.files.map((file) => file.storedPath),
+    ...book.files.map((file) => file.coverPath).filter((value): value is string => Boolean(value)),
+  ]
+  await booksQuery.removeBook({ id: book.id })
   await authorsQuery.removeOrphans()
-
+  await Promise.all(
+    [...new Set(paths)].map(async (filePath) => {
+      try {
+        await fs.unlink(filePath)
+      } catch {
+        logger.debug('Managed book asset cleanup skipped - file does not exist')
+      }
+    })
+  )
   return true
 }

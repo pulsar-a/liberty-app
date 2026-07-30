@@ -1,33 +1,37 @@
 import { clsx } from 'clsx'
 import { useTranslation } from 'react-i18next'
+import { READER_ENGINES } from '@app-types/reader-engines'
 import { PageTitle } from '../components/PageTitle'
 import { SettingsCard } from '../components/SettingsCard'
 import { SettingsRow } from '../components/SettingsRow'
-import { ReaderEngine, useReaderSettingsStore } from '../store/useReaderSettingsStore'
+import { useReaderSettingsStore } from '../store/useReaderSettingsStore'
 
 export const SettingsReadingView: React.FC = () => {
   const { t } = useTranslation()
   const { settings, setEngine } = useReaderSettingsStore()
 
-  const engines: { id: ReaderEngine; name: string; description: string; badge?: string }[] = [
-    {
-      id: 'wasm',
-      name: t('settings_reading_engine_wasm_name', 'WASM Reader'),
-      description: t(
+  const engines = READER_ENGINES.map((engine) => {
+    const descriptions = {
+      wasm: t(
         'settings_reading_engine_wasm_description',
-        'The standard reader with deterministic layout and native app integration.'
+        'Deterministic EPUB layout with native app integration.'
       ),
-    },
-    {
-      id: 'html',
-      name: t('settings_reading_engine_html_name', 'HTML Reader'),
-      description: t(
+      html: t(
         'settings_reading_engine_html_description',
-        'Legacy browser-based rendering retained as a compatibility fallback.'
+        'Legacy EPUB rendering retained as a compatibility fallback.'
       ),
-      badge: t('settings_reading_engine_legacy', 'Legacy'),
-    },
-  ]
+      foliate: t(
+        'settings_reading_engine_foliate_description',
+        'Multi-format reader for EPUB, MOBI, AZW3, FB2, and CBZ.'
+      ),
+    }
+
+    return {
+      ...engine,
+      description: descriptions[engine.id],
+      formats: engine.supportedFormats.map((format) => format.toUpperCase()).join(', '),
+    }
+  })
 
   return (
     <main className="px-8 pb-8">
@@ -74,11 +78,16 @@ export const SettingsReadingView: React.FC = () => {
                           : 'text-gray-900 dark:text-white'
                       )}
                     >
-                      {engine.name}
+                      {engine.label}
                     </span>
-                    {engine.badge && (
+                    {engine.experimental && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-                        {engine.badge}
+                        {t('settings_reading_engine_experimental', 'Experimental')}
+                      </span>
+                    )}
+                    {engine.id === 'html' && (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                        {t('settings_reading_engine_legacy', 'Legacy')}
                       </span>
                     )}
                   </div>
@@ -91,6 +100,9 @@ export const SettingsReadingView: React.FC = () => {
                     )}
                   >
                     {engine.description}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400 dark:text-mako-500">
+                    {t('settings_reading_engine_formats', 'Formats')}: {engine.formats}
                   </p>
                 </button>
               ))}

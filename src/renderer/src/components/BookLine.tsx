@@ -1,17 +1,17 @@
 import { faHeart as faHeartOutline } from '@fortawesome/free-regular-svg-icons'
+import type { BookSummary } from '@app-types/books.types'
 import { faBookOpen, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import BookEntity from '../../../main/entities/book.entity'
 import { useIpc } from '../hooks/useIpc'
 import { BookContextMenu } from './BookContextMenu'
 import { BookCover } from './BookCover'
 
 type BookLineProps = {
-  book: BookEntity
+  book: BookSummary
   onClick?: () => void
   onRemove?: () => void
 }
@@ -36,16 +36,11 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
     toggleFavoriteMutation.mutate({ bookId: book.id })
   }
 
-  const hasReadingProgress =
-    book.readingProgress !== null &&
-    book.readingProgress !== undefined &&
-    book.totalPages !== null &&
-    book.totalPages !== undefined &&
-    book.totalPages > 0
-
-  const progressPercentage = hasReadingProgress
-    ? Math.round(((book.readingProgress! + 1) / book.totalPages!) * 100)
-    : 0
+  const progressPercentage =
+    book.readingProgression !== null && book.readingProgression !== undefined
+      ? Math.round(book.readingProgression * 100)
+      : 0
+  const hasReadingProgress = progressPercentage > 0
 
   const openBookDetails = async () => {
     await navigate({
@@ -57,6 +52,7 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
 
   const openReader = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!book.hasReadableFile) return
     await navigate({
       to: '/reader/$bookId',
       params: { bookId: book.id.toString() },
@@ -77,10 +73,7 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
           {/* Progress bar overlay on cover */}
           {hasReadingProgress && (
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
-              <div
-                className="h-full bg-indigo-500"
-                style={{ width: `${progressPercentage}%` }}
-              />
+              <div className="h-full bg-indigo-500" style={{ width: `${progressPercentage}%` }} />
             </div>
           )}
         </div>
@@ -116,7 +109,11 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
               : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-500 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400',
             toggleFavoriteMutation.isLoading && 'opacity-50'
           )}
-          title={book.isFavorite ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites') : t('bookDetailsView_addToFavorites', 'Add to favorites')}
+          title={
+            book.isFavorite
+              ? t('bookDetailsView_removeFromFavorites', 'Remove from favorites')
+              : t('bookDetailsView_addToFavorites', 'Add to favorites')
+          }
         >
           <FontAwesomeIcon
             icon={book.isFavorite ? faHeartSolid : faHeartOutline}
@@ -127,15 +124,22 @@ export const BookLine: React.FC<BookLineProps> = ({ book }) => {
         {/* Continue/Start reading button */}
         <button
           onClick={openReader}
+          disabled={!book.hasReadableFile}
           className={clsx(
             'hidden items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors sm:flex',
-            hasReadingProgress
+            !book.hasReadableFile
+              ? 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600'
+              : hasReadingProgress
               ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-900'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
           )}
         >
           <FontAwesomeIcon icon={faBookOpen} className="h-3.5 w-3.5" />
-          {hasReadingProgress ? t('book_continue', 'Continue') : t('book_read', 'Read')}
+          {!book.hasReadableFile
+            ? t('book_no_readable_files', 'No readable files')
+            : hasReadingProgress
+              ? t('book_continue', 'Continue')
+              : t('book_read', 'Read')}
         </button>
 
         {/* Progress percentage badge */}

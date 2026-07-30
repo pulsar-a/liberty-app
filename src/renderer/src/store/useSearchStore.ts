@@ -1,27 +1,33 @@
 import { create } from 'zustand'
+import type { BookFormat } from '../../../../types/reader-engines'
 
-export type SearchFilter = 'books' | 'collections' | 'book_ids' | 'file_names' | 'internal_file_names'
-export type BookFormat = 'epub' | 'pdf' | 'fb2' | 'fb3' | 'txt'
+export type SearchFilter =
+  | 'books'
+  | 'collections'
+  | 'book_ids'
+  | 'file_names'
+  | 'internal_file_names'
+export type { BookFormat } from '../../../../types/reader-engines'
 
 interface SearchState {
   // Global search term (shared between header and search page)
   searchTerm: string
   setSearchTerm: (term: string) => void
-  
+
   // Search filters (for search page)
   filters: SearchFilter[]
   setFilters: (filters: SearchFilter[]) => void
   toggleFilter: (filter: SearchFilter) => void
-  
+
   // Format filters (for search page)
   formats: BookFormat[]
   setFormats: (formats: BookFormat[]) => void
   toggleFormat: (format: BookFormat) => void
-  
+
   // Dropdown visibility
   isDropdownOpen: boolean
   setDropdownOpen: (open: boolean) => void
-  
+
   // Reset all filters
   resetFilters: () => void
 }
@@ -32,7 +38,7 @@ const DEFAULT_FORMATS: BookFormat[] = []
 export const useSearchStore = create<SearchState>((set) => ({
   searchTerm: '',
   setSearchTerm: (term) => set({ searchTerm: term }),
-  
+
   filters: DEFAULT_FILTERS,
   setFilters: (filters) => set({ filters }),
   toggleFilter: (filter) =>
@@ -45,7 +51,7 @@ export const useSearchStore = create<SearchState>((set) => ({
       }
       return { filters: [...state.filters, filter] }
     }),
-  
+
   formats: DEFAULT_FORMATS,
   setFormats: (formats) => set({ formats }),
   toggleFormat: (format) =>
@@ -56,10 +62,10 @@ export const useSearchStore = create<SearchState>((set) => ({
       }
       return { formats: [...state.formats, format] }
     }),
-  
+
   isDropdownOpen: false,
   setDropdownOpen: (open) => set({ isDropdownOpen: open }),
-  
+
   resetFilters: () => set({ filters: DEFAULT_FILTERS, formats: DEFAULT_FORMATS }),
 }))
 
@@ -68,5 +74,3 @@ export const selectSearchTerm = (state: SearchState) => state.searchTerm
 export const selectFilters = (state: SearchState) => state.filters
 export const selectFormats = (state: SearchState) => state.formats
 export const selectIsDropdownOpen = (state: SearchState) => state.isDropdownOpen
-
-

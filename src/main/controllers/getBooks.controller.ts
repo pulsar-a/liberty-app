@@ -1,9 +1,10 @@
-import BookEntity from '../entities/book.entity'
+import type { BookSummary } from '../../../types/books.types'
 import { booksQuery } from '../queries/books'
+import { toBookSummary } from '../services/bookDtos'
 
-export const getBooksController = async (): Promise<{ items: BookEntity[] }> => {
+export const getBooksController = async (): Promise<{ items: BookSummary[] }> => {
   const books = await booksQuery.books()
   return {
-    items: books,
+    items: await Promise.all(books.map(toBookSummary)),
   }
 }

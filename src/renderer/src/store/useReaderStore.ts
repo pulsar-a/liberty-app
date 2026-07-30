@@ -47,6 +47,7 @@ interface ReaderState {
   // Navigation state
   currentPageIndex: number
   totalPages: number
+  readerProgression: number | null
   wasmPageChapterMap: WasmPageChapterLocation[]
   wasmChapterPageMap: WasmChapterLocation[]
   wasmAnchorPageMap: WasmAnchorLocation[]
@@ -70,10 +71,12 @@ interface ReaderState {
   // Progress saving
   progressDirty: boolean
   lastSavedPage: number
+  resumeProgression: number | null
 }
 
 interface ReaderActions {
   // Initialization
+  setBookMetadata: (data: { bookId: number; bookTitle: string; bookAuthor: string }) => void
   setBookData: (data: {
     bookId: number
     bookTitle: string
@@ -81,6 +84,7 @@ interface ReaderActions {
     content: BookContent
     paginatedContent: PaginatedContent | null
     lastReadPage: number
+    lastReadProgression?: number | null
     clientSidePagination?: boolean
   }) => void
   setLoading: (loading: boolean) => void
@@ -96,6 +100,11 @@ interface ReaderActions {
 
   // Navigation
   goToPage: (pageIndex: number) => void
+  setEngineLocation: (location: {
+    currentPageIndex: number
+    totalPages: number
+    progression: number | null
+  }) => void
   nextPage: () => void
   previousPage: () => void
   goToChapter: (chapterId: string, anchorId?: string) => void
@@ -126,6 +135,7 @@ interface ReaderActions {
   // Bookmarks
   setBookmarks: (bookmarks: Bookmark[]) => void
   addBookmarkToState: (bookmark: Bookmark) => void
+  updateBookmarkInState: (bookmark: Bookmark) => void
   removeBookmarkFromState: (bookmarkId: number) => void
 
   // Sidebar
@@ -156,6 +166,7 @@ const initialState: ReaderState = {
   containerDimensions: null,
   currentPageIndex: 0,
   totalPages: 0,
+  readerProgression: null,
   wasmPageChapterMap: [],
   wasmChapterPageMap: [],
   wasmAnchorPageMap: [],
@@ -169,6 +180,7 @@ const initialState: ReaderState = {
   bookmarks: [],
   progressDirty: false,
   lastSavedPage: 0,
+  resumeProgression: null,
 }
 
 export const useReaderStore = create<ReaderState & ReaderActions>()(
@@ -177,6 +189,24 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
       ...initialState,
 
       // Initialization
+      setBookMetadata: (data) =>
+        set((state) => {
+          if (
+            state.bookId === data.bookId &&
+            state.bookTitle === data.bookTitle &&
+            state.bookAuthor === data.bookAuthor &&
+            state.error === null
+          ) {
+            return state
+          }
+          return {
+            bookId: data.bookId,
+            bookTitle: data.bookTitle,
+            bookAuthor: data.bookAuthor,
+            error: null,
+          }
+        }),
+
       setBookData: (data) => {
         const currentState = get()
         const isNewBook = currentState.bookId !== data.bookId
@@ -205,11 +235,15 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           useClientSidePagination: useClientSide,
           isPaginating: useClientSide, // Start paginating if using client-side
           totalPages: paginatedTotalPages,
+          readerProgression: null,
           wasmPageChapterMap: [],
           wasmChapterPageMap: [],
           wasmAnchorPageMap: [],
           currentPageIndex: pageIndex,
           lastSavedPage: isNewBook ? data.lastReadPage : currentState.lastSavedPage,
+          resumeProgression: isNewBook
+            ? (data.lastReadProgression ?? null)
+            : currentState.resumeProgression,
           isLoading: false,
           error: null,
           loadingProgress: useClientSide ? 90 : 100,
@@ -217,16 +251,36 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
         })
       },
 
-      setLoading: (loading) => set({ isLoading: loading }),
+      setLoading: (loading) =>
+        set((state) => (state.isLoading === loading ? state : { isLoading: loading })),
 
       setLoadingProgress: (percent, stage) =>
         set({ loadingProgress: percent, loadingStage: stage }),
 
-      setError: (error) => set({ error, isLoading: false, loadingProgress: 0, loadingStage: '' }),
+      setError: (error) =>
+        set((state) => {
+          if (
+            state.error === error &&
+            !state.isLoading &&
+            state.loadingProgress === 0 &&
+            state.loadingStage === ''
+          ) {
+            return state
+          }
+          return { error, isLoading: false, loadingProgress: 0, loadingStage: '' }
+        }),
 
       // Reset reader state but keep essential data for the "Reading" menu item and resume
       resetReader: () => {
-        const { bookId, bookTitle, bookAuthor, currentPageIndex, totalPages, layoutMode } = get()
+        const {
+          bookId,
+          bookTitle,
+          bookAuthor,
+          currentPageIndex,
+          totalPages,
+          layoutMode,
+          resumeProgression,
+        } = get()
         set({
           ...initialState,
           bookId,
@@ -235,6 +289,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           currentPageIndex,
           totalPages,
           layoutMode,
+          resumeProgression,
           loadingProgress: 0,
           loadingStage: '',
         })
@@ -249,7 +304,11 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
         let pageIndex = currentState.currentPageIndex
         if (content.totalPages > 0) {
           // Try to maintain reading position proportionally
-          if (!isNewBook && currentState.totalPages > 0) {
+          if (isNewBook && currentState.resumeProgression !== null) {
+            pageIndex = Math.round(
+              currentState.resumeProgression * Math.max(0, content.totalPages - 1)
+            )
+          } else if (!isNewBook && currentState.totalPages > 0) {
             const progressRatio = currentState.currentPageIndex / currentState.totalPages
             pageIndex = Math.round(progressRatio * content.totalPages)
           }
@@ -259,10 +318,12 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
         set({
           fittedContent: content,
           totalPages: content.totalPages,
+          readerProgression: null,
           currentPageIndex: pageIndex,
           isPaginating: false,
           loadingProgress: 100,
           loadingStage: '',
+          resumeProgression: null,
         })
       },
 
@@ -308,6 +369,29 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           })
         }
       },
+
+      setEngineLocation: ({ currentPageIndex, totalPages, progression }) =>
+        set((state) => {
+          const safeTotal = Math.max(0, Math.floor(totalPages))
+          const safeIndex =
+            safeTotal > 0 ? Math.min(Math.max(0, Math.floor(currentPageIndex)), safeTotal - 1) : 0
+          const safeProgression =
+            progression === null ? null : Math.min(1, Math.max(0, progression))
+
+          if (
+            state.currentPageIndex === safeIndex &&
+            state.totalPages === safeTotal &&
+            state.readerProgression === safeProgression
+          ) {
+            return state
+          }
+
+          return {
+            currentPageIndex: safeIndex,
+            totalPages: safeTotal,
+            readerProgression: safeProgression,
+          }
+        }),
 
       nextPage: () => {
         const { currentPageIndex, totalPages, layoutMode, wasmPageChapterMap } = get()
@@ -409,6 +493,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
       applyWasmPagination: (maps, pageIndex) =>
         set({
           totalPages: maps.totalPages,
+          readerProgression: null,
           currentPageIndex: Math.min(Math.max(pageIndex, 0), Math.max(0, maps.totalPages - 1)),
           wasmPageChapterMap: maps.pageChapterMap,
           wasmChapterPageMap: maps.chapterPageMap,
@@ -435,11 +520,36 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
         set((state) => ({ isReferencesPanelOpen: !state.isReferencesPanelOpen })),
 
       // Bookmarks
-      setBookmarks: (bookmarks) => set({ bookmarks }),
+      setBookmarks: (bookmarks) =>
+        set((state) => {
+          const unchanged =
+            state.bookmarks.length === bookmarks.length &&
+            state.bookmarks.every((bookmark, index) => {
+              const next = bookmarks[index]
+              return (
+                bookmark.id === next.id &&
+                bookmark.bookFileId === next.bookFileId &&
+                bookmark.chapterId === next.chapterId &&
+                bookmark.pageIndex === next.pageIndex &&
+                bookmark.progression === next.progression &&
+                JSON.stringify(bookmark.position) === JSON.stringify(next.position) &&
+                bookmark.label === next.label &&
+                bookmark.selectedText === next.selectedText
+              )
+            })
+          return unchanged ? state : { bookmarks }
+        }),
 
       addBookmarkToState: (bookmark) =>
         set((state) => ({
-          bookmarks: [...state.bookmarks, bookmark].sort((a, b) => a.pageIndex - b.pageIndex),
+          bookmarks: [...state.bookmarks, bookmark].sort(
+            (a, b) => (a.progression ?? a.pageIndex ?? 0) - (b.progression ?? b.pageIndex ?? 0)
+          ),
+        })),
+
+      updateBookmarkInState: (bookmark) =>
+        set((state) => ({
+          bookmarks: state.bookmarks.map((item) => (item.id === bookmark.id ? bookmark : item)),
         })),
 
       removeBookmarkFromState: (bookmarkId) =>
@@ -514,7 +624,8 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
       },
 
       getProgressPercentage: () => {
-        const { currentPageIndex, totalPages } = get()
+        const { currentPageIndex, totalPages, readerProgression } = get()
+        if (typeof readerProgression === 'number') return Math.round(readerProgression * 100)
         if (totalPages === 0) return 0
         return Math.round(((currentPageIndex + 1) / totalPages) * 100)
       },

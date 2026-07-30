@@ -1,4 +1,5 @@
 import { faBookOpen } from '@fortawesome/free-solid-svg-icons'
+import type { BookSearchResult } from '@app-types/search.types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
@@ -11,20 +12,7 @@ import { getStableOptionForHash } from '../../utils/hashSelector'
 import { Badge } from '../Badge'
 import { HighlightedText } from './HighlightedText'
 
-export interface BookSearchEntryData {
-  id: number
-  name: string
-  cover: string | null
-  authors: { id: number; name: string }[]
-  fileFormat: string
-  fileName: string
-  originalFileName: string
-  matchedField?: 'title' | 'book_id' | 'file_name' | 'internal_file_name'
-  matchedBookId?: {
-    idType: string
-    idVal: string
-  }
-}
+export type BookSearchEntryData = BookSearchResult
 
 interface BookSearchEntryProps {
   book: BookSearchEntryData
@@ -61,6 +49,7 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
 
   const handleOpenReader = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!book.hasReadableFile) return
     onSelect?.()
     await navigate({
       to: '/reader/$bookId',
@@ -91,7 +80,7 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
       >
         {book.cover && isImageAvailable && (
           <img
-            src={'liberty-file://' + encodeURIComponent(book.cover)}
+            src={`liberty-book://cover/${book.id}`}
             onError={() => setImageAvailable(false)}
             alt=""
             className="h-full w-full object-cover"
@@ -142,7 +131,7 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
                   <div className="flex items-center gap-1">
                     <span className="font-medium">{t('search_matched_fileName', 'File')}:</span>
                     <HighlightedText
-                      text={book.originalFileName}
+                      text={book.matchedFile?.originalFileName || ''}
                       highlight={searchTerm}
                       className="truncate"
                     />
@@ -150,9 +139,11 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
                 )}
                 {book.matchedField === 'internal_file_name' && (
                   <div className="flex items-center gap-1">
-                    <span className="font-medium">{t('search_matched_internalFileName', 'Internal')}:</span>
+                    <span className="font-medium">
+                      {t('search_matched_internalFileName', 'Internal')}:
+                    </span>
                     <HighlightedText
-                      text={book.fileName}
+                      text={book.matchedFile?.storedPath || ''}
                       highlight={searchTerm}
                       className="truncate font-mono text-xs"
                     />
@@ -163,11 +154,16 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
           </div>
 
           {/* Format badge */}
-          <Badge
-            label={book.fileFormat.toUpperCase()}
-            color="indigo"
-            className={clsx(isDropdown && 'text-xs')}
-          />
+          <div className="flex flex-wrap gap-1">
+            {book.formats.map((format) => (
+              <Badge
+                key={format}
+                label={format.toUpperCase()}
+                color="indigo"
+                className={clsx(isDropdown && 'text-xs')}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Open reader button (non-dropdown only) */}
@@ -175,7 +171,8 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
           <div className="mt-3 opacity-0 transition-opacity group-hover:opacity-100">
             <button
               onClick={handleOpenReader}
-              className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500"
+              disabled={!book.hasReadableFile}
+              className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               <FontAwesomeIcon icon={faBookOpen} className="h-3 w-3" />
               {t('book_start_reading', 'Start Reading')}
@@ -186,5 +183,3 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
     </div>
   )
 }
-
-

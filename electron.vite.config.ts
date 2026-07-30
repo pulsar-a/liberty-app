@@ -18,7 +18,8 @@ export default defineConfig({
     },
   },
   preload: {
-    plugins: [externalizeDepsPlugin(), bytecodePlugin()],
+    // Bundle preload dependencies so the preload remains compatible with Electron sandboxing.
+    plugins: [bytecodePlugin()],
   },
   renderer: {
     worker: {

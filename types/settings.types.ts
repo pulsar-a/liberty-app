@@ -5,6 +5,9 @@ export type SettingsType = {
   currentlyReading: number | null
   libraryViewStyle: 'list' | 'grid'
   confirmRemoveFromCollection: boolean
+  confirmDeleteBook: boolean
+  confirmLastBookFileRemoval: boolean
+  lastBookFileRemovalAction: 'keepBook' | 'deleteBook'
 }
 
 export type SettingKeys = keyof SettingsType

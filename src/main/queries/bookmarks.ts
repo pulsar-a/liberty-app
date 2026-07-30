@@ -1,5 +1,6 @@
 import BookmarkEntity from '../entities/bookmark.entity'
 import { db } from '../services/db'
+import type { ReaderPosition } from '../../../types/reader.types'
 
 export const bookmarksQuery = {
   /**
@@ -8,7 +9,7 @@ export const bookmarksQuery = {
   async getBookmarks(bookId: number): Promise<BookmarkEntity[]> {
     return db.manager.find(BookmarkEntity, {
       where: { bookId },
-      order: { pageIndex: 'ASC', createdAt: 'DESC' },
+      order: { progression: 'ASC', pageIndex: 'ASC', createdAt: 'DESC' },
     })
   },
 
@@ -26,16 +27,21 @@ export const bookmarksQuery = {
    */
   async createBookmark(data: {
     bookId: number
-    chapterId: string
-    pageIndex: number
+    bookFileId: number
+    position: ReaderPosition
+    chapterId?: string
+    pageIndex?: number
     label?: string
     selectedText?: string
   }): Promise<BookmarkEntity> {
     const repository = db.getRepository(BookmarkEntity)
     const bookmark = repository.create({
       bookId: data.bookId,
-      chapterId: data.chapterId,
-      pageIndex: data.pageIndex,
+      bookFileId: data.bookFileId,
+      chapterId: data.chapterId ?? null,
+      pageIndex: data.pageIndex ?? null,
+      position: data.position,
+      progression: data.position.progression,
       label: data.label || null,
       selectedText: data.selectedText || null,
     })
@@ -67,6 +73,18 @@ export const bookmarksQuery = {
     return await db.manager.save(bookmark)
   },
 
+  async updateBookmarkPosition(
+    id: number,
+    position: ReaderPosition
+  ): Promise<BookmarkEntity | null> {
+    const bookmark = await bookmarksQuery.getBookmark(id)
+    if (!bookmark) return null
+
+    bookmark.position = position
+    bookmark.progression = position.progression
+    return await db.manager.save(bookmark)
+  },
+
   /**
    * Delete a bookmark
    */
@@ -93,4 +111,3 @@ export const bookmarksQuery = {
     return count > 0
   },
 }
-

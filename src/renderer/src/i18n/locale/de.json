@@ -71,6 +71,8 @@
     "settings_general_confirmations_card_title": "Bestätigungen",
     "settings_general_confirmations_card_description": "Legen Sie fest, wann Bestätigungsdialoge angezeigt werden",
     "settings_general_confirmRemoveFromCollection_label": "Bestätigung beim Entfernen eines Buches aus einer Sammlung anfordern",
+    "settings_general_confirmDeleteBook_label": "Vor dem Löschen eines Buches um Bestätigung bitten",
+    "settings_general_confirmLastBookFileRemoval_label": "Beim Entfernen der letzten verfügbaren Buchdatei nachfragen",
     "settings_files_storage_card_title": "Dateispeicher",
     "settings_files_storage_card_description": "Konfigurieren Sie, wo Ihre Buchdateien auf Ihrem Computer gespeichert werden",
     "settings_files_folder_description": "Wählen Sie einen benutzerdefinierten Ordner für Ihre Buchsammlung",

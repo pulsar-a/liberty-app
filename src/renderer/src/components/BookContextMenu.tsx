@@ -1,14 +1,15 @@
 import { faBookOpen, faEye, faTrash } from '@fortawesome/free-solid-svg-icons'
+import type { BookSummary } from '@app-types/books.types'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import BookEntity from '../../../main/entities/book.entity'
 import { useIpc } from '../hooks/useIpc'
+import { useSettings } from '../hooks/useSettings'
 import { ConfirmationDialog } from './ConfirmationDialog'
 import { ContextMenu } from './ContextMenu'
 
 type BookContextMenuProps = {
-  book: BookEntity
+  book: BookSummary
 }
 
 export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
@@ -16,6 +17,7 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { main } = useIpc()
+  const { getSetting, setSetting } = useSettings()
   const utils = main.useUtils()
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
@@ -41,10 +43,26 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
     return removeMutation.mutate({ id: book.id })
   }
 
+  const requestBookDeletion = () => {
+    const confirmDelete = getSetting('confirmDeleteBook', true)
+    if (confirmDelete) {
+      setShowDeleteConfirmation(true)
+    } else {
+      removeBook()
+    }
+  }
+
+  const handleNeverAskBeforeDeletingBook = (value: boolean) => {
+    if (value) {
+      setSetting('confirmDeleteBook', false)
+    }
+  }
+
   const readBook = async () => {
     await new Promise((resolve) => setTimeout(resolve, 50))
     await navigate({
-      to: '/reader',
+      to: '/reader/$bookId',
+      params: { bookId: book.id.toString() },
     })
   }
 
@@ -60,13 +78,14 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
       icon: faBookOpen,
       label: t('libraryView_bookContextMenu_read_label'),
       onClick: readBook,
+      disabled: !book.hasReadableFile,
     },
     { id: `separator-${book.id}`, separator: true },
     {
       id: `remove-${book.id}`,
       icon: faTrash,
       label: t('delete'),
-      onClick: () => setShowDeleteConfirmation(true),
+      onClick: requestBookDeletion,
     },
   ]
 
@@ -78,6 +97,8 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
         open={showDeleteConfirmation}
         onClose={() => setShowDeleteConfirmation(false)}
         onConfirm={removeBook}
+        showNeverAskAgain
+        onNeverAskAgainChange={handleNeverAskBeforeDeletingBook}
       />
       <ContextMenu items={menuItems} />
     </>

@@ -1,4 +1,11 @@
-import { faBook, faFileAlt, faFilter, faFolderOpen, faHashtag, faServer } from '@fortawesome/free-solid-svg-icons'
+import {
+  faBook,
+  faFileAlt,
+  faFilter,
+  faFolderOpen,
+  faHashtag,
+  faServer,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { clsx } from 'clsx'
 import React, { useEffect } from 'react'
@@ -10,11 +17,8 @@ import { BookSearchEntry } from '../components/search/BookSearchEntry'
 import { CollectionSearchEntry } from '../components/search/CollectionSearchEntry'
 import { useIpc } from '../hooks/useIpc'
 import { ThreeSectionsLayout } from '../layouts/parts/ThreeSectionsLayout'
-import {
-  BookFormat,
-  SearchFilter,
-  useSearchStore,
-} from '../store/useSearchStore'
+import { getReadableBookFormats } from '../../../../types/reader-engines'
+import { BookFormat, SearchFilter, useSearchStore } from '../store/useSearchStore'
 
 // Filter option configuration
 const FILTER_OPTIONS: { id: SearchFilter; icon: typeof faBook; labelKey: string }[] = [
@@ -26,13 +30,9 @@ const FILTER_OPTIONS: { id: SearchFilter; icon: typeof faBook; labelKey: string 
 ]
 
 // Format option configuration
-const FORMAT_OPTIONS: { id: BookFormat; label: string }[] = [
-  { id: 'epub', label: 'EPUB' },
-  { id: 'pdf', label: 'PDF' },
-  { id: 'fb2', label: 'FB2' },
-  { id: 'fb3', label: 'FB3' },
-  { id: 'txt', label: 'TXT' },
-]
+const FORMAT_OPTIONS: { id: BookFormat; label: string }[] = getReadableBookFormats().map(
+  (format) => ({ id: format, label: format.toUpperCase() })
+)
 
 export const SearchView: React.FC = () => {
   const { t } = useTranslation()
@@ -55,7 +55,6 @@ export const SearchView: React.FC = () => {
     },
     {
       enabled: searchTerm.length > 0,
-      queryKey: ['search', searchTerm, filters, formats],
     }
   )
 
@@ -193,9 +192,7 @@ export const SearchView: React.FC = () => {
                       className={clsx('h-4 w-4', isActive ? 'text-indigo-500' : 'text-gray-400')}
                     />
                     {t(option.labelKey, option.id)}
-                    {isActive && (
-                      <span className="ml-auto h-2 w-2 rounded-full bg-indigo-500" />
-                    )}
+                    {isActive && <span className="ml-auto h-2 w-2 rounded-full bg-indigo-500" />}
                   </button>
                 )
               })}
@@ -237,5 +234,3 @@ export const SearchView: React.FC = () => {
     />
   )
 }
-
-

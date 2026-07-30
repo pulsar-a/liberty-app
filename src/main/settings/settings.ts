@@ -21,6 +21,19 @@ const schema = {
     type: 'boolean',
     default: true,
   },
+  confirmDeleteBook: {
+    type: 'boolean',
+    default: true,
+  },
+  confirmLastBookFileRemoval: {
+    type: 'boolean',
+    default: true,
+  },
+  lastBookFileRemovalAction: {
+    type: 'string',
+    enum: ['keepBook', 'deleteBook'],
+    default: 'keepBook',
+  },
 }
 
 export const settings = new Store({ schema })

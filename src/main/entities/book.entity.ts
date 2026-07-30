@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm'
 import AuthorEntity from './author.entity'
-import BookIdEntity from './bookId.entity'
+import BookFileEntity from './bookFile.entity'
 import CollectionEntity from './collection.entity'
 
 @Entity('books')
@@ -22,17 +22,6 @@ export default class BookEntity {
   @Column('text')
   name: string
 
-  @Index('idx_books_fileName')
-  @Column('text')
-  fileName: string
-
-  @Index('idx_books_originalFileName')
-  @Column('text')
-  originalFileName: string
-
-  @Column('text', { nullable: true })
-  cover: string | null
-
   @Column('text', { nullable: true })
   lang: string | null
 
@@ -42,27 +31,20 @@ export default class BookEntity {
   @Column('text', { nullable: true })
   description: string | null
 
-  @Index('idx_books_fileFormat')
-  @Column('text')
-  fileFormat: string
-
-  @Column('integer', { nullable: true })
-  readingProgress: number | null
-
-  @Column('integer', { nullable: true })
-  totalPages: number | null
+  @Column('real', { nullable: true })
+  readingProgression: number | null
 
   @Column('integer', { nullable: true })
   score: number | null
 
-  @Column('text')
-  bookHash: string
-
-  @Column('integer', { nullable: true })
-  fileSize: number | null
-
   @Column('boolean', { default: false })
   isFavorite: boolean
+
+  @Column('integer', { nullable: true })
+  preferredBookFileId: number | null
+
+  @Column('integer', { nullable: true })
+  coverBookFileId: number | null
 
   @CreateDateColumn({ type: 'date', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date
@@ -74,11 +56,10 @@ export default class BookEntity {
   })
   updatedAt: Date
 
-  @OneToMany(() => BookIdEntity, (bookId) => bookId.book, {
-    onDelete: 'CASCADE',
-    orphanedRowAction: 'delete',
+  @OneToMany(() => BookFileEntity, (file) => file.book, {
+    cascade: true,
   })
-  bookIds: BookIdEntity[]
+  files: BookFileEntity[]
 
   @ManyToMany(() => AuthorEntity, undefined, {
     onDelete: 'CASCADE',

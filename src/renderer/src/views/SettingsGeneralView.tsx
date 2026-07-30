@@ -11,6 +11,8 @@ export const SettingsGeneralView: React.FC = () => {
   const { getSetting, setSetting } = useSettings()
 
   const confirmRemoveFromCollection = getSetting('confirmRemoveFromCollection', true) as boolean
+  const confirmDeleteBook = getSetting('confirmDeleteBook', true) as boolean
+  const confirmLastBookFileRemoval = getSetting('confirmLastBookFileRemoval', true) as boolean
 
   return (
     <main className="px-8 pb-8">
@@ -46,6 +48,33 @@ export const SettingsGeneralView: React.FC = () => {
             <Toggle
               value={confirmRemoveFromCollection}
               onChange={(value) => setSetting('confirmRemoveFromCollection', value)}
+            />
+          </SettingsRow>
+          <SettingsRow
+            label={t(
+              'settings_general_confirmDeleteBook_label',
+              'Ask for confirmation before deleting a book'
+            )}
+          >
+            <Toggle
+              value={confirmDeleteBook}
+              onChange={(value) => setSetting('confirmDeleteBook', value)}
+            />
+          </SettingsRow>
+          <SettingsRow
+            label={t(
+              'settings_general_confirmLastBookFileRemoval_label',
+              'Ask what to do when removing the last available book file'
+            )}
+          >
+            <Toggle
+              value={confirmLastBookFileRemoval}
+              onChange={(value) => {
+                if (!value) {
+                  setSetting('lastBookFileRemovalAction', 'keepBook')
+                }
+                setSetting('confirmLastBookFileRemoval', value)
+              }}
             />
           </SettingsRow>
         </SettingsCard>

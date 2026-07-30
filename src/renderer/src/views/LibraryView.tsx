@@ -1,5 +1,6 @@
 import { useIpc } from '@/hooks/useIpc'
 import { libraryRoute } from '@/routes/routes'
+import type { BookSummary } from '@app-types/books.types'
 import {
   faBars,
   faHeart,
@@ -9,7 +10,6 @@ import {
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RouteEntry } from '../../../../types/router.types'
-import BookEntity from '../../../main/entities/book.entity'
 import { BooksGrid } from '../components/BooksGrid'
 import { BooksList } from '../components/BooksList'
 import { Button } from '../components/Button'
@@ -58,13 +58,13 @@ export const LibraryView: React.FC = () => {
     },
   })
 
-  const filteredBooks = ((): BookEntity[] => {
+  const filteredBooks = ((): BookSummary[] => {
     if (!books?.items) {
       return []
     }
 
     if (authorId === undefined) {
-      return books.items as unknown as BookEntity[]
+      return books.items
     }
 
     return books.items.filter((book) => {
@@ -75,7 +75,7 @@ export const LibraryView: React.FC = () => {
 
       // Search by author
       return book.authors.some((author) => author.id === authorId)
-    }) as unknown as BookEntity[]
+    })
   })()
 
   const booksWithoutAuthorCount = useMemo(() => {

@@ -1,11 +1,15 @@
-import { Author, Book } from './books.types'
-import { Collection } from './collections.types'
+import { Author } from './books.types'
+import type { BookFormat } from './reader-engines'
+
+export type { BookFormat } from './reader-engines'
 
 // Search filter options
-export type SearchFilter = 'books' | 'collections' | 'book_ids' | 'file_names' | 'internal_file_names'
-
-// Supported book formats for filtering
-export type BookFormat = 'epub' | 'pdf' | 'fb2' | 'fb3' | 'txt'
+export type SearchFilter =
+  | 'books'
+  | 'collections'
+  | 'book_ids'
+  | 'file_names'
+  | 'internal_file_names'
 
 // Search request parameters
 export interface SearchParams {
@@ -21,9 +25,16 @@ export interface BookSearchResult {
   name: string
   cover: string | null
   authors: Author[]
-  fileFormat: string
-  fileName: string // internal UUID filename
-  originalFileName: string
+  formats: string[]
+  activeFileCount: number
+  hasReadableFile: boolean
+  matchedFile?: {
+    id: number
+    fileFormat: string
+    storedPath: string
+    originalFileName: string
+    isAvailable: boolean
+  }
   // Matched fields for highlighting
   matchedField?: 'title' | 'book_id' | 'file_name' | 'internal_file_name'
   matchedBookId?: {
@@ -54,5 +65,3 @@ export interface DropdownSearchResults {
   hasMoreBooks: boolean
   hasMoreCollections: boolean
 }
-
-

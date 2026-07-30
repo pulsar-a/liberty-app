@@ -1,9 +1,9 @@
+import type { BookSummary } from '@app-types/books.types'
 import React from 'react'
-import BookEntity from '../../../main/entities/book.entity'
 import { BookTile } from './BookTile'
 
 type BooksListProps = {
-  books: BookEntity[]
+  books: BookSummary[]
 }
 
 export const BooksGrid: React.FC<BooksListProps> = ({ books }) => {

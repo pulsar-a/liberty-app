@@ -1,12 +1,13 @@
 import 'reflect-metadata'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, net, protocol, shell } from 'electron'
+import fs from 'node:fs/promises'
 import installExtension, {
   REACT_DEVELOPER_TOOLS,
   REDUX_DEVTOOLS,
 } from 'electron-devtools-installer'
 import { createIPCHandler } from 'electron-trpc/main'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import { pathToFileURL } from 'url'
 // @ts-ignore - no types
 import iconDarwin from '../../resources/app-icons/mac/app-icon.icns?asset'
@@ -14,22 +15,64 @@ import iconDarwin from '../../resources/app-icons/mac/app-icon.icns?asset'
 import icon from '../../resources/app-icons/win/app-icon.ico?asset'
 import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
+import { booksQuery } from './queries/books'
+import BookFileEntity from './entities/bookFile.entity'
+import { db } from './services/db'
 import { logger } from './utils/logger'
+import { isPathInside } from './utils/pathSecurity'
 
-import './services/db'
-
-// Register custom protocol for secure local file access
+// Opaque access to files managed by Liberty. Never expose arbitrary filesystem paths.
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: 'liberty-file',
+    scheme: 'liberty-book',
     privileges: {
       secure: true,
       supportFetchAPI: true,
-      bypassCSP: true,
       stream: true,
     },
   },
 ])
+
+const handleBookResource = async (request: Request): Promise<Response> => {
+  const url = new URL(request.url)
+  const resourceType = url.hostname
+  const idText = url.pathname.replace(/^\/+/, '')
+
+  if (!/^\d+$/.test(idText) || (resourceType !== 'file' && resourceType !== 'cover')) {
+    return new Response('Not found', { status: 404 })
+  }
+
+  let requestedPath: string | null | undefined
+  if (resourceType === 'file') {
+    const file = await db.manager.findOneBy(BookFileEntity, { id: Number(idText) })
+    requestedPath = file?.removedAt ? null : file?.storedPath
+  } else {
+    const book = await booksQuery.book({ id: Number(idText) })
+    requestedPath =
+      book?.files.find((file) => file.id === book.coverBookFileId)?.coverPath ||
+      book?.files.find((file) => file.coverPath)?.coverPath
+  }
+  if (!requestedPath) {
+    return new Response('Not found', { status: 404 })
+  }
+
+  try {
+    const managedRoot = resolve(app.getPath('userData'), 'books')
+    const canonicalRoot = await fs.realpath(managedRoot)
+    const canonicalPath = await fs.realpath(requestedPath)
+    if (!isPathInside(canonicalRoot, canonicalPath)) {
+      logger.warn(`Blocked book resource outside managed directory for book ${idText}`)
+      return new Response('Forbidden', { status: 403 })
+    }
+
+    return net.fetch(pathToFileURL(canonicalPath).toString(), {
+      headers: request.headers,
+    })
+  } catch (error) {
+    logger.warn(`Failed to serve book resource ${resourceType}/${idText}: ${error}`)
+    return new Response('Not found', { status: 404 })
+  }
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -42,7 +85,9 @@ function createWindow(): void {
     ...(process.platform !== 'darwin' ? { icon } : { icon: iconDarwin }),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
       webSecurity: true,
     },
   })
@@ -74,7 +119,7 @@ function createWindow(): void {
     mainWindow.maximize()
     mainWindow.show()
     logger.debug('User data path:', app.getPath('userData'))
-    
+
     // Open DevTools in development
     if (is.dev) {
       mainWindow.webContents.openDevTools()
@@ -82,7 +127,14 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    try {
+      const url = new URL(details.url)
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        void shell.openExternal(url.toString())
+      }
+    } catch {
+      logger.warn('Blocked invalid external URL')
+    }
     return { action: 'deny' }
   })
 
@@ -99,12 +151,7 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  // Register protocol handler for local files
-  protocol.handle('liberty-file', (request) => {
-    const filePath = request.url.replace('liberty-file://', '')
-    const decodedPath = decodeURIComponent(filePath)
-    return net.fetch(pathToFileURL(decodedPath).toString())
-  })
+  protocol.handle('liberty-book', handleBookResource)
 
   await installExtension([REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS], {
     loadExtensionOptions: {

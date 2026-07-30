@@ -1,8 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ReaderFontFamily } from '@app-types/reader.types'
+import type { ReaderEngine } from '@app-types/reader-engines'
 
 export type { ReaderFontFamily } from '@app-types/reader.types'
+export type { ReaderEngine } from '@app-types/reader-engines'
 
 /**
  * Reader theme presets
@@ -54,11 +56,6 @@ export const READER_FONTS: { id: ReaderFontFamily; name: string }[] = [
  * Base font size in pixels for unit conversions
  */
 export const BASE_FONT_SIZE_PX = 16
-
-/**
- * Reader rendering engine
- */
-export type ReaderEngine = 'html' | 'wasm'
 
 /**
  * Number of columns for reading layout
@@ -286,7 +283,7 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
     }),
     {
       name: 'liberty-reader-settings',
-      version: 1,
+      version: 2,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as { settings?: Partial<ReaderSettings> }
         if (version < 1 && state.settings) {
@@ -296,6 +293,12 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
             state.settings.fontFamily !== 'Noto Sans'
           ) {
             state.settings.fontFamily = 'Literata'
+          }
+        }
+        if (version < 2 && state.settings) {
+          const engine = state.settings.engine
+          if (engine !== 'html' && engine !== 'wasm' && engine !== 'foliate') {
+            state.settings.engine = 'wasm'
           }
         }
         return state as ReaderSettingsState & ReaderSettingsActions
