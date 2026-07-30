@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, net, protocol, shell } from 'electron'
+import { app, BrowserWindow, dialog, net, protocol, session, shell } from 'electron'
 import fs from 'node:fs/promises'
 import installExtension, {
   REACT_DEVELOPER_TOOLS,
@@ -17,7 +17,7 @@ import { initIpcListeners } from './listeners/ipc'
 import { router } from './router/routes'
 import { booksQuery } from './queries/books'
 import BookFileEntity from './entities/bookFile.entity'
-import { db } from './services/db'
+import { db, initializeDatabase } from './services/db'
 import { logger } from './utils/logger'
 import { isPathInside } from './utils/pathSecurity'
 
@@ -113,7 +113,8 @@ function createWindow(): void {
 
   // Menu.setApplicationMenu(menu)
 
-  initIpcListeners(mainWindow)
+  const disposeIpcListeners = initIpcListeners(mainWindow)
+  mainWindow.once('closed', disposeIpcListeners)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()
@@ -137,6 +138,8 @@ function createWindow(): void {
     }
     return { action: 'deny' }
   })
+  mainWindow.webContents.on('will-navigate', (event) => event.preventDefault())
+  mainWindow.webContents.on('will-attach-webview', (event) => event.preventDefault())
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -151,15 +154,31 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  protocol.handle('liberty-book', handleBookResource)
+  try {
+    await initializeDatabase()
+  } catch {
+    dialog.showErrorBox(
+      'Liberty could not start',
+      'The library database could not be opened. Your files were not changed.'
+    )
+    app.quit()
+    return
+  }
 
-  await installExtension([REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS], {
-    loadExtensionOptions: {
-      allowFileAccess: true,
-    },
+  protocol.handle('liberty-book', handleBookResource)
+  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    callback(false)
   })
-    .then((name) => logger.debug('Added Extension:', name))
-    .catch((err) => logger.error('Error installing extension:', err))
+
+  if (is.dev) {
+    await installExtension([REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS], {
+      loadExtensionOptions: {
+        allowFileAccess: true,
+      },
+    })
+      .then((name) => logger.debug('Added Extension:', name))
+      .catch((err) => logger.error('Error installing extension:', err))
+  }
 
   // IPC: Call Renderer -> main
   // ipcMain.on('counter-value', (_event, value) => {

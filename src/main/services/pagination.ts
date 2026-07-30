@@ -1,4 +1,4 @@
-import { DOMParser } from '@xmldom/xmldom'
+import { DOMParser, XMLSerializer, type Element as XmlElement } from '@xmldom/xmldom'
 import {
   BookChapter,
   BookContent,
@@ -196,7 +196,7 @@ export class PaginationService {
   /**
    * Recursively extract segments from DOM nodes
    */
-  private extractSegments(node: Element, segments: string[]): void {
+  private extractSegments(node: XmlElement, segments: string[]): void {
     const blockElements = new Set([
       'p',
       'div',
@@ -236,12 +236,12 @@ export class PaginationService {
         }
       } else if (child.nodeType === 1) {
         // Element node
-        const element = child as Element
+        const element = child as XmlElement
         const tagName = element.tagName.toLowerCase()
 
         if (blockElements.has(tagName)) {
           // Serialize this block element as a segment
-          const serializer = new (require('@xmldom/xmldom').XMLSerializer)()
+          const serializer = new XMLSerializer()
           segments.push(serializer.serializeToString(element))
         } else {
           // Recurse into inline elements
@@ -275,7 +275,7 @@ export class PaginationService {
       }
 
       // Also check for common footnote link patterns
-      const markerNum = ref.marker.replace(/[\[\]\(\)]/g, '')
+      const markerNum = ref.marker.replace(/[()[\]]/g, '')
       if (
         content.includes(`href="#fn${markerNum}"`) ||
         content.includes(`href="#note${markerNum}"`) ||

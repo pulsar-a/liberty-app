@@ -61,7 +61,7 @@ export const BookDetailsView: React.FC<BookDetailsViewProps> = ({ bookId }) => {
     onSettled: async () => {
       // Close the flyout by removing bookId from search params
       await navigate({
-        search: (prev) => ({ ...prev, bookId: undefined }),
+        search: { bookId: undefined } as never,
       })
       utils.invalidate(undefined, {
         queryKey: ['getBooks', undefined],
@@ -364,7 +364,7 @@ export const BookDetailsView: React.FC<BookDetailsViewProps> = ({ bookId }) => {
                 'You really want to remove the book from the'
               )}{' '}
               <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                "{collectionToRemove?.name}"
+                &ldquo;{collectionToRemove?.name}&rdquo;
               </span>{' '}
               {t('bookDetailsView_removeFromCollectionConfirmation_messagePart2', 'collection?')}
             </>

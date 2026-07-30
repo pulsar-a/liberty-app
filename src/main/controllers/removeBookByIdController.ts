@@ -1,7 +1,6 @@
-import fs from 'node:fs/promises'
 import { booksQuery } from '../queries/books'
 import { authorsQuery } from '../queries/authors'
-import { logger } from '../utils/logger'
+import { removeManagedBookFile } from '../utils/managedFiles'
 
 export const removeBookByIdController = async ({ input }): Promise<boolean> => {
   const book = await booksQuery.book({ id: Number(input.id) })
@@ -13,14 +12,6 @@ export const removeBookByIdController = async ({ input }): Promise<boolean> => {
   ]
   await booksQuery.removeBook({ id: book.id })
   await authorsQuery.removeOrphans()
-  await Promise.all(
-    [...new Set(paths)].map(async (filePath) => {
-      try {
-        await fs.unlink(filePath)
-      } catch {
-        logger.debug('Managed book asset cleanup skipped - file does not exist')
-      }
-    })
-  )
+  await Promise.all([...new Set(paths)].map(removeManagedBookFile))
   return true
 }

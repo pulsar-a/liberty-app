@@ -212,7 +212,7 @@ export interface GetBookmarksRequest {
   bookId: number
 }
 
-export interface CreateBookmarkRequest extends CreateBookmarkInput {}
+export type CreateBookmarkRequest = CreateBookmarkInput
 
 export interface DeleteBookmarkRequest {
   bookmarkId: number

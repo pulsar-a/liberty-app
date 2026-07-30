@@ -1,10 +1,10 @@
 import react from '@vitejs/plugin-react'
-import { bytecodePlugin, defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { resolve } from 'path'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin(), bytecodePlugin()],
+    plugins: [externalizeDepsPlugin()],
     build: {
       rollupOptions: {
         input: {
@@ -18,8 +18,9 @@ export default defineConfig({
     },
   },
   preload: {
-    // Bundle preload dependencies so the preload remains compatible with Electron sandboxing.
-    plugins: [bytecodePlugin()],
+    // Sandboxed preloads cannot use the Node modules required by bytecode-loader.cjs.
+    // Bundle dependencies into ordinary JavaScript instead.
+    plugins: [],
   },
   renderer: {
     worker: {

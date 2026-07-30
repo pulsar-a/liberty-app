@@ -28,12 +28,16 @@ interface ContextMenuSeparatorItem extends ContextMenuItem {
 
 type ContextMenuProps = {
   items: (ContextMenuLinkItem | ContextMenuSeparatorItem)[]
+  label?: string
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ items }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({ items, label = 'More actions' }) => {
   return (
     <Menu as="div" className="relative flex-none">
-      <Menu.Button className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white">
+      <Menu.Button
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white"
+        aria-label={label}
+      >
         <FontAwesomeIcon icon={faEllipsisV} className="h-4 w-4" aria-hidden="true" />
       </Menu.Button>
       <Transition
@@ -56,8 +60,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ items }) => {
               <Menu.Item key={item.id}>
                 <button
                   type="button"
+                  disabled={item.disabled}
                   className={clsx(
-                    'block w-full cursor-default px-3 py-1 text-left text-sm leading-6 text-gray-900 hover:bg-mako-200 hover:shadow-inner dark:text-indigo-50 dark:hover:bg-mako-900'
+                    'block w-full cursor-default px-3 py-1 text-left text-sm leading-6 text-gray-900 hover:bg-mako-200 hover:shadow-inner disabled:opacity-50 dark:text-indigo-50 dark:hover:bg-mako-900'
                   )}
                   onClick={!item.disabled ? item.onClick : undefined}
                 >

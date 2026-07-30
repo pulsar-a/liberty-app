@@ -1,5 +1,5 @@
 import fs from 'fs'
-import NodeZip from 'node-zip'
+import JSZip from 'jszip'
 import xml2js from 'xml2js'
 import { DOMParser } from '@xmldom/xmldom'
 import {
@@ -9,6 +9,7 @@ import {
   ParsedBook,
 } from '../../../../types/parsed.types'
 import { logger } from '../../utils/logger'
+import { loadSafeZip } from '../../utils/safeZip'
 import { AbstractParser, FileData } from '../AbstractParser'
 
 /**
@@ -21,16 +22,14 @@ export class EpubParser extends AbstractParser {
   private readonly filePath: string
   private xmlParser: xml2js.Parser
   private parsedCache: ParsedBook | null = null
-  private readonly archive: NodeZip | null = null
+  private readonly archive: Promise<JSZip>
 
   constructor(file: FileData) {
     super(file)
     this.xmlParser = new xml2js.Parser()
     this.filePath = file.filePath
 
-    const buffer: Buffer = fs.readFileSync(this.filePath, 'binary') as unknown as Buffer
-
-    this.archive = new NodeZip(buffer, { binary: true, base64: false, checkCRC32: true })
+    this.archive = loadSafeZip(fs.readFileSync(this.filePath))
   }
 
   async parse(): Promise<ParsedBook | null> {
@@ -78,16 +77,9 @@ export class EpubParser extends AbstractParser {
   }
 
   private async getArchivedFileContent(filename: string): Promise<string | null> {
-    if (!this.archive) {
-      return null
-    }
-
     try {
-      const zip: NodeZip = this.archive
-
-      const fileData = zip.file(filename)
-
-      return fileData?.asText() || null
+      const archive = await this.archive
+      return (await archive.file(filename)?.async('text')) || null
     } catch (error) {
       logger.error('ZIP read error:', error)
       throw new Error('ZIP: Error while reading file')
@@ -165,12 +157,13 @@ export class EpubParser extends AbstractParser {
     xmlString: string,
     contentOpfPath: string
   ): Promise<BookCoverData> {
-    const coverImagePath = this.getBookCoverImagePath(xmlString, contentOpfPath)
+    const archive = await this.archive
+    const coverImagePath = this.getBookCoverImagePath(xmlString, contentOpfPath, archive)
 
     logger.debug('Cover image path:', coverImagePath)
 
-    const archiveFile = coverImagePath ? this.archive.file(coverImagePath) : null;
-    const imageBuffer = archiveFile?._data ?? null;
+    const archiveFile = coverImagePath ? archive.file(coverImagePath) : null
+    const imageBuffer = archiveFile ? await archiveFile.async('nodebuffer') : null
 
     return {
       archivePath: coverImagePath || '',
@@ -178,7 +171,11 @@ export class EpubParser extends AbstractParser {
     }
   }
 
-  private getBookCoverImagePath(xmlString: string, contentOpfPath: string): string | null {
+  private getBookCoverImagePath(
+    xmlString: string,
+    contentOpfPath: string,
+    archive: JSZip
+  ): string | null {
     const opfDocument = new DOMParser().parseFromString(xmlString, 'text/xml')
     const opfDocumentDir = contentOpfPath.split('/').slice(0, -1).join('/')
 
@@ -236,7 +233,7 @@ export class EpubParser extends AbstractParser {
         (opfDocumentDir ? opfDocumentDir + '/images/' : 'images/') + coverName,
       ]
       for (const possiblePath of possiblePaths) {
-        if (this.archive?.file(possiblePath)) {
+        if (archive.file(possiblePath)) {
           return possiblePath
         }
       }

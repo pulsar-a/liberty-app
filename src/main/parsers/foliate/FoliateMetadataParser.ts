@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises'
-import NodeZip from 'node-zip'
+import JSZip, { type JSZipObject } from 'jszip'
 import { parseHTML } from 'linkedom'
 import { ParsedBook } from '../../../../types/parsed.types'
 import { AbstractParser, FileData } from '../AbstractParser'
+import { loadSafeZip } from '../../utils/safeZip'
 
 interface FoliateBookMetadata {
   metadata?: Record<string, unknown>
@@ -10,12 +11,7 @@ interface FoliateBookMetadata {
   destroy?: () => void
 }
 
-interface NodeZipEntry {
-  dir: boolean
-  name: string
-  asBinary: () => string
-  _data?: { length?: number } | Buffer
-}
+type SizedZipEntry = JSZipObject & { _data?: { uncompressedSize?: number } }
 
 let domGlobalsInstalled = false
 
@@ -150,14 +146,8 @@ export class FoliateMetadataParser extends AbstractParser {
       }
       case 'cbz': {
         const { makeComicBook } = await import('foliate-js/comic-book.js')
-        const archive = new NodeZip(buffer, {
-          binary: true,
-          base64: false,
-          checkCRC32: true,
-        })
-        const entries = Object.values(
-          archive.files as unknown as Record<string, NodeZipEntry>
-        ).filter((entry) => !entry.dir)
+        const archive = await loadSafeZip(buffer)
+        const entries = Object.values(archive.files).filter((entry) => !entry.dir)
         if (!entries.some((entry) => /\.(?:avif|bmp|gif|jpe?g|png|webp)$/i.test(entry.name))) {
           throw new Error('Invalid CBZ file: no readable images')
         }
@@ -166,12 +156,14 @@ export class FoliateMetadataParser extends AbstractParser {
           {
             entries: entries.map((entry) => ({ filename: entry.name })),
             loadBlob: async (name) => {
-              const data = entryMap.get(name)?.asBinary()
-              if (data === undefined) throw new Error(`Missing CBZ entry: ${name}`)
-              return new Blob([Buffer.from(data, 'binary')])
+              const entry = entryMap.get(name)
+              if (!entry) throw new Error(`Missing CBZ entry: ${name}`)
+              return new Blob([await entry.async('arraybuffer')])
             },
-            getSize: (name) => entryMap.get(name)?._data?.length ?? 0,
-            getComment: async () => archive.comment ?? '',
+            getSize: (name) =>
+              (entryMap.get(name) as SizedZipEntry | undefined)?._data?.uncompressedSize ?? 0,
+            getComment: async () =>
+              (archive as JSZip & { comment?: string }).comment ?? '',
           },
           { name: this.file.originalFilename }
         )

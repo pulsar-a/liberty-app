@@ -35,8 +35,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
   } = useReaderStore()
 
   // Fetch data for library stats
-  const { data: books } = main.getBooks.useQuery(undefined, {
-    queryKey: ['getBooks', undefined],
+  const { data: books } = main.getBooks.useQuery({ limit: 1 }, {
     enabled: isLibrary,
   })
   const { data: authors } = main.getAuthors.useQuery(undefined, {
@@ -48,7 +47,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
   const collectionsCount = 3
 
   const renderLibraryStatus = () => {
-    const booksCount = books?.items.length || 0
+    const booksCount = books?.total || 0
     const authorsCount = authors?.items.length || 0
 
     return (
@@ -168,6 +167,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ className }) => {
                 : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200'
             )}
             title={t('reader_settings_title', 'Reader Settings')}
+            aria-label={t('reader_settings_title', 'Reader Settings')}
           >
             <FontAwesomeIcon icon={faCog} className="h-3.5 w-3.5" />
           </button>

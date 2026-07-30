@@ -37,8 +37,8 @@ export const Button: React.FC<ButtonProps> = ({
     <>
       <button
         type={type}
-        disabled={disabled}
-        onClick={!disabled && onClick ? onClick : undefined}
+        disabled={disabled || isLoading}
+        onClick={!disabled && !isLoading && onClick ? onClick : undefined}
         className={clsx(
           'flex cursor-default items-center justify-center gap-x-1 font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
           {

@@ -8,6 +8,9 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   settings: {
+    react: {
+      version: 'detect'
+    },
     "import/resolver": {
       "typescript": {}
     }
@@ -17,5 +20,13 @@ module.exports = {
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'off',
     "react/prop-types": "off"
-  }
+  },
+  overrides: [
+    {
+      files: ['*.js', '*.cjs'],
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off'
+      }
+    }
+  ]
 }

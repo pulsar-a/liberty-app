@@ -10,10 +10,33 @@ import { getReadableBookFormats } from '../../../types/reader-engines'
 const readableFormats = new Set<string>(getReadableBookFormats())
 
 export const booksQuery = {
-  async books(): Promise<BookEntity[]> {
-    return db.manager.find(BookEntity, {
-      relations: { authors: true, files: { identifiers: true } },
-    })
+  async books({
+    limit,
+    cursor,
+    authorId,
+  }: {
+    limit: number
+    cursor?: number
+    authorId?: number | null
+  }): Promise<{ items: BookEntity[]; total: number }> {
+    const createQuery = () => {
+      const query = db
+        .getRepository(BookEntity)
+        .createQueryBuilder('book')
+        .leftJoinAndSelect('book.authors', 'author')
+        .leftJoinAndSelect('book.files', 'file')
+        .leftJoinAndSelect('file.identifiers', 'identifier')
+        .distinct(true)
+
+      if (authorId === null) query.andWhere('author.id IS NULL')
+      else if (authorId !== undefined) query.andWhere('author.id = :authorId', { authorId })
+      return query
+    }
+
+    const total = await createQuery().getCount()
+    const query = createQuery().orderBy('book.id', 'DESC').take(limit)
+    if (cursor !== undefined) query.andWhere('book.id < :cursor', { cursor })
+    return { items: await query.getMany(), total }
   },
 
   async book({ id }: { id: number }): Promise<BookEntity | null> {

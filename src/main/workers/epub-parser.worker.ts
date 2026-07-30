@@ -6,9 +6,14 @@
 
 import { parentPort, workerData } from 'worker_threads'
 import fs from 'fs'
-import NodeZip from 'node-zip'
+import JSZip from 'jszip'
 import xml2js from 'xml2js'
-import { DOMParser, XMLSerializer } from '@xmldom/xmldom'
+import {
+  DOMParser,
+  XMLSerializer,
+  type Document as XmlDocument,
+  type Element as XmlElement,
+} from '@xmldom/xmldom'
 import {
   BookChapter,
   BookContent,
@@ -19,6 +24,8 @@ import {
   PageBoundary,
   PaginationConfig,
 } from '../../../types/reader.types'
+import { sanitizeBookHtml } from '../utils/sanitizeBookHtml'
+import { loadSafeZip } from '../utils/safeZip'
 import {
   attachTocTargets,
   normalizeBookPath,
@@ -71,8 +78,6 @@ interface ErrorMessage {
   message: string
 }
 
-type WorkerMessage = ProgressMessage | ResultMessage | ErrorMessage
-
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -120,7 +125,7 @@ interface ManifestItem {
 
 class WorkerEpubParser {
   private xmlParser: xml2js.Parser
-  private archive: NodeZip | null = null
+  private archive: JSZip | null = null
   private opfPath: string = ''
   private opfDir: string = ''
   private manifest: Map<string, ManifestItem> = new Map()
@@ -136,10 +141,9 @@ class WorkerEpubParser {
     this.xmlParser = new xml2js.Parser()
   }
 
-  private loadArchive(): void {
+  private async loadArchive(): Promise<void> {
     try {
-      const buffer: Buffer = fs.readFileSync(this.filePath, 'binary') as unknown as Buffer
-      this.archive = new NodeZip(buffer, { binary: true, base64: false, checkCRC32: true })
+      this.archive = await loadSafeZip(fs.readFileSync(this.filePath))
     } catch (error) {
       throw new Error(`Failed to load EPUB file: ${error}`)
     }
@@ -149,12 +153,12 @@ class WorkerEpubParser {
     // Stage: Opening (0-5%)
     sendProgress(PROGRESS_RANGES.OPENING.start, PROGRESS_STAGES.OPENING)
 
-    this.loadArchive()
+    await this.loadArchive()
 
     sendProgress(2, PROGRESS_STAGES.OPENING)
 
     // Get container.xml to find OPF location
-    const containerXml = this.getFileContent('META-INF/container.xml')
+    const containerXml = await this.getFileContent('META-INF/container.xml')
     if (!containerXml) {
       throw new Error('Invalid EPUB: missing container.xml')
     }
@@ -169,7 +173,7 @@ class WorkerEpubParser {
     this.opfDir = this.opfPath.split('/').slice(0, -1).join('/')
 
     // Parse the OPF file
-    const opfXml = this.getFileContent(this.opfPath)
+    const opfXml = await this.getFileContent(this.opfPath)
     if (!opfXml) {
       throw new Error('Invalid EPUB: cannot read OPF file')
     }
@@ -197,14 +201,13 @@ class WorkerEpubParser {
     }
   }
 
-  private getFileContent(filename: string): string | null {
+  private async getFileContent(filename: string): Promise<string | null> {
     if (!this.archive) {
       return null
     }
 
     try {
-      const fileData = this.archive.file(filename)
-      return fileData?.asText() || null
+      return (await this.archive.file(filename)?.async('text')) || null
     } catch {
       return null
     }
@@ -251,7 +254,7 @@ class WorkerEpubParser {
       const spineItem = this.spine[i]
       const fullPath = this.opfDir ? `${this.opfDir}/${spineItem.href}` : spineItem.href
       const chapterDir = fullPath.split('/').slice(0, -1).join('/')
-      const content = this.getFileContent(fullPath)
+      const content = await this.getFileContent(fullPath)
 
       if (!content) {
         continue
@@ -273,7 +276,7 @@ class WorkerEpubParser {
       this.totalImages += images.length
 
       // Convert images to base64 data URIs
-      this.convertImagesToDataUri(doc, chapterDir)
+      await this.convertImagesToDataUri(doc, chapterDir)
 
       // Serialize body content, stripping the body tags
       const serializer = new XMLSerializer()
@@ -301,7 +304,7 @@ class WorkerEpubParser {
     return chapters
   }
 
-  private convertImagesToDataUri(doc: Document, chapterDir: string): void {
+  private async convertImagesToDataUri(doc: XmlDocument, chapterDir: string): Promise<void> {
     const images = doc.getElementsByTagName('img')
 
     // Report entering images stage if we have images
@@ -320,7 +323,7 @@ class WorkerEpubParser {
 
       try {
         const imagePath = this.resolveImagePath(src, chapterDir)
-        const base64Data = this.getFileAsBase64(imagePath)
+        const base64Data = await this.getFileAsBase64(imagePath)
 
         if (base64Data) {
           const mimeType = this.getImageMimeType(imagePath)
@@ -360,7 +363,7 @@ class WorkerEpubParser {
     return resolved.join('/')
   }
 
-  private getFileAsBase64(filename: string): string | null {
+  private async getFileAsBase64(filename: string): Promise<string | null> {
     if (!this.archive) {
       return null
     }
@@ -370,9 +373,7 @@ class WorkerEpubParser {
       if (!fileData) {
         return null
       }
-      const binaryString = fileData.asBinary()
-      const buffer = Buffer.from(binaryString, 'binary')
-      return buffer.toString('base64')
+      return await fileData.async('base64')
     } catch {
       return null
     }
@@ -394,7 +395,7 @@ class WorkerEpubParser {
     return mimeTypes[ext] || 'image/jpeg'
   }
 
-  private extractChapterTitle(doc: Document): string | null {
+  private extractChapterTitle(doc: XmlDocument): string | null {
     const titleSources = ['h1', 'h2', 'h3', 'title']
 
     for (const tag of titleSources) {
@@ -415,7 +416,7 @@ class WorkerEpubParser {
     html = html.replace(/\s+xmlns:[^=]+=["'][^"']*["']/gi, '')
     html = html.replace(/\s+epub:[^=]+=["'][^"']*["']/gi, '')
 
-    return html.trim()
+    return sanitizeBookHtml(html)
   }
 
   private extractReferences(chapters: BookChapter[]): BookReference[] {
@@ -460,9 +461,9 @@ class WorkerEpubParser {
     return references
   }
 
-  private extractReferenceMarker(element: Element, fallbackNumber: number): string {
+  private extractReferenceMarker(element: XmlElement, fallbackNumber: number): string {
     const text = element.textContent || ''
-    const markerMatch = text.match(/^[\[\(]?(\d+|[*†‡§¶]|[a-z])[\]\)]?\.?\s*/i)
+    const markerMatch = text.match(/^[[(]?(\d+|[*†‡§¶]|[a-z])[\])]?\.?\s*/i)
 
     if (markerMatch) {
       return markerMatch[0].trim()
@@ -492,7 +493,7 @@ class WorkerEpubParser {
     for (const [, item] of this.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
         const fullPath = this.opfDir ? `${this.opfDir}/${item.href}` : item.href
-        const content = this.getFileContent(fullPath)
+        const content = await this.getFileContent(fullPath)
 
         if (content && content.includes('epub:type="toc"')) {
           navHref = fullPath
@@ -506,7 +507,7 @@ class WorkerEpubParser {
       return []
     }
 
-    const navContent = this.getFileContent(navHref)
+    const navContent = await this.getFileContent(navHref)
     if (!navContent) {
       return []
     }
@@ -529,7 +530,7 @@ class WorkerEpubParser {
     return []
   }
 
-  private parseNavList(ol: Element, level: number, baseHref: string): TocEntry[] {
+  private parseNavList(ol: XmlElement, level: number, baseHref: string): TocEntry[] {
     const entries: TocEntry[] = []
     const items = ol.childNodes
 
@@ -538,10 +539,10 @@ class WorkerEpubParser {
       const li = items[i]
       if (li.nodeName !== 'li') continue
 
-      let link: Element | null = null
-      let nestedOl: Element | null = null
+      let link: XmlElement | null = null
+      let nestedOl: XmlElement | null = null
       for (let childIndex = 0; childIndex < li.childNodes.length; childIndex++) {
-        const child = li.childNodes[childIndex] as Element
+        const child = li.childNodes[childIndex] as XmlElement
         const childName = child.nodeName?.toLocaleLowerCase()
         if (childName === 'a') link = child
         if (childName === 'ol') nestedOl = child
@@ -588,7 +589,7 @@ class WorkerEpubParser {
     }
 
     const fullPath = this.opfDir ? `${this.opfDir}/${ncxHref}` : ncxHref
-    const ncxContent = this.getFileContent(fullPath)
+    const ncxContent = await this.getFileContent(fullPath)
 
     if (!ncxContent) {
       return []
@@ -798,7 +799,7 @@ class WorkerPaginationService {
     return segments
   }
 
-  private extractSegments(node: Element, segments: string[]): void {
+  private extractSegments(node: XmlElement, segments: string[]): void {
     const blockElements = new Set([
       'p',
       'div',
@@ -836,7 +837,7 @@ class WorkerPaginationService {
           segments.push(text)
         }
       } else if (child.nodeType === 1) {
-        const element = child as Element
+        const element = child as XmlElement
         const tagName = element.tagName.toLowerCase()
 
         if (blockElements.has(tagName)) {
@@ -865,7 +866,7 @@ class WorkerPaginationService {
         foundReferences.push(ref)
       }
 
-      const markerNum = ref.marker.replace(/[\[\]\(\)]/g, '')
+      const markerNum = ref.marker.replace(/[()[\]]/g, '')
       if (
         content.includes(`href="#fn${markerNum}"`) ||
         content.includes(`href="#note${markerNum}"`) ||

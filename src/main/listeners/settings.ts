@@ -1,27 +1,31 @@
-import { app, ipcMain } from 'electron'
-import { settings } from '../settings/settings'
+import { BrowserWindow, ipcMain } from 'electron'
+import { isSettingKey, settings, settingValueSchemas } from '../settings/settings'
 
-export const initSettingsListeners = () => {
-  ipcMain.on('settings:get', async (event, val, defaultValue) => {
-    event.returnValue = settings.get(val, defaultValue)
+export const initSettingsListeners = (mainWindow: BrowserWindow) => {
+  const isTrusted = (senderId: number): boolean => senderId === mainWindow.webContents.id
+
+  ipcMain.handle('settings:getAll', (event) => {
+    if (!isTrusted(event.sender.id)) throw new Error('Untrusted IPC sender')
+    return settings.store
   })
 
-  ipcMain.on('settings:getAll', async (event) => {
-    event.returnValue = settings.store
+  ipcMain.handle('settings:set', (event, key: unknown, value: unknown) => {
+    if (!isTrusted(event.sender.id)) throw new Error('Untrusted IPC sender')
+    if (!isSettingKey(key)) throw new Error('Unknown setting')
+    const parsed = settingValueSchemas[key].parse(value)
+    settings.set(key, parsed)
+    return settings.store
   })
 
-  ipcMain.on('settings:set', async (_, key, val) => {
-    settings.set(key, val)
-  })
-
-  ipcMain.on('settings:reset', async () => {
+  ipcMain.handle('settings:reset', (event) => {
+    if (!isTrusted(event.sender.id)) throw new Error('Untrusted IPC sender')
     settings.reset()
+    return settings.store
   })
 
-  app.on('window-all-closed', () => {
-    ipcMain.removeAllListeners('settings:get')
-    ipcMain.removeAllListeners('settings:getAll')
-    ipcMain.removeAllListeners('settings:set')
-    ipcMain.removeAllListeners('settings:reset')
-  })
+  return () => {
+    ipcMain.removeHandler('settings:getAll')
+    ipcMain.removeHandler('settings:set')
+    ipcMain.removeHandler('settings:reset')
+  }
 }

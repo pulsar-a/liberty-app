@@ -405,7 +405,7 @@ export const ReaderView: React.FC = () => {
       clearFittedContent()
       setMeasurementReady(false)
     }
-  }, [layoutMode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [layoutMode])
 
   const legacyPosition = useMemo<ReaderPosition | null>(() => {
     if (!usesLegacyContent || !effectiveEngine || totalPages <= 0) return null

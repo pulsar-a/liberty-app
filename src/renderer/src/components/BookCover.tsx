@@ -1,9 +1,6 @@
 import { clsx } from 'clsx'
 import type { BookSummary } from '@app-types/books.types'
 import React from 'react'
-import placeholderBlue from '../assets/images/placeholder-blue.jpg'
-import placeholderGreen from '../assets/images/placeholder-green.jpg'
-import placeholderPink from '../assets/images/placeholder-pink.jpg'
 import { getStableOptionForHash } from '../utils/hashSelector'
 
 type BookCoverProps = {
@@ -15,9 +12,9 @@ type BookCoverProps = {
 export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'md' }) => {
   const [isImageAvailable, setImageAvailable] = React.useState(true)
   const placeholder = getStableOptionForHash(book.id.toString(), [
-    placeholderGreen,
-    placeholderPink,
-    placeholderBlue,
+    'linear-gradient(145deg, #143d36 0%, #28685c 48%, #c08b5c 100%)',
+    'linear-gradient(145deg, #4b2338 0%, #8a3f62 48%, #d49278 100%)',
+    'linear-gradient(145deg, #1d3260 0%, #365fa0 48%, #ad7a68 100%)',
   ])
 
   const hasAuthors = book.authors.length > 0
@@ -33,7 +30,7 @@ export const BookCover: React.FC<BookCoverProps> = ({ book, withTitle, size = 'm
         size === 'xl' && 'h-96 rounded-lg'
       )}
       style={{
-        backgroundImage: `url(${placeholder})`,
+        backgroundImage: placeholder,
         backgroundSize: 'cover',
       }}
     >

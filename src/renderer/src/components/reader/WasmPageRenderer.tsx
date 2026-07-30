@@ -126,7 +126,10 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     canvasElement.className = 'block h-full w-full select-none'
     canvasHost.appendChild(canvasElement)
 
-    if (!('transferControlToOffscreen' in canvasElement)) {
+    const transferableCanvas = canvasElement as HTMLCanvasElement & {
+      transferControlToOffscreen?: () => OffscreenCanvas
+    }
+    if (typeof transferableCanvas.transferControlToOffscreen !== 'function') {
       setError(t('reader_wasm_offscreen_unsupported', 'This system cannot start the WASM reader.'))
       return () => canvasElement.remove()
     }
@@ -192,7 +195,7 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
       clearSlowFeedback()
     }
 
-    const offscreen = canvasElement.transferControlToOffscreen()
+    const offscreen = transferableCanvas.transferControlToOffscreen()
     const requestId = nextRequestId()
     postCommand(
       {

@@ -1,6 +1,6 @@
 export type SettingsType = {
-  language: string | null
-  theme: 'light' | 'dark'
+  language: string
+  theme: 'light' | 'dark' | 'system'
   userFilesDir: string
   currentlyReading: number | null
   libraryViewStyle: 'list' | 'grid'

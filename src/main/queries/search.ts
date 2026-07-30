@@ -37,12 +37,38 @@ export const searchQuery = {
     const term = query.trim()
     if (!term) return { books: [], collections: [], totalBooks: 0, totalCollections: 0 }
 
-    const allBooks = await db.manager.find(BookEntity, {
-      relations: { authors: true, files: { identifiers: true } },
-    })
+    const bookFilters = filters.filter((filter) => filter !== 'collections')
+    let matchingBooks: BookEntity[] = []
+    let totalBooks = 0
+    if (bookFilters.length > 0) {
+      const conditions: string[] = []
+      if (filters.includes('books')) conditions.push('LOWER(book.name) LIKE :term')
+      if (filters.includes('book_ids')) conditions.push('LOWER(identifier.idVal) LIKE :term')
+      if (filters.includes('file_names')) conditions.push('LOWER(file.originalFileName) LIKE :term')
+      if (filters.includes('internal_file_names')) conditions.push('LOWER(file.storedPath) LIKE :term')
+
+      const queryBuilder = db
+        .getRepository(BookEntity)
+        .createQueryBuilder('book')
+        .leftJoinAndSelect('book.authors', 'author')
+        .leftJoinAndSelect('book.files', 'file')
+        .leftJoinAndSelect('file.identifiers', 'identifier')
+        .where(`(${conditions.join(' OR ')})`, { term: `%${term.toLocaleLowerCase()}%` })
+        .distinct(true)
+        .orderBy('book.name', 'ASC')
+        .take(limit ?? 200)
+
+      if (formats?.length) {
+        queryBuilder.andWhere('LOWER(file.fileFormat) IN (:...formats)', {
+          formats: formats.map((format) => format.toLocaleLowerCase()),
+        })
+      }
+      ;[matchingBooks, totalBooks] = await queryBuilder.getManyAndCount()
+    }
+
     const results: BookSearchResult[] = []
 
-    for (const book of allBooks) {
+    for (const book of matchingBooks) {
       const activeFiles = book.files.filter((file) => !file.removedAt)
       if (
         formats?.length &&
@@ -108,18 +134,30 @@ export const searchQuery = {
     }
 
     let collectionResults: CollectionSearchResult[] = []
+    let totalCollections = 0
     if (filters.includes('collections')) {
-      const collections = await db.manager.find(CollectionEntity, { order: { name: 'ASC' } })
-      collectionResults = collections
-        .filter((collection) => contains(collection.name, term))
-        .map(({ id, name, booksCount }) => ({ id, name, booksCount }))
+      const [collections, count] = await db
+        .getRepository(CollectionEntity)
+        .createQueryBuilder('collection')
+        .where('LOWER(collection.name) LIKE :term', {
+          term: `%${term.toLocaleLowerCase()}%`,
+        })
+        .orderBy('collection.name', 'ASC')
+        .take(limit ?? 200)
+        .getManyAndCount()
+      totalCollections = count
+      collectionResults = collections.map(({ id, name, booksCount }) => ({
+        id,
+        name,
+        booksCount,
+      }))
     }
 
     return {
-      books: limit ? results.slice(0, limit) : results,
-      collections: limit ? collectionResults.slice(0, limit) : collectionResults,
-      totalBooks: results.length,
-      totalCollections: collectionResults.length,
+      books: results,
+      collections: collectionResults,
+      totalBooks,
+      totalCollections,
     }
   },
 
@@ -127,6 +165,7 @@ export const searchQuery = {
     const results = await searchQuery.search({
       query,
       filters: ['books', 'collections'],
+      limit: 6,
     })
     const limit = 5
     return {

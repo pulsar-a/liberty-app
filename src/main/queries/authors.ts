@@ -5,11 +5,7 @@ const repository = db.getRepository(AuthorEntity)
 
 export const authorsQuery = {
   async authors(): Promise<AuthorEntity[]> {
-    return db.manager.find(AuthorEntity, {
-      relations: {
-        books: true,
-      },
-    })
+    return db.manager.find(AuthorEntity, { order: { name: 'ASC' } })
   },
   async author({ id }: { id: number }): Promise<AuthorEntity | null> {
     return db.manager.findOne(AuthorEntity, {

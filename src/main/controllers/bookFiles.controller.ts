@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises'
 import { z } from 'zod'
 import BookEntity from '../entities/book.entity'
 import BookFileEntity from '../entities/bookFile.entity'
@@ -6,9 +5,9 @@ import BookMatchEntity from '../entities/bookMatch.entity'
 import AuthorEntity from '../entities/author.entity'
 import CollectionEntity from '../entities/collection.entity'
 import { db } from '../services/db'
-import { logger } from '../utils/logger'
 import { getReadableBookFormats } from '../../../types/reader-engines'
 import { authorsQuery } from '../queries/authors'
+import { removeManagedBookFile } from '../utils/managedFiles'
 
 const readableFormats = new Set<string>(getReadableBookFormats())
 
@@ -73,11 +72,7 @@ export async function removeBookFileController({
     await db.manager.save(book)
   }
 
-  try {
-    await fs.unlink(file.storedPath)
-  } catch {
-    logger.debug('Managed book file cleanup skipped - file does not exist')
-  }
+  await removeManagedBookFile(file.storedPath)
   return { success: true, isFileless: activeFiles.length === 0 }
 }
 

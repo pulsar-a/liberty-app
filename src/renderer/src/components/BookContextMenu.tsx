@@ -100,7 +100,7 @@ export const BookContextMenu: React.FC<BookContextMenuProps> = ({ book }) => {
         showNeverAskAgain
         onNeverAskAgainChange={handleNeverAskBeforeDeletingBook}
       />
-      <ContextMenu items={menuItems} />
+      <ContextMenu items={menuItems} label={t('book_actions', `Actions for ${book.name}`)} />
     </>
   )
 }

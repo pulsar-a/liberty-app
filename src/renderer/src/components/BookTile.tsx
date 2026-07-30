@@ -6,9 +6,6 @@ import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import placeholderBlue from '../assets/images/placeholder-blue.jpg'
-import placeholderGreen from '../assets/images/placeholder-green.jpg'
-import placeholderPink from '../assets/images/placeholder-pink.jpg'
 import { useIpc } from '../hooks/useIpc'
 import { getStableOptionForHash } from '../utils/hashSelector'
 import { BookContextMenu } from './BookContextMenu'
@@ -49,9 +46,9 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
   const hasAuthors = book.authors && book.authors.length > 0
 
   const placeholder = getStableOptionForHash(book.id.toString(), [
-    placeholderGreen,
-    placeholderPink,
-    placeholderBlue,
+    'linear-gradient(145deg, #143d36 0%, #28685c 48%, #c08b5c 100%)',
+    'linear-gradient(145deg, #4b2338 0%, #8a3f62 48%, #d49278 100%)',
+    'linear-gradient(145deg, #1d3260 0%, #365fa0 48%, #ad7a68 100%)',
   ])
 
   const openBookDetails = async () => {
@@ -82,6 +79,15 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
         className
       )}
       onClick={openBookDetails}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          void openBookDetails()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={t('book_view_details', `View details for ${book.name}`)}
     >
       <div
         className={clsx(
@@ -89,7 +95,7 @@ export const BookTile: React.FC<BookTileProps> = ({ book, withGutter, className 
           withGutter ? 'rounded-t-lg' : 'rounded-lg'
         )}
         style={{
-          backgroundImage: `url(${placeholder})`,
+          backgroundImage: placeholder,
           backgroundSize: 'cover',
         }}
       >

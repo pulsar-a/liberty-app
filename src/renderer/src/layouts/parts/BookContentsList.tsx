@@ -13,9 +13,10 @@ export const BookContentsList: React.FC<BookContentsListProps> = ({ items, class
       {items.map((item) => (
         <li key={item.id}>
           <Link
+            to={item.to || '.'}
             onClick={item.fn}
             activeOptions={{ exact: true, includeSearch: true, includeHash: true }}
-            search={item.search}
+            search={item.search as never}
             hash={item?.hash}
             className={clsx(
               'block cursor-pointer py-2 pl-3 pr-2 text-xs font-medium text-gray-900 hover:underline dark:text-gray-100',

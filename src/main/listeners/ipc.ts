@@ -4,7 +4,10 @@ import { initFileListeners } from './files'
 import { initSettingsListeners } from './settings'
 
 export const initIpcListeners = (mainWindow: BrowserWindow) => {
-  initFileListeners(mainWindow)
-  initAppListeners()
-  initSettingsListeners()
+  const cleanups = [
+    initFileListeners(mainWindow),
+    initAppListeners(mainWindow),
+    initSettingsListeners(mainWindow),
+  ]
+  return () => cleanups.forEach((cleanup) => cleanup())
 }

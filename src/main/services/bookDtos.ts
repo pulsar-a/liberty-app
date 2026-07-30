@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises'
 import type {
   Book,
   BookFile,
@@ -12,21 +11,13 @@ import { getReadableBookFormats } from '../../../types/reader-engines'
 
 const readableFormats = new Set<string>(getReadableBookFormats())
 
-async function fileExists(file: BookFileEntity): Promise<boolean> {
-  if (file.removedAt) return false
-  try {
-    await fs.access(file.storedPath)
-    return true
-  } catch {
-    return false
-  }
-}
-
 export async function toBookFileDto(
   file: BookFileEntity,
   preferredBookFileId: number | null
 ): Promise<BookFile> {
-  const isAvailable = await fileExists(file)
+  // File availability is tracked in the database. The custom protocol verifies the
+  // canonical path when a file is actually opened, avoiding an fs.stat call per row.
+  const isAvailable = !file.removedAt
   return {
     id: file.id,
     bookId: file.bookId,

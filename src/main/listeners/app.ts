@@ -1,15 +1,17 @@
-import { BrowserWindow, ipcMain, shell } from 'electron'
+import { BrowserWindow, ipcMain, shell, type IpcMainEvent } from 'electron'
 
-export const initAppListeners = () => {
-  // IPC: Call Renderer -> main
-  ipcMain.on('window:set-title', (event, title) => {
+export const initAppListeners = (mainWindow: BrowserWindow) => {
+  const isTrusted = (senderId: number): boolean => senderId === mainWindow.webContents.id
+
+  const handleSetTitle = (event: IpcMainEvent, title: unknown) => {
+    if (!isTrusted(event.sender.id) || typeof title !== 'string') return
     const webContents = event.sender
-    const mainWindow = BrowserWindow.fromWebContents(webContents)
-    mainWindow?.setTitle(title)
-  })
+    BrowserWindow.fromWebContents(webContents)?.setTitle(title)
+  }
+  ipcMain.on('window:set-title', handleSetTitle)
 
-  ipcMain.handle('app:open-external', async (_event, value: unknown) => {
-    if (typeof value !== 'string') return false
+  ipcMain.handle('app:open-external', async (event, value: unknown) => {
+    if (!isTrusted(event.sender.id) || typeof value !== 'string') return false
 
     try {
       const url = new URL(value)
@@ -22,4 +24,9 @@ export const initAppListeners = () => {
       return false
     }
   })
+
+  return () => {
+    ipcMain.removeListener('window:set-title', handleSetTitle)
+    ipcMain.removeHandler('app:open-external')
+  }
 }

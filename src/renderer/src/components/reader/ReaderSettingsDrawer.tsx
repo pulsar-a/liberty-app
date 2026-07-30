@@ -77,7 +77,7 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
         leaveFrom="translate-y-0"
         leaveTo="translate-y-full"
       >
-        <div className="pointer-events-none fixed bottom-7 left-[calc(15rem+14rem)] right-0 z-50">
+        <div className="pointer-events-none fixed bottom-7 left-[calc(15rem+14rem)] right-0 z-30">
           <div className="pointer-events-auto rounded-t-xl border-x border-t border-gray-300 bg-white shadow-2xl dark:border-gray-700 dark:bg-bright-gray-900">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 dark:border-gray-700">

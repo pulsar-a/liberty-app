@@ -26,7 +26,7 @@ export const LibraryLayout = () => {
   
   const closeFlyout = () => {
     navigate({
-      search: (prev) => ({ ...prev, bookId: undefined }),
+      search: { bookId: undefined } as never,
     })
   }
 

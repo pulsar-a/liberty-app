@@ -41,10 +41,9 @@ export const GlobalSearch: React.FC = () => {
 
   // Quick search query
   const { data: searchResults, isLoading } = main.quickSearch.useQuery(
-    { query: localSearchTerm },
+    { query: searchTerm },
     {
-      enabled: localSearchTerm.length > 0,
-      queryKey: ['quickSearch', localSearchTerm],
+      enabled: searchTerm.trim().length >= 2,
     }
   )
 
@@ -166,7 +165,7 @@ export const GlobalSearch: React.FC = () => {
 
       {/* Search dropdown */}
       <Transition
-        show={isDropdownOpen && localSearchTerm.length > 0}
+        show={isDropdownOpen && localSearchTerm.trim().length >= 2}
         as={Fragment}
         enter="transition ease-out duration-100"
         enterFrom="opacity-0 scale-95"
@@ -185,7 +184,7 @@ export const GlobalSearch: React.FC = () => {
             )}
 
             {/* No results */}
-            {!isLoading && !hasResults && localSearchTerm.length > 0 && (
+            {!isLoading && !hasResults && searchTerm.trim().length >= 2 && (
               <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                 {t('search_noResults', 'No results found for "{{query}}"', { query: localSearchTerm })}
               </div>

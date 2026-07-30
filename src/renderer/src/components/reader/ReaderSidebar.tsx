@@ -336,7 +336,7 @@ const BookmarkItem: React.FC<BookmarkItemProps> = ({
 
           {bookmark.selectedText && (
             <p className="mt-1.5 line-clamp-2 pl-6 text-xs italic text-gray-500 dark:text-gray-400">
-              "{bookmark.selectedText}"
+              &ldquo;{bookmark.selectedText}&rdquo;
             </p>
           )}
         </button>

@@ -181,6 +181,7 @@ export const MeasurementContainer = forwardRef<MeasurementContainerApi, Measurem
         }, 50) // Small delay to ensure DOM is ready
         return () => clearTimeout(timeoutId)
       }
+      return undefined
     }, [portalTarget, onReady])
 
     if (!portalTarget) {
@@ -189,7 +190,6 @@ export const MeasurementContainer = forwardRef<MeasurementContainerApi, Measurem
 
     const effectiveWidth = getEffectiveWidth()
     const paddingX = settings.contentPaddingX * 16
-    const paddingY = settings.contentPaddingY * 16
     const contentWidth = Math.min(
       effectiveWidth - (paddingX * 2),
       settings.maxContentWidth * 16

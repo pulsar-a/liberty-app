@@ -9,9 +9,7 @@ import {
   FittedPage,
   FittingConfig,
   FittingProgressCallback,
-  ImageDimension,
   ParsedChapterContent,
-  ReaderTypographySettings,
 } from '@app-types/reader.types'
 import { imagePreloader } from './ImagePreloader'
 import { MeasurementContainerApi } from '../components/reader/MeasurementContainer'
@@ -273,43 +271,9 @@ export class ContentFitter {
   }
 
   /**
-   * Split content at <br> tags
-   */
-  private splitAtBreaks(html: string, type: ContentSegmentType, chapterId: string): ContentSegment[] {
-    // Extract the tag wrapper (e.g., <blockquote>, <p>)
-    const openTagMatch = html.match(/^<(\w+)([^>]*)>/)
-    const closeTagMatch = html.match(/<\/(\w+)>\s*$/)
-    
-    if (!openTagMatch || !closeTagMatch) {
-      return []
-    }
-
-    const tagName = openTagMatch[1]
-    const tagAttrs = openTagMatch[2]
-    const innerHtml = html.slice(openTagMatch[0].length, html.length - closeTagMatch[0].length)
-    
-    // Split at <br> tags
-    const parts = innerHtml.split(/<br\s*\/?>/i).filter(p => p.trim())
-    
-    if (parts.length <= 1) {
-      return []
-    }
-
-    // Create segments from parts
-    let segIndex = 0
-    return parts.map(part => ({
-      id: `${chapterId}-split-${segIndex++}-${Date.now()}`,
-      type,
-      htmlContent: `<${tagName}${tagAttrs}>${part.trim()}</${tagName}>`,
-      textContent: part.replace(/<[^>]+>/g, '').trim(),
-    }))
-  }
-
-  /**
    * Split list into individual items
    */
   private splitListItems(html: string, chapterId: string): ContentSegment[] {
-    const isOrdered = html.toLowerCase().startsWith('<ol')
     const listMatch = html.match(/^<(ul|ol)([^>]*)>([\s\S]*)<\/\1>$/i)
     
     if (!listMatch) {
@@ -419,26 +383,31 @@ export class ContentFitter {
     const charsPerLine = 60
 
     switch (segment.type) {
-      case 'paragraph':
+      case 'paragraph': {
         const lines = Math.ceil(segment.textContent.length / charsPerLine)
         return lines * baseLineHeight + 20 // Add margin
-      case 'heading':
+      }
+      case 'heading': {
         const headingMultiplier = segment.headingLevel
           ? 2.5 - (segment.headingLevel * 0.2)
           : 1.5
         return baseLineHeight * headingMultiplier + 32
+      }
       case 'image':
       case 'figure':
         return segment.imageData?.scaledHeight || 200
-      case 'blockquote':
+      case 'blockquote': {
         const quoteLines = Math.ceil(segment.textContent.length / (charsPerLine - 10))
         return quoteLines * baseLineHeight + 40
-      case 'list':
+      }
+      case 'list': {
         const items = (segment.htmlContent.match(/<li/g) || []).length
         return items * baseLineHeight + 20
-      case 'codeBlock':
+      }
+      case 'codeBlock': {
         const codeLines = segment.textContent.split('\n').length
         return codeLines * 24 + 32
+      }
       case 'hr':
         return 40
       default:
@@ -472,7 +441,7 @@ export class ContentFitter {
       if (
         combinedHtml.includes(ref.id) ||
         combinedHtml.includes(`#${ref.id}`) ||
-        combinedHtml.includes(`href="#fn${ref.marker.replace(/[\[\]]/g, '')}"`)
+        combinedHtml.includes(`href="#fn${ref.marker.replace(/[[\]]/g, '')}"`)
       ) {
         if (!foundRefs.includes(ref)) {
           foundRefs.push(ref)
@@ -658,7 +627,6 @@ export class ContentFitter {
         // check if they fit together
         if (segment.keepWithNext && i < segments.length - 1) {
           const nextSegment = segments[i + 1]
-          const nextHeight = this.measureSegment(nextSegment)
           const combinedWithNext = this.measureCombinedContent([
             ...currentPageSegments,
             nextSegment

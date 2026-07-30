@@ -1,4 +1,5 @@
 node_modules
 dist
 out
+src/renderer/src/wasm-reader/pkg
 .gitignore

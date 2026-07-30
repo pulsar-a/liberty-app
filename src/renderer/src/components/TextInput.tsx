@@ -73,8 +73,10 @@ export const TextInput: React.FC<TextInputProps> = ({
           />
           {withRemove && value?.length !== 0 && (
             <button
+              type="button"
               className="absolute inset-y-0 right-0 flex cursor-default items-center pr-3 hover:text-mako-400 dark:hover:text-mako-200"
               onClick={clearInput}
+              aria-label="Clear input"
             >
               <FontAwesomeIcon icon={faRemove} className="h-4 w-4" />
             </button>

@@ -1,4 +1,4 @@
-const path = require('node:path')
+import path from 'node:path'
 import { app } from 'electron'
 import { isDev } from './app'
 

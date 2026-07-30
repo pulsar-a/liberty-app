@@ -2,6 +2,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge, ipcRenderer } from 'electron'
 import { exposeElectronTRPC } from 'electron-trpc/main'
 import { LoadingStatusItem } from '../../types/loader.types'
+import type { SettingKeys, SettingsType } from '../../types/settings.types'
 
 process.once('loaded', async () => {
   exposeElectronTRPC()
@@ -10,19 +11,12 @@ process.once('loaded', async () => {
 // Custom APIs for renderer
 export const api = {
   settings: {
-    get(key, defaultValue) {
-      return ipcRenderer.sendSync('settings:get', key, defaultValue)
-    },
-    getAll() {
-      return ipcRenderer.sendSync('settings:getAll')
-    },
-    set(property, val) {
-      ipcRenderer.send('settings:set', property, val)
-    },
-    reset() {
-      ipcRenderer.send('settings:reset')
-    },
-    // Other method you want to add like has(), reset(), etc.
+    getAll: (): Promise<SettingsType> => ipcRenderer.invoke('settings:getAll'),
+    set: <Key extends SettingKeys>(
+      property: Key,
+      value: SettingsType[Key]
+    ): Promise<SettingsType> => ipcRenderer.invoke('settings:set', property, value),
+    reset: (): Promise<SettingsType> => ipcRenderer.invoke('settings:reset'),
   },
 
   // IPC: Renderer -> main
@@ -30,7 +24,6 @@ export const api = {
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
 
   // IPC: Renderer -> main + data return
-  openFile: () => ipcRenderer.invoke('dialog:open-file'),
   selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
 
   onAddLoaders: (callback: (items: LoadingStatusItem[]) => void) => {
@@ -59,11 +52,6 @@ export const api = {
     ipcRenderer.removeAllListeners('reader:progress')
   },
 
-  // IPC: main -> Renderer
-  onUpdateCounter: (callback) =>
-    ipcRenderer.on('update-counter', (_event, value) => callback(value)),
-  // IPC: Renderer -> main
-  counterValue: (value) => ipcRenderer.send('counter-value', value),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

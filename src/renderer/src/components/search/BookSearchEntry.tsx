@@ -5,9 +5,6 @@ import { useLocation, useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import placeholderBlue from '../../assets/images/placeholder-blue.jpg'
-import placeholderGreen from '../../assets/images/placeholder-green.jpg'
-import placeholderPink from '../../assets/images/placeholder-pink.jpg'
 import { getStableOptionForHash } from '../../utils/hashSelector'
 import { Badge } from '../Badge'
 import { HighlightedText } from './HighlightedText'
@@ -35,9 +32,9 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
   const [isImageAvailable, setImageAvailable] = React.useState(true)
 
   const placeholder = getStableOptionForHash(book.id.toString(), [
-    placeholderGreen,
-    placeholderPink,
-    placeholderBlue,
+    'linear-gradient(145deg, #143d36 0%, #28685c 48%, #c08b5c 100%)',
+    'linear-gradient(145deg, #4b2338 0%, #8a3f62 48%, #d49278 100%)',
+    'linear-gradient(145deg, #1d3260 0%, #365fa0 48%, #ad7a68 100%)',
   ])
 
   const handleClick = async () => {
@@ -76,7 +73,7 @@ export const BookSearchEntry: React.FC<BookSearchEntryProps> = ({
           'relative shrink-0 overflow-hidden rounded-md bg-cover bg-center',
           isDropdown ? 'h-16 w-11' : 'h-24 w-16'
         )}
-        style={{ backgroundImage: `url(${placeholder})` }}
+        style={{ backgroundImage: placeholder }}
       >
         {book.cover && isImageAvailable && (
           <img

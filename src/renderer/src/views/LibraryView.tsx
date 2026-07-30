@@ -1,6 +1,5 @@
 import { useIpc } from '@/hooks/useIpc'
 import { libraryRoute } from '@/routes/routes'
-import type { BookSummary } from '@app-types/books.types'
 import {
   faBars,
   faHeart,
@@ -26,18 +25,32 @@ export const LibraryView: React.FC = () => {
   const { getSetting, setSetting } = useSettings()
   const { authorId } = libraryRoute.useSearch()
   const { main } = useIpc()
-  const { data: books, isLoading: isBooksLoading } = main.getBooks.useQuery(undefined, {
-    queryKey: ['getBooks', undefined],
-    suspense: true,
-  })
+  const {
+    data: books,
+    isLoading: isBooksLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = main.getBooks.useInfiniteQuery(
+    { limit: 60, authorId },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      suspense: true,
+    }
+  )
+  const { data: booksWithoutAuthor } = main.getBooks.useQuery(
+    { limit: 1, authorId: null },
+    { enabled: authorId !== null }
+  )
+  const { data: allBooksSummary } = main.getBooks.useQuery(
+    { limit: 1 },
+    { enabled: authorId !== undefined }
+  )
   const { data: authors, isLoading: isAuthorsLoading } = main.getAuthors.useQuery(undefined, {
     queryKey: ['getAuthors', undefined],
     suspense: true,
   })
-  const { data: favoritesCount } = main.getFavoriteBooksCount.useQuery(undefined, {
-    queryKey: ['getFavoriteBooksCount'],
-  })
-  console.log('RENDER: LibraryView')
+  const { data: favoritesCount } = main.getFavoriteBooksCount.useQuery(undefined)
 
   const utils = main.useUtils()
   const [authorSearchTerm, setAuthorSearchTerm] = useState<string>('')
@@ -58,29 +71,10 @@ export const LibraryView: React.FC = () => {
     },
   })
 
-  const filteredBooks = ((): BookSummary[] => {
-    if (!books?.items) {
-      return []
-    }
+  const bookItems = useMemo(() => books?.pages.flatMap((page) => page.items) || [], [books])
 
-    if (authorId === undefined) {
-      return books.items
-    }
-
-    return books.items.filter((book) => {
-      // Books without author
-      if (book.authors.length === 0 && authorId === null) {
-        return true
-      }
-
-      // Search by author
-      return book.authors.some((author) => author.id === authorId)
-    })
-  })()
-
-  const booksWithoutAuthorCount = useMemo(() => {
-    return books?.items.filter((book) => book.authors.length === 0).length || 0
-  }, [books])
+  const booksWithoutAuthorCount =
+    authorId === null ? books?.pages[0]?.total || 0 : booksWithoutAuthor?.total || 0
 
   const authorRouteEntries: RouteEntry[] = useMemo(() => {
     const isSearching = authorSearchTerm.trim().length > 0
@@ -95,7 +89,10 @@ export const LibraryView: React.FC = () => {
               to: '/',
               active: authorId === undefined,
               search: {},
-              count: books?.items.length || 0,
+              count:
+                authorId === undefined
+                  ? books?.pages[0]?.total || 0
+                  : allBooksSummary?.total || 0,
             } as RouteEntry,
           ]
         : []),
@@ -129,7 +126,15 @@ export const LibraryView: React.FC = () => {
           count: author.booksCount,
         })) || []
     )
-  }, [authors, authorSearchTerm, books, authorId, booksWithoutAuthorCount])
+  }, [
+    allBooksSummary,
+    authors,
+    authorSearchTerm,
+    books,
+    authorId,
+    booksWithoutAuthorCount,
+    t,
+  ])
 
   const selectedAuthorName = useMemo(() => {
     if (authorId === null) {
@@ -181,10 +186,21 @@ export const LibraryView: React.FC = () => {
             )}
 
             {listStyle === 'grid' && !isLoading && books && (
-              <BooksGrid books={filteredBooks || []} />
+              <BooksGrid books={bookItems} />
             )}
             {listStyle === 'list' && !isLoading && books && (
-              <BooksList books={filteredBooks || []} />
+              <BooksList books={bookItems} />
+            )}
+            {hasNextPage && (
+              <div className="mt-10 flex justify-center">
+                <Button
+                  label={t('libraryView_loadMore', 'Load more books')}
+                  variant="secondary"
+                  shape="rounded"
+                  isLoading={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                />
+              </div>
             )}
           </div>
         }

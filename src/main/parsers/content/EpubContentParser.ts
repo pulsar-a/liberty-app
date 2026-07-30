@@ -1,7 +1,12 @@
 import fs from 'fs'
-import NodeZip from 'node-zip'
+import JSZip from 'jszip'
 import xml2js from 'xml2js'
-import { DOMParser, XMLSerializer } from '@xmldom/xmldom'
+import {
+  DOMParser,
+  XMLSerializer,
+  type Document as XmlDocument,
+  type Element as XmlElement,
+} from '@xmldom/xmldom'
 import { BookChapter, BookContent, BookReference, TocEntry } from '../../../../types/reader.types'
 import {
   attachTocTargets,
@@ -9,6 +14,8 @@ import {
   resolveBookHref,
 } from '../../../../types/reader-navigation'
 import { logger } from '../../utils/logger'
+import { sanitizeBookHtml } from '../../utils/sanitizeBookHtml'
+import { loadSafeZip } from '../../utils/safeZip'
 import { AbstractContentParser, ContentParserOptions } from './AbstractContentParser'
 
 interface SpineItem {
@@ -29,7 +36,8 @@ interface ManifestItem {
  */
 export class EpubContentParser extends AbstractContentParser {
   private xmlParser: xml2js.Parser
-  private archive: NodeZip | null = null
+  private archive: JSZip | null = null
+  private archiveLoading: Promise<void>
   private opfPath: string = ''
   private opfDir: string = ''
   private manifest: Map<string, ManifestItem> = new Map()
@@ -38,13 +46,12 @@ export class EpubContentParser extends AbstractContentParser {
   constructor(options: ContentParserOptions) {
     super(options)
     this.xmlParser = new xml2js.Parser()
-    this.loadArchive()
+    this.archiveLoading = this.loadArchive()
   }
 
-  private loadArchive(): void {
+  private async loadArchive(): Promise<void> {
     try {
-      const buffer: Buffer = fs.readFileSync(this.filePath, 'binary') as unknown as Buffer
-      this.archive = new NodeZip(buffer, { binary: true, base64: false, checkCRC32: true })
+      this.archive = await loadSafeZip(fs.readFileSync(this.filePath))
     } catch (error) {
       logger.error('Failed to load EPUB archive:', error)
       throw new Error('Failed to load EPUB file')
@@ -52,6 +59,7 @@ export class EpubContentParser extends AbstractContentParser {
   }
 
   async extractContent(): Promise<BookContent> {
+    await this.archiveLoading
     // Get container.xml to find OPF location
     const containerXml = await this.getFileContent('META-INF/container.xml')
     if (!containerXml) {
@@ -98,8 +106,7 @@ export class EpubContentParser extends AbstractContentParser {
     }
 
     try {
-      const fileData = this.archive.file(filename)
-      return fileData?.asText() || null
+      return (await this.archive.file(filename)?.async('text')) || null
     } catch (error) {
       logger.error(`Failed to read file from archive: ${filename}`, error)
       return null
@@ -193,7 +200,7 @@ export class EpubContentParser extends AbstractContentParser {
    * Convert all img elements in the document to use base64 data URIs
    * This allows images to be rendered without needing to serve them from a file path
    */
-  private async convertImagesToDataUri(doc: Document, chapterDir: string): Promise<void> {
+  private async convertImagesToDataUri(doc: XmlDocument, chapterDir: string): Promise<void> {
     const images = doc.getElementsByTagName('img')
 
     for (let i = 0; i < images.length; i++) {
@@ -209,7 +216,7 @@ export class EpubContentParser extends AbstractContentParser {
         const imagePath = this.resolveImagePath(src, chapterDir)
 
         // Get the image data from the archive as base64
-        const base64Data = this.getFileAsBase64(imagePath)
+        const base64Data = await this.getFileAsBase64(imagePath)
 
         if (base64Data) {
           // Determine MIME type from extension or manifest
@@ -253,7 +260,7 @@ export class EpubContentParser extends AbstractContentParser {
   /**
    * Get binary file content from the archive as base64 string
    */
-  private getFileAsBase64(filename: string): string | null {
+  private async getFileAsBase64(filename: string): Promise<string | null> {
     if (!this.archive) {
       return null
     }
@@ -263,12 +270,7 @@ export class EpubContentParser extends AbstractContentParser {
       if (!fileData) {
         return null
       }
-      // node-zip's asBinary() returns a binary string
-      // We need to convert it to base64 properly using Buffer
-      const binaryString = fileData.asBinary()
-      // Convert binary string to Buffer, then to base64
-      const buffer = Buffer.from(binaryString, 'binary')
-      return buffer.toString('base64')
+      return await fileData.async('base64')
     } catch (error) {
       logger.error(`Failed to read binary file from archive: ${filename}`, error)
       return null
@@ -294,7 +296,7 @@ export class EpubContentParser extends AbstractContentParser {
     return mimeTypes[ext] || 'image/jpeg'
   }
 
-  private extractChapterTitle(doc: Document): string | null {
+  private extractChapterTitle(doc: XmlDocument): string | null {
     // Try to find title in order of preference
     const titleSources = ['h1', 'h2', 'h3', 'title']
 
@@ -321,7 +323,7 @@ export class EpubContentParser extends AbstractContentParser {
     html = html.replace(/\s+xmlns:[^=]+=["'][^"']*["']/gi, '')
     html = html.replace(/\s+epub:[^=]+=["'][^"']*["']/gi, '')
 
-    return html.trim()
+    return sanitizeBookHtml(html)
   }
 
   private extractReferences(chapters: BookChapter[]): BookReference[] {
@@ -373,10 +375,10 @@ export class EpubContentParser extends AbstractContentParser {
     return references
   }
 
-  private extractReferenceMarker(element: Element, fallbackNumber: number): string {
+  private extractReferenceMarker(element: XmlElement, fallbackNumber: number): string {
     // Try to find a number or marker at the start of the content
     const text = element.textContent || ''
-    const markerMatch = text.match(/^[\[\(]?(\d+|[*†‡§¶]|[a-z])[\]\)]?\.?\s*/i)
+    const markerMatch = text.match(/^[[(]?(\d+|[*†‡§¶]|[a-z])[\])]?\.?\s*/i)
 
     if (markerMatch) {
       return markerMatch[0].trim()
@@ -447,7 +449,7 @@ export class EpubContentParser extends AbstractContentParser {
     return []
   }
 
-  private parseNavList(ol: Element, level: number, baseHref: string): TocEntry[] {
+  private parseNavList(ol: XmlElement, level: number, baseHref: string): TocEntry[] {
     const entries: TocEntry[] = []
     const items = ol.childNodes
 
@@ -456,10 +458,10 @@ export class EpubContentParser extends AbstractContentParser {
       const li = items[i]
       if (li.nodeName !== 'li') continue
 
-      let link: Element | null = null
-      let nestedOl: Element | null = null
+      let link: XmlElement | null = null
+      let nestedOl: XmlElement | null = null
       for (let childIndex = 0; childIndex < li.childNodes.length; childIndex++) {
-        const child = li.childNodes[childIndex] as Element
+        const child = li.childNodes[childIndex] as XmlElement
         const childName = child.nodeName?.toLocaleLowerCase()
         if (childName === 'a') link = child
         if (childName === 'ol') nestedOl = child

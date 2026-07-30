@@ -42,10 +42,19 @@ export const db = new DataSource({
   ],
 })
 
-db.initialize()
-  .then(() => {
+let initialization: Promise<DataSource> | null = null
+
+export const initializeDatabase = async (): Promise<DataSource> => {
+  if (db.isInitialized) return db
+  initialization ??= db.initialize()
+
+  try {
+    const dataSource = await initialization
     logger.info('Database initialized successfully')
-  })
-  .catch((err) => {
-    logger.error('Database initialization failed:', err)
-  })
+    return dataSource
+  } catch (error) {
+    initialization = null
+    logger.error('Database initialization failed:', error)
+    throw error
+  }
+}

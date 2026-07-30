@@ -1,8 +1,10 @@
 import { RouteEntry } from '@app-types/router.types'
-import { faHeart, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faEllipsisVertical, faHeart, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { faPlusCircle as faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useNavigate } from '@tanstack/react-router'
+import { Menu } from '@headlessui/react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { clsx } from 'clsx'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BooksGrid } from '../components/BooksGrid'
@@ -36,22 +38,16 @@ export const MyCollectionsView: React.FC = () => {
 
   // Fetch all collections
   const { data: collectionsData, isLoading: isLoadingCollections } = main.getCollections.useQuery(
-    undefined,
-    {
-      queryKey: ['getCollections'],
-    }
+    undefined
   )
 
   // Fetch favorites count for sidebar badge
-  const { data: favoritesCount } = main.getFavoriteBooksCount.useQuery(undefined, {
-    queryKey: ['getFavoriteBooksCount'],
-  })
+  const { data: favoritesCount } = main.getFavoriteBooksCount.useQuery(undefined)
 
   // Fetch favorite books when favorites is selected
   const { data: favoriteBooks, isLoading: isLoadingFavorites } = main.getFavoriteBooks.useQuery(
     undefined,
     {
-      queryKey: ['getFavoriteBooks'],
       enabled: isFavoritesSelected,
     }
   )
@@ -129,9 +125,7 @@ export const MyCollectionsView: React.FC = () => {
     }
   }
 
-  const handleDeleteCollection = (id: number, name: string, e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handleDeleteCollection = (id: number, name: string) => {
     setCollectionToDelete({ id, name })
   }
 
@@ -230,21 +224,60 @@ export const MyCollectionsView: React.FC = () => {
               <div className="pt-4">
                 <ul className="space-y-1">
                   {collections.map((collection) => (
-                    <li key={collection.id} className="group relative">
-                      <SubmenuEntries items={[collection]} />
-                      <button
-                        onClick={(e) =>
-                          handleDeleteCollection(
-                            collection.id as number,
-                            collection.name,
-                            e
-                          )
-                        }
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-gray-400 opacity-0 transition-opacity hover:bg-red-100 hover:text-red-600 group-hover:opacity-100 dark:hover:bg-red-900/30 dark:hover:text-red-400"
-                        title={t('myCollectionsView_deleteCollection', 'Delete collection')}
+                    <li
+                      key={collection.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1"
+                    >
+                      <Link
+                        to="/my-collections"
+                        search={{ collectionId: collection.id as number }}
+                        activeOptions={{ exact: true, includeSearch: true }}
+                        activeProps={{
+                          className:
+                            'border-indigo-500 bg-indigo-300 font-semibold dark:border-white/50 dark:bg-white/10 dark:text-white',
+                        }}
+                        className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center rounded-md border-r-4 border-transparent py-2 pl-3 pr-2 text-sm font-medium text-gray-900 hover:border-black hover:bg-gray-600/15 dark:text-gray-300 dark:hover:border-white dark:hover:bg-white/15"
                       >
-                        <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" />
-                      </button>
+                        <span className="truncate" title={collection.name}>
+                          {collection.name}
+                        </span>
+                        <span className="ml-2 shrink-0 rounded-full bg-gray-400/30 px-2 py-0.5 text-xs tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-400">
+                          {collection.count}
+                        </span>
+                      </Link>
+                      <Menu as="div" className="relative">
+                        <Menu.Button
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-600/15 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-gray-400 dark:hover:bg-white/15 dark:hover:text-white"
+                          aria-label={t(
+                            'myCollectionsView_collectionActions',
+                            `Actions for ${collection.name}`
+                          )}
+                        >
+                          <FontAwesomeIcon icon={faEllipsisVertical} className="h-4 w-4" />
+                        </Menu.Button>
+                        <Menu.Items className="absolute right-0 z-20 mt-1 w-44 origin-top-right rounded-md border border-gray-200 bg-white p-1 shadow-lg focus:outline-none dark:border-gray-600 dark:bg-gray-800">
+                          <Menu.Item>
+                            {({ active }) => (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteCollection(
+                                    collection.id as number,
+                                    collection.name
+                                  )
+                                }
+                                className={clsx(
+                                  'flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 dark:text-red-400',
+                                  active && 'bg-red-50 dark:bg-red-900/30'
+                                )}
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" />
+                                {t('myCollectionsView_deleteCollection', 'Delete collection')}
+                              </button>
+                            )}
+                          </Menu.Item>
+                        </Menu.Items>
+                      </Menu>
                     </li>
                   ))}
                 </ul>
@@ -315,7 +348,7 @@ export const MyCollectionsView: React.FC = () => {
           <>
             {t('myCollectionsView_deleteConfirmation_messagePart1', 'Are you sure you want to delete the')}{' '}
             <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-              "{collectionToDelete?.name}"
+              &ldquo;{collectionToDelete?.name}&rdquo;
             </span>{' '}
             {t('myCollectionsView_deleteConfirmation_messagePart2', 'collection? Books will not be deleted.')}
           </>

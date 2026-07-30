@@ -11,6 +11,7 @@ import './assets/index.css'
 import superjson from 'superjson'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { router } from './routes/routes'
+import { initializeAppSettings } from './store/useAppSettingsStore'
 
 const trpcReact = createTRPCReact<AppRouter>()
 
@@ -36,4 +37,14 @@ const Main = () => {
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<Main />)
+const bootstrap = async (): Promise<void> => {
+  try {
+    initializeAppSettings(await window.api.settings.getAll())
+  } catch (error) {
+    console.error('Failed to load settings; using defaults', error)
+  }
+
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<Main />)
+}
+
+void bootstrap()

@@ -16,7 +16,7 @@ import {
 } from '../controllers/bookFiles.controller'
 import { getAuthorsController } from '../controllers/getAuthors.controller'
 import { getBookByIdController } from '../controllers/getBookById.controller'
-import { getBooksController } from '../controllers/getBooks.controller'
+import { getBooksController, getBooksInputSchema } from '../controllers/getBooks.controller'
 import { getPlatformDataController } from '../controllers/getPlatformData.controller'
 import {
   createBookmarkController,
@@ -49,7 +49,7 @@ export const router = trpc.router({
     .mutation(changeColorSchemeController),
   addBooks: trpc.procedure.mutation(addBooksController),
   getPlatformData: trpc.procedure.query(getPlatformDataController),
-  getBooks: trpc.procedure.query(getBooksController),
+  getBooks: trpc.procedure.input(getBooksInputSchema).query(getBooksController),
   getBookById: trpc.procedure
     .input(z.object({ id: z.union([z.number(), z.string()]) }))
     .query(getBookByIdController),

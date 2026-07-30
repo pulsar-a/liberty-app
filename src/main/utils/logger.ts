@@ -4,7 +4,7 @@ const isDev = !app.isPackaged
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
-const formatMessage = (level: LogLevel, ...args: unknown[]): string => {
+const formatMessage = (level: LogLevel): string => {
   const timestamp = new Date().toISOString()
   return `[${timestamp}] [${level.toUpperCase()}]`
 }
