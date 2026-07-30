@@ -4,24 +4,23 @@ This directory contains fonts bundled for the WASM-based reader.
 
 ## Required Fonts
 
-Download and place the following Literata font files here:
+The deterministic reader font registry contains:
 
-1. **Literata-Regular.ttf** - Regular weight
-2. **Literata-Bold.ttf** - Bold weight
-3. **Literata-Italic.ttf** - Italic style
-4. **Literata-BoldItalic.ttf** - Bold italic
+1. Four static **Literata 18pt** faces: regular, bold, italic, and bold italic.
+2. Four static **Noto Sans** faces with the same styles for glyph fallback.
 
 ## Download Source
 
-Literata is an open-source font available from Google Fonts:
+Literata and Noto Sans are open-source fonts available from Google Fonts:
 https://fonts.google.com/specimen/Literata
+https://fonts.google.com/noto/specimen/Noto+Sans
 
 Or from the official repository:
 https://github.com/nickshanks/Literata
 
 ## Font License
 
-Literata is licensed under the SIL Open Font License 1.1.
+Literata and Noto Sans are licensed under the SIL Open Font License 1.1.
 See: https://scripts.sil.org/OFL
 
 ## Adding Custom Fonts

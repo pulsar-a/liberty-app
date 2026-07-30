@@ -37,6 +37,7 @@ pub struct SpanStyle {
     pub underline: bool,
     pub strikethrough: bool,
     pub link: Option<String>,
+    pub anchor: Option<String>,
     pub font_size_override: Option<f32>,
     pub color_override: Option<[u8; 4]>,
 }
@@ -71,6 +72,7 @@ impl SpanStyle {
             underline: self.underline || other.underline,
             strikethrough: self.strikethrough || other.strikethrough,
             link: other.link.clone().or_else(|| self.link.clone()),
+            anchor: other.anchor.clone().or_else(|| self.anchor.clone()),
             font_size_override: other.font_size_override.or(self.font_size_override),
             color_override: other.color_override.or(self.color_override),
         }
@@ -80,16 +82,14 @@ impl SpanStyle {
 /// A layout element representing a block of content
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LayoutElement {
+    /// A semantic container. Unlike a block quote, this adds no visual decoration.
+    Container { elements: Vec<LayoutElement> },
+    /// A named location in the chapter used by table-of-contents navigation.
+    Anchor { id: String },
     /// A paragraph of text
-    Paragraph {
-        spans: Vec<TextSpan>,
-        indent: bool,
-    },
+    Paragraph { spans: Vec<TextSpan>, indent: bool },
     /// A heading (h1-h6)
-    Heading {
-        level: u8,
-        spans: Vec<TextSpan>,
-    },
+    Heading { level: u8, spans: Vec<TextSpan> },
     /// An image
     Image {
         src: String,
@@ -99,9 +99,7 @@ pub enum LayoutElement {
         height: Option<u32>,
     },
     /// A block quote
-    BlockQuote {
-        elements: Vec<LayoutElement>,
-    },
+    BlockQuote { elements: Vec<LayoutElement> },
     /// An ordered or unordered list
     List {
         ordered: bool,
@@ -127,37 +125,57 @@ pub enum LayoutElement {
         caption: Option<Vec<TextSpan>>,
     },
     /// Raw text (fallback)
-    RawText {
-        text: String,
-    },
+    RawText { text: String },
 }
 
 impl LayoutElement {
     /// Get all text content as a plain string
     pub fn text_content(&self) -> String {
         match self {
-            LayoutElement::Paragraph { spans, .. } => {
-                spans.iter().map(|s| s.text.as_str()).collect::<Vec<_>>().join("")
-            }
-            LayoutElement::Heading { spans, .. } => {
-                spans.iter().map(|s| s.text.as_str()).collect::<Vec<_>>().join("")
-            }
-            LayoutElement::BlockQuote { elements } => {
-                elements.iter().map(|e| e.text_content()).collect::<Vec<_>>().join("\n")
-            }
-            LayoutElement::List { items, .. } => {
-                items.iter()
-                    .map(|item| item.iter().map(|e| e.text_content()).collect::<Vec<_>>().join(""))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            }
+            LayoutElement::Container { elements } => elements
+                .iter()
+                .map(|element| element.text_content())
+                .filter(|text| !text.is_empty())
+                .collect::<Vec<_>>()
+                .join("\n"),
+            LayoutElement::Anchor { .. } => String::new(),
+            LayoutElement::Paragraph { spans, .. } => spans
+                .iter()
+                .map(|s| s.text.as_str())
+                .collect::<Vec<_>>()
+                .join(""),
+            LayoutElement::Heading { spans, .. } => spans
+                .iter()
+                .map(|s| s.text.as_str())
+                .collect::<Vec<_>>()
+                .join(""),
+            LayoutElement::BlockQuote { elements } => elements
+                .iter()
+                .map(|e| e.text_content())
+                .collect::<Vec<_>>()
+                .join("\n"),
+            LayoutElement::List { items, .. } => items
+                .iter()
+                .map(|item| {
+                    item.iter()
+                        .map(|e| e.text_content())
+                        .collect::<Vec<_>>()
+                        .join("")
+                })
+                .collect::<Vec<_>>()
+                .join("\n"),
             LayoutElement::CodeBlock { code, .. } => code.clone(),
             LayoutElement::RawText { text } => text.clone(),
             LayoutElement::Figure { content, caption } => {
                 let mut text = content.text_content();
                 if let Some(cap) = caption {
                     text.push('\n');
-                    text.push_str(&cap.iter().map(|s| s.text.as_str()).collect::<Vec<_>>().join(""));
+                    text.push_str(
+                        &cap.iter()
+                            .map(|s| s.text.as_str())
+                            .collect::<Vec<_>>()
+                            .join(""),
+                    );
                 }
                 text
             }
@@ -165,7 +183,13 @@ impl LayoutElement {
                 let mut text = String::new();
                 for row in headers.iter().chain(rows.iter()) {
                     for cell in row {
-                        text.push_str(&cell.iter().map(|span| span.text.as_str()).collect::<Vec<_>>().join(""));
+                        text.push_str(
+                            &cell
+                                .iter()
+                                .map(|span| span.text.as_str())
+                                .collect::<Vec<_>>()
+                                .join(""),
+                        );
                         text.push('\t');
                     }
                     text.push('\n');
@@ -176,16 +200,17 @@ impl LayoutElement {
         }
     }
 
-    /// Check if this element should keep with the next element (e.g., headings)
-    pub fn keep_with_next(&self) -> bool {
-        matches!(self, LayoutElement::Heading { .. })
-    }
-
     /// Check if this is an empty element
     pub fn is_empty(&self) -> bool {
         match self {
-            LayoutElement::Paragraph { spans, .. } => spans.is_empty() || spans.iter().all(|s| s.text.trim().is_empty()),
-            LayoutElement::Heading { spans, .. } => spans.is_empty() || spans.iter().all(|s| s.text.trim().is_empty()),
+            LayoutElement::Container { elements } => elements.is_empty(),
+            LayoutElement::Anchor { id } => id.is_empty(),
+            LayoutElement::Paragraph { spans, .. } => {
+                spans.is_empty() || spans.iter().all(|s| s.text.trim().is_empty())
+            }
+            LayoutElement::Heading { spans, .. } => {
+                spans.is_empty() || spans.iter().all(|s| s.text.trim().is_empty())
+            }
             LayoutElement::BlockQuote { elements } => elements.is_empty(),
             LayoutElement::List { items, .. } => items.is_empty(),
             LayoutElement::RawText { text } => text.trim().is_empty(),
@@ -250,8 +275,8 @@ impl LayoutDocument {
             html_content: String,
         }
 
-        let content: BookContent = serde_json::from_str(json)
-            .map_err(|e| ReaderError::ParseError(e.to_string()))?;
+        let content: BookContent =
+            serde_json::from_str(json).map_err(|e| ReaderError::ParseError(e.to_string()))?;
 
         let mut document = LayoutDocument::new();
 
@@ -281,4 +306,3 @@ impl Default for LayoutDocument {
         Self::new()
     }
 }
-

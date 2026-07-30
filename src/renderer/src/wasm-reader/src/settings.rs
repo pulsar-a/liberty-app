@@ -73,23 +73,23 @@ impl Default for Color {
 pub struct ReaderSettings {
     // Typography
     pub font_family: String,
-    pub font_size: f32,        // pixels
-    pub line_height: f32,      // multiplier (1.0 - 2.5)
-    pub letter_spacing: f32,   // pixels
+    pub font_size: f32,      // pixels
+    pub line_height: f32,    // multiplier (1.0 - 2.5)
+    pub letter_spacing: f32, // pixels
 
     // Layout
-    pub padding_x: f32,        // pixels
-    pub padding_y: f32,        // pixels
+    pub padding_x: f32, // pixels
+    pub padding_y: f32, // pixels
     pub text_align: TextAlign,
-    pub paragraph_indent: f32, // pixels
+    pub paragraph_indent: f32,  // pixels
     pub paragraph_spacing: f32, // pixels
     pub max_content_width: f32, // pixels (0 = no limit)
-    
+
     // Column layout
     #[serde(default = "default_columns")]
-    pub columns: u8,           // 1 or 2
+    pub columns: u8, // 1 or 2
     #[serde(default = "default_column_gap")]
-    pub column_gap: f32,       // pixels
+    pub column_gap: f32, // pixels
 
     // Container dimensions (set during paginate)
     #[serde(default)]
@@ -120,19 +120,19 @@ impl Default for ReaderSettings {
         Self {
             // Typography - matching current defaults
             font_family: "Literata".to_string(),
-            font_size: 18.0,      // 1.125rem * 16
+            font_size: 18.0, // 1.125rem * 16
             line_height: 1.8,
             letter_spacing: 0.0,
 
             // Layout - matching current defaults
-            padding_x: 48.0,      // 3rem * 16
-            padding_y: 40.0,      // 2.5rem * 16
+            padding_x: 48.0, // 3rem * 16
+            padding_y: 40.0, // 2.5rem * 16
             text_align: TextAlign::Justify,
-            paragraph_indent: 27.0, // 1.5em * 18px
-            paragraph_spacing: 22.5, // 1.25em * 18px
+            paragraph_indent: 27.0,   // 1.5em * 18px
+            paragraph_spacing: 22.5,  // 1.25em * 18px
             max_content_width: 672.0, // 42rem * 16
             columns: 1,
-            column_gap: 48.0,     // 3rem * 16
+            column_gap: 48.0, // 3rem * 16
 
             container_width: 0.0,
             container_height: 0.0,
@@ -149,9 +149,31 @@ impl Default for ReaderSettings {
 }
 
 impl ReaderSettings {
+    pub fn layout_eq(&self, other: &Self) -> bool {
+        self.font_family == other.font_family
+            && self.font_size == other.font_size
+            && self.line_height == other.line_height
+            && self.letter_spacing == other.letter_spacing
+            && self.padding_x == other.padding_x
+            && self.padding_y == other.padding_y
+            && self.text_align == other.text_align
+            && self.paragraph_indent == other.paragraph_indent
+            && self.paragraph_spacing == other.paragraph_spacing
+            && self.max_content_width == other.max_content_width
+            && self.columns == other.columns
+            && self.column_gap == other.column_gap
+            && self.container_width == other.container_width
+            && self.container_height == other.container_height
+            && self.hyphenation == other.hyphenation
+    }
+
+    fn available_content_width(&self) -> f32 {
+        (self.container_width - (self.padding_x * 2.0)).max(1.0)
+    }
+
     /// Get the total available content width (both columns combined if 2-column)
     pub fn total_content_width(&self) -> f32 {
-        let available = self.container_width - (self.padding_x * 2.0);
+        let available = self.available_content_width();
         if self.max_content_width > 0.0 && self.columns == 1 {
             available.min(self.max_content_width)
         } else {
@@ -195,17 +217,9 @@ impl ReaderSettings {
 
     /// Get the X offset for the start of column 1 (left column)
     pub fn column_1_x(&self) -> f32 {
-        let total = self.total_content_width();
-        let used_width = if self.columns >= 2 {
-            total
-        } else if self.max_content_width > 0.0 {
-            total.min(self.max_content_width)
-        } else {
-            total
-        };
-        
-        // Center content horizontally
-        self.padding_x + (total - used_width) / 2.0
+        let available = self.available_content_width();
+        let used_width = self.total_content_width();
+        self.padding_x + (available - used_width) / 2.0
     }
 
     /// Get the X offset for the start of column 2 (right column)
@@ -225,9 +239,9 @@ mod tests {
     #[test]
     fn test_color_blend() {
         let fg = Color::new(255, 0, 0, 128); // Semi-transparent red
-        let bg = Color::rgb(0, 0, 255);       // Blue
+        let bg = Color::rgb(0, 0, 255); // Blue
         let blended = fg.blend_over(&bg);
-        
+
         // Should be purplish
         assert!(blended.r > 100);
         assert!(blended.b > 100);
@@ -248,4 +262,3 @@ mod tests {
         assert_eq!(settings.content_width(), 700.0);
     }
 }
-

@@ -45,7 +45,7 @@ interface WasmModule {
   update_settings: (settingsJson: string) => WasmSettingsUpdateResult
   load_book: (bookContentJson: string) => WasmLoadBookResult
   paginate: (width: number, height: number) => WasmPaginationResult
-  render_page: (pageIndex: number, width: number, height: number) => Uint8Array
+  render_page: (pageIndex: number, width: number, height: number, pixelRatio: number) => Uint8Array
   get_page_chapter: (pageIndex: number) => WasmPageChapter
   search_text: (query: string) => WasmSearchResult[]
   unload_book: () => void
@@ -59,8 +59,19 @@ interface WasmModule {
   get_selected_text: () => string | null
   get_link_at_position: (pageIndex: number, x: number, y: number) => string | null
   // Performance API
-  prerender_pages: (currentPage: number, width: number, height: number, range: number) => void
-  get_pagination_stats: () => { hasDocument: boolean; isPaginated: boolean; totalChapters: number; totalPages: number }
+  prerender_pages: (
+    currentPage: number,
+    width: number,
+    height: number,
+    pixelRatio: number,
+    range: number
+  ) => void
+  get_pagination_stats: () => {
+    hasDocument: boolean
+    isPaginated: boolean
+    totalChapters: number
+    totalPages: number
+  }
   clear_render_cache: () => void
 }
 
@@ -110,27 +121,11 @@ let fontLoadPromise: Promise<void> | null = null
 
 /**
  * Load bundled fonts into the WASM module
- * @param forceReload - If true, reload fonts even if already loaded (needed after unloadBook)
  */
-export async function loadBundledFonts(
-  fonts: FontToLoad[] = DEFAULT_READER_FONTS,
-  forceReload: boolean = false
-): Promise<void> {
-  if (fontsLoaded && !forceReload) {
+export async function loadBundledFonts(fonts: FontToLoad[] = DEFAULT_READER_FONTS): Promise<void> {
+  if (fontsLoaded) {
     console.log('[WasmReader] Fonts already loaded, skipping')
     return
-  }
-  
-  // If force reload requested but a load is already in progress, wait for it
-  // This prevents race conditions when multiple effects call forceReload concurrently
-  if (forceReload && fontLoadPromise) {
-    return fontLoadPromise
-  }
-  
-  // Reset flag if force reloading and no load in progress
-  if (forceReload) {
-    fontsLoaded = false
-    fontLoadPromise = null
   }
 
   // If font loading is in progress, wait for it
@@ -143,7 +138,10 @@ export async function loadBundledFonts(
   }
 
   fontLoadPromise = (async () => {
-    console.log('[WasmReader] Loading fonts:', fonts.map(f => ({ name: f.name, url: f.url })))
+    console.log(
+      '[WasmReader] Loading fonts:',
+      fonts.map((f) => ({ name: f.name, url: f.url }))
+    )
 
     let loadedCount = 0
     const errors: string[] = []
@@ -160,7 +158,7 @@ export async function loadBundledFonts(
 
         const data = await response.arrayBuffer()
         console.log(`[WasmReader] Font ${font.name} fetched, size: ${data.byteLength} bytes`)
-        
+
         wasmModule!.load_font(font.name, new Uint8Array(data))
         loadedCount++
         console.log(`[WasmReader] Loaded font into WASM: ${font.name}`)
@@ -171,9 +169,11 @@ export async function loadBundledFonts(
       }
     }
 
-    if (loadedCount === 0) {
+    if (loadedCount !== fonts.length) {
       fontLoadPromise = null // Reset so we can retry
-      throw new Error(`Failed to load any fonts. Errors: ${errors.join('; ')}`)
+      throw new Error(
+        `Failed to load the complete deterministic font set (${loadedCount}/${fonts.length}). Errors: ${errors.join('; ')}`
+      )
     }
 
     fontsLoaded = true
@@ -240,7 +240,7 @@ export function convertSettingsToWasm(
     paragraphIndent: settings.paragraphIndent * settings.fontSize * baseSize,
     paragraphSpacing: settings.paragraphSpacing * settings.fontSize * baseSize,
     maxContentWidth: settings.maxContentWidth * baseSize,
-    
+
     // Column layout
     columns: settings.columns,
     columnGap: settings.columnGap * baseSize,
@@ -284,11 +284,13 @@ export function loadBook(content: BookContent): WasmLoadBookResult {
  * Convert a Map (from serde_wasm_bindgen) to a plain object
  */
 function mapToObject<T>(mapOrObj: unknown): T {
+  if (Array.isArray(mapOrObj)) {
+    return mapOrObj.map((value) => mapToObject(value)) as T
+  }
   if (mapOrObj instanceof Map) {
     const obj: Record<string, unknown> = {}
     mapOrObj.forEach((value, key) => {
-      // Recursively convert nested Maps
-      obj[key] = value instanceof Map ? mapToObject(value) : value
+      obj[key] = mapToObject(value)
     })
     return obj as T
   }
@@ -314,13 +316,14 @@ export function paginateBook(width: number, height: number): WasmPaginationResul
 export function renderPage(
   pageIndex: number,
   width: number,
-  height: number
+  height: number,
+  pixelRatio: number
 ): Uint8ClampedArray {
   if (!wasmModule) {
     throw new Error('WASM module not initialized')
   }
 
-  const pixels = wasmModule.render_page(pageIndex, width, height)
+  const pixels = wasmModule.render_page(pageIndex, width, height, pixelRatio)
   return new Uint8ClampedArray(pixels)
 }
 
@@ -348,7 +351,7 @@ export function searchText(query: string): WasmSearchResult[] {
   const rawResult = wasmModule.search_text(query)
   // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
   if (Array.isArray(rawResult)) {
-    return rawResult.map(item => mapToObject<WasmSearchResult>(item))
+    return rawResult.map((item) => mapToObject<WasmSearchResult>(item))
   }
   return mapToObject<WasmSearchResult[]>(rawResult)
 }
@@ -444,7 +447,7 @@ export function getSelectionRects(): WasmSelectionRect[] {
   const rawResult = wasmModule.get_selection_rects()
   // FIX: Convert Map to plain object (serde_wasm_bindgen returns Maps by default)
   if (Array.isArray(rawResult)) {
-    return rawResult.map(item => mapToObject<WasmSelectionRect>(item))
+    return rawResult.map((item) => mapToObject<WasmSelectionRect>(item))
   }
   return []
 }
@@ -463,11 +466,7 @@ export function getSelectedText(): string | null {
 /**
  * Get link URL at a position (if any)
  */
-export function getLinkAtPosition(
-  pageIndex: number,
-  x: number,
-  y: number
-): string | null {
+export function getLinkAtPosition(pageIndex: number, x: number, y: number): string | null {
   if (!wasmModule) {
     return null
   }
@@ -486,10 +485,11 @@ export function prerenderPages(
   currentPage: number,
   width: number,
   height: number,
+  pixelRatio: number,
   range: number = 2
 ): void {
   if (wasmModule) {
-    wasmModule.prerender_pages(currentPage, width, height, range)
+    wasmModule.prerender_pages(currentPage, width, height, pixelRatio, range)
   }
 }
 
@@ -524,4 +524,3 @@ export function clearRenderCache(): void {
     wasmModule.clear_render_cache()
   }
 }
-

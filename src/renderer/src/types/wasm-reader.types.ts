@@ -7,6 +7,10 @@ import LiterataRegular from '../assets/fonts/reading/Literata_18pt-Regular.ttf?u
 import LiterataBold from '../assets/fonts/reading/Literata_18pt-Bold.ttf?url'
 import LiterataItalic from '../assets/fonts/reading/Literata_18pt-Italic.ttf?url'
 import LiterataBoldItalic from '../assets/fonts/reading/Literata_18pt-BoldItalic.ttf?url'
+import NotoSansRegular from '../assets/fonts/reading/NotoSans-Regular.ttf?url'
+import NotoSansBold from '../assets/fonts/reading/NotoSans-Bold.ttf?url'
+import NotoSansItalic from '../assets/fonts/reading/NotoSans-Italic.ttf?url'
+import NotoSansBoldItalic from '../assets/fonts/reading/NotoSans-BoldItalic.ttf?url'
 
 /**
  * RGBA color for WASM settings
@@ -30,21 +34,21 @@ export type WasmTextAlign = 'left' | 'right' | 'center' | 'justify'
 export interface WasmReaderSettings {
   // Typography
   fontFamily: string
-  fontSize: number        // pixels
-  lineHeight: number      // multiplier (1.0 - 2.5)
-  letterSpacing: number   // pixels
+  fontSize: number // pixels
+  lineHeight: number // multiplier (1.0 - 2.5)
+  letterSpacing: number // pixels
 
   // Layout
-  paddingX: number        // pixels
-  paddingY: number        // pixels
+  paddingX: number // pixels
+  paddingY: number // pixels
   textAlign: WasmTextAlign
   paragraphIndent: number // pixels
   paragraphSpacing: number // pixels
   maxContentWidth: number // pixels (0 = no limit)
-  
+
   // Column layout
-  columns: number         // 1 or 2
-  columnGap: number       // pixels (gap between columns)
+  columns: number // 1 or 2
+  columnGap: number // pixels (gap between columns)
 
   // Theme colors
   backgroundColor: WasmColor
@@ -73,6 +77,17 @@ export interface WasmPaginationResult {
     pageIndex: number
     chapterId: string
     chapterTitle: string
+  }>
+  chapterPageMap: Array<{
+    chapterId: string
+    chapterTitle: string
+    firstPageIndex: number
+    pageCount: number
+  }>
+  anchorPageMap: Array<{
+    chapterId: string
+    anchorId: string
+    pageIndex: number
   }>
 }
 
@@ -121,6 +136,10 @@ export const DEFAULT_READER_FONTS: FontToLoad[] = [
   { name: 'Literata-Bold', url: LiterataBold },
   { name: 'Literata-Italic', url: LiterataItalic },
   { name: 'Literata-BoldItalic', url: LiterataBoldItalic },
+  { name: 'Noto Sans', url: NotoSansRegular },
+  { name: 'Noto Sans-Bold', url: NotoSansBold },
+  { name: 'Noto Sans-Italic', url: NotoSansItalic },
+  { name: 'Noto Sans-BoldItalic', url: NotoSansBoldItalic },
 ]
 
 /**

@@ -1,632 +1,235 @@
-//! Canvas rendering to pixel buffer
+//! Canvas rendering for already-indexed page content.
 
 use std::collections::HashMap;
 
+use cosmic_text::{Color as CosmicColor, SwashCache};
+
 use crate::error::ReaderError;
-use crate::fonts::{FontManager, FontStyle};
-use crate::layout::{LayoutElement, TextSpan};
-use crate::pagination::Page;
-use crate::settings::{Color, ReaderSettings, TextAlign};
+use crate::fonts::FontManager;
+use crate::pagination::{IndexedItem, IndexedLine, Page};
+use crate::settings::{Color, ReaderSettings};
 
-use super::text::TextRenderer;
-
-/// Page cache entry
-struct CachedPage {
-    pixels: Vec<u8>,
-    width: u32,
-    height: u32,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct RenderCacheKey {
+    layout_generation: u64,
+    paint_generation: u64,
+    page_index: usize,
+    logical_width: u32,
+    logical_height: u32,
+    pixel_ratio_bits: u32,
 }
 
-/// Main renderer for pages
 pub struct Renderer {
-    text_renderer: TextRenderer,
-    page_cache: HashMap<usize, CachedPage>,
+    swash_cache: SwashCache,
+    page_cache: HashMap<RenderCacheKey, Vec<u8>>,
     max_cache_size: usize,
+    layout_generation: u64,
+    paint_generation: u64,
 }
 
 impl Renderer {
     pub fn new() -> Self {
         Self {
-            text_renderer: TextRenderer::new(),
+            swash_cache: SwashCache::new(),
             page_cache: HashMap::new(),
             max_cache_size: 5,
+            layout_generation: 0,
+            paint_generation: 0,
         }
     }
 
-    /// Update renderer with new settings
-    pub fn update_settings(&mut self, _settings: &ReaderSettings) {
-        // Clear cache when settings change
+    pub fn update_settings(&mut self, _settings: &ReaderSettings, layout_changed: bool) {
+        if layout_changed {
+            self.invalidate_layout();
+        } else {
+            self.invalidate_paint();
+        }
+    }
+
+    pub fn invalidate_layout(&mut self) {
+        self.layout_generation = self.layout_generation.wrapping_add(1);
         self.clear_cache();
     }
 
-    /// Set font manager reference (called when fonts are loaded)
-    pub fn set_font_manager(&mut self, _font_manager: &FontManager) {
-        // Text renderer will use font manager directly
+    fn invalidate_paint(&mut self) {
+        self.paint_generation = self.paint_generation.wrapping_add(1);
+        self.clear_cache();
     }
 
-    /// Clear the page cache
+    pub fn set_font_manager(&mut self, _font_manager: &FontManager) {
+        self.swash_cache = SwashCache::new();
+        self.invalidate_layout();
+    }
+
     pub fn clear_cache(&mut self) {
         self.page_cache.clear();
     }
 
-    /// Render a page to a pixel buffer
     pub fn render_page(
         &mut self,
         page: &Page,
-        width: u32,
-        height: u32,
+        logical_width: u32,
+        logical_height: u32,
+        pixel_ratio: f32,
         settings: &ReaderSettings,
-        font_manager: &FontManager,
+        font_manager: &mut FontManager,
     ) -> Result<Vec<u8>, ReaderError> {
-        // Check cache
-        if let Some(cached) = self.page_cache.get(&page.index) {
-            if cached.width == width && cached.height == height {
-                return Ok(cached.pixels.clone());
-            }
+        let scale = pixel_ratio.max(1.0);
+        let pixel_width = ((logical_width as f32) * scale).round().max(1.0) as u32;
+        let pixel_height = ((logical_height as f32) * scale).round().max(1.0) as u32;
+        let cache_key = RenderCacheKey {
+            layout_generation: self.layout_generation,
+            paint_generation: self.paint_generation,
+            page_index: page.index,
+            logical_width,
+            logical_height,
+            pixel_ratio_bits: scale.to_bits(),
+        };
+
+        if let Some(cached) = self.page_cache.get(&cache_key) {
+            return Ok(cached.clone());
         }
 
-        // Create pixel buffer (RGBA)
-        let mut pixels = vec![0u8; (width * height * 4) as usize];
-
-        // Fill background
-        self.fill_background(&mut pixels, width, height, &settings.background_color);
-
-        // Calculate content area
-        let content_y = settings.padding_y;
-        let content_width = settings.content_width();
-        let content_height = settings.content_height();
-
-        // Column marker threshold (elements with y_position >= this are in column 2)
-        let column_marker = content_height + 1.0;
-
-        // Get column X positions
-        let column_1_x = settings.column_1_x();
-        let column_2_x = settings.column_2_x();
-
-        // Render each element
-        for page_element in &page.elements {
-            // Determine which column this element belongs to
-            let (render_x, actual_y) = if page_element.y_position >= column_marker {
-                // Column 2 - subtract the marker offset to get actual Y
-                (column_2_x, page_element.y_position - column_marker)
-            } else {
-                // Column 1
-                (column_1_x, page_element.y_position)
-            };
-
-            let y = content_y + actual_y;
-
-            self.render_element(
-                &mut pixels,
-                width,
-                height,
-                &page_element.element,
-                render_x,
-                y,
-                content_width,
-                settings,
-                font_manager,
-            )?;
-        }
-
-        // Cache the result
-        if self.page_cache.len() >= self.max_cache_size {
-            // Remove oldest entry (simple LRU approximation)
-            if let Some(&oldest_key) = self.page_cache.keys().next() {
-                self.page_cache.remove(&oldest_key);
-            }
-        }
-
-        self.page_cache.insert(
-            page.index,
-            CachedPage {
-                pixels: pixels.clone(),
-                width,
-                height,
-            },
+        let mut pixels = vec![0; (pixel_width * pixel_height * 4) as usize];
+        fill_background(
+            &mut pixels,
+            pixel_width,
+            pixel_height,
+            &settings.background_color,
         );
 
+        for element in &page.elements {
+            let column_x = if element.column == 0 {
+                settings.column_1_x()
+            } else {
+                settings.column_2_x()
+            };
+            let x = column_x + element.x_position;
+            let y = settings.padding_y + element.y_position;
+
+            match &element.item {
+                IndexedItem::Line(line) => self.render_line(
+                    &mut pixels,
+                    pixel_width,
+                    pixel_height,
+                    line,
+                    x,
+                    y,
+                    scale,
+                    settings,
+                    font_manager,
+                ),
+                IndexedItem::Image {
+                    data,
+                    width,
+                    height,
+                    ..
+                } => render_image(
+                    &mut pixels,
+                    pixel_width,
+                    pixel_height,
+                    data,
+                    x,
+                    y,
+                    *width,
+                    *height,
+                    scale,
+                )?,
+                IndexedItem::HorizontalRule { height } => {
+                    let rule_y = y + height / 2.0;
+                    draw_rect(
+                        &mut pixels,
+                        pixel_width,
+                        pixel_height,
+                        x * scale,
+                        rule_y * scale,
+                        settings.content_width() * scale,
+                        scale.max(1.0),
+                        &Color::rgb(180, 180, 180),
+                    );
+                }
+            }
+        }
+
+        if self.page_cache.len() >= self.max_cache_size {
+            if let Some(oldest) = self.page_cache.keys().next().copied() {
+                self.page_cache.remove(&oldest);
+            }
+        }
+        self.page_cache.insert(cache_key, pixels.clone());
         Ok(pixels)
     }
 
-    /// Fill the entire buffer with a background color
-    fn fill_background(&self, pixels: &mut [u8], width: u32, height: u32, color: &Color) {
-        let rgba = color.to_rgba_array();
-        for y in 0..height {
-            for x in 0..width {
-                let idx = ((y * width + x) * 4) as usize;
-                pixels[idx] = rgba[0];
-                pixels[idx + 1] = rgba[1];
-                pixels[idx + 2] = rgba[2];
-                pixels[idx + 3] = rgba[3];
-            }
-        }
-    }
-
-    /// Render a single element
-    fn render_element(
-        &self,
+    #[allow(clippy::too_many_arguments)]
+    fn render_line(
+        &mut self,
         pixels: &mut [u8],
-        canvas_width: u32,
-        canvas_height: u32,
-        element: &LayoutElement,
+        pixel_width: u32,
+        pixel_height: u32,
+        line: &IndexedLine,
         x: f32,
         y: f32,
-        max_width: f32,
+        scale: f32,
         settings: &ReaderSettings,
-        font_manager: &FontManager,
-    ) -> Result<(), ReaderError> {
-        match element {
-            LayoutElement::Paragraph { spans, indent } => {
-                let indent_x = if *indent { settings.paragraph_indent } else { 0.0 };
-                self.render_text_block(
-                    pixels,
-                    canvas_width,
-                    canvas_height,
-                    spans,
-                    x + indent_x,
-                    y,
-                    max_width - indent_x,
-                    settings.font_size,
-                    settings.line_height,
-                    &settings.text_color,
-                    settings.text_align,
-                    settings,
-                    font_manager,
-                )?;
-            }
+        font_manager: &mut FontManager,
+    ) {
+        let line_x = x + line.x_offset;
+        let baseline_y = y + line.baseline_offset;
 
-            LayoutElement::Heading { level, spans } => {
-                let font_size = settings.heading_size(*level);
-                // Headings are typically left-aligned or centered
-                self.render_text_block(
-                    pixels,
-                    canvas_width,
-                    canvas_height,
-                    spans,
-                    x,
-                    y,
-                    max_width,
-                    font_size,
-                    settings.line_height * 0.9, // Tighter line height for headings
-                    &settings.heading_color,
-                    TextAlign::Left,
-                    settings,
-                    font_manager,
-                )?;
-            }
-
-            LayoutElement::BlockQuote { elements } => {
-                // Draw left border
-                let border_x = x as i32;
-                let border_width = 3;
-                let quote_padding = settings.font_size;
-
-                // Render quote border
-                for py in (y as u32)..(y as u32 + 100).min(canvas_height) {
-                    for px in (border_x as u32)..(border_x as u32 + border_width).min(canvas_width) {
-                        let idx = ((py * canvas_width + px) * 4) as usize;
-                        if idx + 3 < pixels.len() {
-                            // Use a muted color for the border
-                            let border_color = Color::rgb(180, 180, 180);
-                            pixels[idx] = border_color.r;
-                            pixels[idx + 1] = border_color.g;
-                            pixels[idx + 2] = border_color.b;
-                            pixels[idx + 3] = border_color.a;
-                        }
-                    }
-                }
-
-                // Render quote content
-                let mut current_y = y;
-                for el in elements {
-                    self.render_element(
-                        pixels,
-                        canvas_width,
-                        canvas_height,
-                        el,
-                        x + quote_padding,
-                        current_y,
-                        max_width - quote_padding * 2.0,
-                        settings,
-                        font_manager,
-                    )?;
-                    current_y += settings.line_height_px();
-                }
-            }
-
-            LayoutElement::List { ordered, start, items } => {
-                let mut current_y = y;
-                let bullet_width = settings.font_size * 1.5;
-
-                for (i, item) in items.iter().enumerate() {
-                    // Draw bullet or number
-                    let marker = if *ordered {
-                        format!("{}.", start + i as u32)
-                    } else {
-                        "•".to_string()
-                    };
-
-                    self.render_text_block(
-                        pixels,
-                        canvas_width,
-                        canvas_height,
-                        &[TextSpan::new(&marker)],
-                        x,
-                        current_y,
-                        bullet_width,
-                        settings.font_size,
-                        settings.line_height,
-                        &settings.text_color,
-                        TextAlign::Right,
-                        settings,
-                        font_manager,
-                    )?;
-
-                    // Render item content
-                    for el in item {
-                        self.render_element(
-                            pixels,
-                            canvas_width,
-                            canvas_height,
-                            el,
-                            x + bullet_width + settings.font_size * 0.5,
-                            current_y,
-                            max_width - bullet_width - settings.font_size * 0.5,
-                            settings,
-                            font_manager,
-                        )?;
-                    }
-
-                    current_y += settings.line_height_px();
-                }
-            }
-
-            LayoutElement::HorizontalRule => {
-                let rule_y = (y + settings.font_size) as u32;
-                let rule_start = x as u32;
-                let rule_end = (x + max_width) as u32;
-
-                if rule_y < canvas_height {
-                    for px in rule_start..rule_end.min(canvas_width) {
-                        let idx = ((rule_y * canvas_width + px) * 4) as usize;
-                        if idx + 3 < pixels.len() {
-                            let rule_color = Color::rgb(200, 200, 200);
-                            pixels[idx] = rule_color.r;
-                            pixels[idx + 1] = rule_color.g;
-                            pixels[idx + 2] = rule_color.b;
-                            pixels[idx + 3] = rule_color.a;
-                        }
-                    }
-                }
-            }
-
-            LayoutElement::Image { data, .. } => {
-                // Decode and render image if data is available
-                if let Some(image_data) = data {
-                    // Calculate max height as remaining space on page (accounting for bottom padding)
-                    // content_bottom is the y-coordinate where content area ends
-                    let content_bottom = canvas_height as f32 - settings.padding_y;
-                    // max_height is space from current y position to content bottom
-                    let max_height = (content_bottom - y).max(1.0) as u32;
-                    
-                    self.render_image(
-                        pixels,
-                        canvas_width,
-                        canvas_height,
-                        image_data,
-                        x as u32,
-                        y as u32,
-                        max_width as u32,
-                        max_height,
-                    )?;
-                }
-            }
-
-            LayoutElement::CodeBlock { code, .. } => {
-                // Render code with monospace style (using regular font for now)
-                let code_font_size = settings.font_size * 0.9;
-                let bg_color = Color::rgb(245, 245, 245);
-
-                // Draw code background
-                let bg_height = (code.lines().count() as f32 * code_font_size * 1.4) as u32;
-                for py in (y as u32)..(y as u32 + bg_height).min(canvas_height) {
-                    for px in (x as u32)..(x as u32 + max_width as u32).min(canvas_width) {
-                        let idx = ((py * canvas_width + px) * 4) as usize;
-                        if idx + 3 < pixels.len() {
-                            pixels[idx] = bg_color.r;
-                            pixels[idx + 1] = bg_color.g;
-                            pixels[idx + 2] = bg_color.b;
-                            pixels[idx + 3] = bg_color.a;
-                        }
-                    }
-                }
-
-                // Render code text
-                let code_spans: Vec<TextSpan> = code
-                    .lines()
-                    .map(|line| TextSpan::new(line))
-                    .collect();
-
-                self.render_text_block(
-                    pixels,
-                    canvas_width,
-                    canvas_height,
-                    &code_spans,
-                    x + settings.font_size * 0.5,
-                    y + settings.font_size * 0.25,
-                    max_width - settings.font_size,
-                    code_font_size,
-                    1.4,
-                    &Color::rgb(50, 50, 50),
-                    TextAlign::Left,
-                    settings,
-                    font_manager,
-                )?;
-            }
-
-            LayoutElement::Figure { content, caption } => {
-                // Render the main content
-                self.render_element(
-                    pixels,
-                    canvas_width,
-                    canvas_height,
-                    content,
-                    x,
-                    y,
-                    max_width,
-                    settings,
-                    font_manager,
-                )?;
-
-                // Render caption if present
-                if let Some(cap_spans) = caption {
-                    let caption_y = y + settings.font_size * 2.0; // Below content
-                    self.render_text_block(
-                        pixels,
-                        canvas_width,
-                        canvas_height,
-                        cap_spans,
-                        x,
-                        caption_y,
-                        max_width,
-                        settings.font_size * 0.85,
-                        settings.line_height,
-                        &Color::rgb(100, 100, 100),
-                        TextAlign::Center,
-                        settings,
-                        font_manager,
-                    )?;
-                }
-            }
-
-            LayoutElement::Table { headers, rows } => {
-                let row_height = settings.line_height_px() * 1.5;
-                let mut current_y = y;
-
-                // Render headers
-                for header_row in headers {
-                    let cell_width = max_width / header_row.len().max(1) as f32;
-                    for (i, cell_spans) in header_row.iter().enumerate() {
-                        let cell_x = x + (i as f32 * cell_width);
-                        self.render_text_block(
-                            pixels,
-                            canvas_width,
-                            canvas_height,
-                            cell_spans,
-                            cell_x,
-                            current_y,
-                            cell_width,
-                            settings.font_size,
-                            settings.line_height,
-                            &settings.heading_color,
-                            TextAlign::Left,
-                            settings,
-                            font_manager,
-                        )?;
-                    }
-                    current_y += row_height;
-                }
-
-                // Render rows
-                for data_row in rows {
-                    let cell_width = max_width / data_row.len().max(1) as f32;
-                    for (i, cell_spans) in data_row.iter().enumerate() {
-                        let cell_x = x + (i as f32 * cell_width);
-                        self.render_text_block(
-                            pixels,
-                            canvas_width,
-                            canvas_height,
-                            cell_spans,
-                            cell_x,
-                            current_y,
-                            cell_width,
-                            settings.font_size,
-                            settings.line_height,
-                            &settings.text_color,
-                            TextAlign::Left,
-                            settings,
-                            font_manager,
-                        )?;
-                    }
-                    current_y += row_height;
-                }
-            }
-
-            LayoutElement::RawText { text } => {
-                self.render_text_block(
-                    pixels,
-                    canvas_width,
-                    canvas_height,
-                    &[TextSpan::new(text)],
-                    x,
-                    y,
-                    max_width,
-                    settings.font_size,
-                    settings.line_height,
-                    &settings.text_color,
-                    settings.text_align,
-                    settings,
-                    font_manager,
-                )?;
-            }
+        if line.quote_depth > 0 {
+            let border_x = x + (line.quote_depth.saturating_sub(1) as f32 * settings.font_size);
+            draw_rect(
+                pixels,
+                pixel_width,
+                pixel_height,
+                border_x * scale,
+                y * scale,
+                (2.0 * scale).max(1.0),
+                line.height * scale,
+                &Color::rgb(180, 180, 180),
+            );
         }
 
-        Ok(())
-    }
+        for indexed in &line.glyphs {
+            let physical = indexed
+                .glyph
+                .physical((line_x * scale, baseline_y * scale), scale);
+            let base_color = CosmicColor::rgba(
+                indexed.color.r,
+                indexed.color.g,
+                indexed.color.b,
+                indexed.color.a,
+            );
 
-    /// Render a block of styled text
-    fn render_text_block(
-        &self,
-        pixels: &mut [u8],
-        canvas_width: u32,
-        canvas_height: u32,
-        spans: &[TextSpan],
-        x: f32,
-        y: f32,
-        max_width: f32,
-        font_size: f32,
-        line_height: f32,
-        default_color: &Color,
-        _text_align: TextAlign,
-        settings: &ReaderSettings,
-        font_manager: &FontManager,
-    ) -> Result<(), ReaderError> {
-        // Get the font for rendering
-        let font = font_manager
-            .get_font(&settings.font_family, FontStyle::Regular)
-            .ok_or_else(|| ReaderError::FontError("No font loaded".to_string()))?;
+            self.swash_cache.with_pixels(
+                font_manager.font_system_mut(),
+                physical.cache_key,
+                base_color,
+                |offset_x, offset_y, color| {
+                    let px = physical.x + offset_x;
+                    let py = physical.y + offset_y;
+                    blend_pixel(pixels, pixel_width, pixel_height, px, py, color.as_rgba());
+                },
+            );
 
-        let bold_font = font_manager.get_font(&settings.font_family, FontStyle::Bold);
-        let italic_font = font_manager.get_font(&settings.font_family, FontStyle::Italic);
-
-        let mut current_x = x;
-        let mut current_y = y;
-        let line_height_px = font_size * line_height;
-
-        for span in spans {
-            // Choose font based on style
-            let render_font = match (span.style.bold, span.style.italic) {
-                (true, _) => bold_font.unwrap_or(font),
-                (_, true) => italic_font.unwrap_or(font),
-                _ => font,
-            };
-
-            // Choose color
-            let color = if span.style.link.is_some() {
-                &settings.link_color
-            } else {
-                default_color
-            };
-
-            // Render each character
-            for c in span.text.chars() {
-                if c == '\n' {
-                    current_x = x;
-                    current_y += line_height_px;
-                    continue;
-                }
-
-                // Get glyph metrics
-                let (metrics, bitmap) = render_font.rasterize(c, font_size);
-
-                // Check for line wrap
-                if current_x + metrics.advance_width > x + max_width {
-                    current_x = x;
-                    current_y += line_height_px;
-                }
-
-                // Calculate glyph position
-                let glyph_x = current_x as i32 + metrics.xmin;
-                let glyph_y = current_y as i32 + (font_size * 0.8) as i32 - metrics.ymin - metrics.height as i32;
-
-                // Render glyph
-                self.text_renderer.render_glyph(
+            if indexed.underline || indexed.strikethrough {
+                let decoration_y = if indexed.strikethrough {
+                    baseline_y - line.height * 0.3
+                } else {
+                    baseline_y + line.height * 0.08
+                };
+                draw_rect(
                     pixels,
-                    canvas_width,
-                    canvas_height,
-                    &bitmap,
-                    metrics.width,
-                    metrics.height,
-                    glyph_x,
-                    glyph_y,
-                    color,
-                    &settings.background_color,
+                    pixel_width,
+                    pixel_height,
+                    (line_x + indexed.glyph.x) * scale,
+                    decoration_y * scale,
+                    indexed.glyph.w.max(1.0) * scale,
+                    scale.max(1.0),
+                    &indexed.color,
                 );
-
-                current_x += metrics.advance_width;
             }
         }
-
-        Ok(())
-    }
-
-    /// Render an image from data
-    fn render_image(
-        &self,
-        pixels: &mut [u8],
-        canvas_width: u32,
-        canvas_height: u32,
-        image_data: &[u8],
-        x: u32,
-        y: u32,
-        max_width: u32,
-        max_height: u32,
-    ) -> Result<(), ReaderError> {
-        // Try to decode the image
-        let img = image::load_from_memory(image_data)
-            .map_err(|e| ReaderError::ImageError(e.to_string()))?;
-
-        let rgba = img.to_rgba8();
-        let (img_width, img_height) = rgba.dimensions();
-
-        // Scale to fit both width AND height constraints while maintaining aspect ratio
-        let scale_for_width = if img_width > max_width {
-            max_width as f32 / img_width as f32
-        } else {
-            1.0
-        };
-        
-        let scale_for_height = if img_height > max_height {
-            max_height as f32 / img_height as f32
-        } else {
-            1.0
-        };
-        
-        // Use the smaller scale to ensure image fits both constraints
-        let scale = scale_for_width.min(scale_for_height);
-
-        let render_width = (img_width as f32 * scale) as u32;
-        let render_height = (img_height as f32 * scale) as u32;
-
-        // Center image horizontally
-        let offset_x = (max_width - render_width) / 2;
-
-        // Copy pixels
-        for py in 0..render_height.min(canvas_height - y) {
-            for px in 0..render_width.min(canvas_width - x - offset_x) {
-                let src_x = (px as f32 / scale) as u32;
-                let src_y = (py as f32 / scale) as u32;
-
-                if src_x < img_width && src_y < img_height {
-                    let src_pixel = rgba.get_pixel(src_x, src_y);
-                    let dst_x = x + offset_x + px;
-                    let dst_y = y + py;
-
-                    if dst_x < canvas_width && dst_y < canvas_height {
-                        let idx = ((dst_y * canvas_width + dst_x) * 4) as usize;
-                        if idx + 3 < pixels.len() {
-                            pixels[idx] = src_pixel[0];
-                            pixels[idx + 1] = src_pixel[1];
-                            pixels[idx + 2] = src_pixel[2];
-                            pixels[idx + 3] = src_pixel[3];
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(())
     }
 }
 
@@ -636,3 +239,136 @@ impl Default for Renderer {
     }
 }
 
+fn fill_background(pixels: &mut [u8], width: u32, height: u32, color: &Color) {
+    for pixel in pixels.chunks_exact_mut(4).take((width * height) as usize) {
+        pixel.copy_from_slice(&color.to_rgba_array());
+    }
+}
+
+fn blend_pixel(pixels: &mut [u8], width: u32, height: u32, x: i32, y: i32, foreground: [u8; 4]) {
+    if x < 0 || y < 0 || x >= width as i32 || y >= height as i32 {
+        return;
+    }
+    let index = (((y as u32 * width) + x as u32) * 4) as usize;
+    let alpha = foreground[3] as f32 / 255.0;
+    let inverse = 1.0 - alpha;
+    pixels[index] = (foreground[0] as f32 * alpha + pixels[index] as f32 * inverse) as u8;
+    pixels[index + 1] = (foreground[1] as f32 * alpha + pixels[index + 1] as f32 * inverse) as u8;
+    pixels[index + 2] = (foreground[2] as f32 * alpha + pixels[index + 2] as f32 * inverse) as u8;
+    pixels[index + 3] = 255;
+}
+
+#[allow(clippy::too_many_arguments)]
+fn draw_rect(
+    pixels: &mut [u8],
+    canvas_width: u32,
+    canvas_height: u32,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    color: &Color,
+) {
+    let start_x = x.floor().max(0.0) as u32;
+    let start_y = y.floor().max(0.0) as u32;
+    let end_x = (x + width).ceil().max(0.0) as u32;
+    let end_y = (y + height).ceil().max(0.0) as u32;
+
+    for py in start_y..end_y.min(canvas_height) {
+        for px in start_x..end_x.min(canvas_width) {
+            let index = ((py * canvas_width + px) * 4) as usize;
+            pixels[index..index + 4].copy_from_slice(&color.to_rgba_array());
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn render_image(
+    pixels: &mut [u8],
+    canvas_width: u32,
+    canvas_height: u32,
+    image_data: &[u8],
+    x: f32,
+    y: f32,
+    logical_width: f32,
+    logical_height: f32,
+    scale: f32,
+) -> Result<(), ReaderError> {
+    let image = image::load_from_memory(image_data)
+        .map_err(|error| ReaderError::ImageError(error.to_string()))?
+        .to_rgba8();
+    let render_width = (logical_width * scale).round().max(1.0) as u32;
+    let render_height = (logical_height * scale).round().max(1.0) as u32;
+    let resized = image::imageops::resize(
+        &image,
+        render_width,
+        render_height,
+        image::imageops::FilterType::Triangle,
+    );
+    let start_x = (x * scale).round().max(0.0) as u32;
+    let start_y = (y * scale).round().max(0.0) as u32;
+
+    for (offset_x, offset_y, source) in resized.enumerate_pixels() {
+        let px = start_x + offset_x;
+        let py = start_y + offset_y;
+        if px < canvas_width && py < canvas_height {
+            blend_pixel(
+                pixels,
+                canvas_width,
+                canvas_height,
+                px as i32,
+                py as i32,
+                [source[0], source[1], source[2], source[3]],
+            );
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{LayoutChapter, LayoutDocument, LayoutElement, TextSpan};
+    use crate::pagination::Paginator;
+
+    #[test]
+    fn pixel_ratio_changes_only_the_output_resolution() {
+        let mut fonts = FontManager::new();
+        fonts
+            .load_font(
+                "Literata",
+                include_bytes!("../../../assets/fonts/reading/Literata_18pt-Regular.ttf"),
+            )
+            .unwrap();
+        let mut settings = ReaderSettings::default();
+        settings.container_width = 400.0;
+        settings.container_height = 300.0;
+        let document = LayoutDocument {
+            chapters: vec![LayoutChapter {
+                id: "one".to_string(),
+                title: "One".to_string(),
+                elements: vec![LayoutElement::Paragraph {
+                    spans: vec![TextSpan::new("A deterministic page")],
+                    indent: false,
+                }],
+            }],
+        };
+        let mut paginator = Paginator::new(&settings, &mut fonts);
+        let book = paginator.paginate(&document);
+        drop(paginator);
+
+        let mut renderer = Renderer::new();
+        let one_x = renderer
+            .render_page(&book.pages[0], 400, 300, 1.0, &settings, &mut fonts)
+            .unwrap();
+        let two_x = renderer
+            .render_page(&book.pages[0], 400, 300, 2.0, &settings, &mut fonts)
+            .unwrap();
+
+        assert_eq!(one_x.len(), 400 * 300 * 4);
+        assert_eq!(two_x.len(), 800 * 600 * 4);
+        assert!(one_x
+            .chunks_exact(4)
+            .any(|pixel| pixel != settings.background_color.to_rgba_array()));
+    }
+}

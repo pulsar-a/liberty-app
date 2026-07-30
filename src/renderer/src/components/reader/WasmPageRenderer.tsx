@@ -16,14 +16,13 @@ import {
   loadBook,
   paginateBook,
   renderPage,
+  getPageChapter,
   unloadBook,
   isInitialized,
   selectionStart,
   selectionUpdate,
   selectionEnd,
   selectionClear,
-  getSelectionRects,
-  getSelectedText,
   getLinkAtPosition,
   prerenderPages,
 } from '../../services/WasmReaderService'
@@ -53,6 +52,7 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const [isWasmReady, setIsWasmReady] = useState(false)
+  const [isBookLoaded, setIsBookLoaded] = useState(false)
   const [isPaginated, setIsPaginated] = useState(false)
   const [totalPages, setTotalPages] = useState(0)
   const [error, setError] = useState<Error | null>(null)
@@ -65,6 +65,8 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     nextPage,
     previousPage,
     bookmarks,
+    setWasmPaginationMaps,
+    clearWasmPaginationMaps,
   } = useReaderStore()
 
   const { settings } = useReaderSettingsStore()
@@ -75,12 +77,12 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
       try {
         await initWasmReader()
         await loadBundledFonts()
-        
+
         // Apply initial settings BEFORE marking as ready
         const wasmSettings = convertSettingsToWasm(settings, settings.theme)
         updateSettings(wasmSettings)
         console.log('[WasmPageRenderer] Initial settings applied')
-        
+
         setIsWasmReady(true)
         console.log('[WasmPageRenderer] WASM module ready')
       } catch (err) {
@@ -94,15 +96,17 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
       initWasm()
     } else {
       // Module already initialized, but ensure fonts are loaded and settings applied
-      loadBundledFonts().then(() => {
-        const wasmSettings = convertSettingsToWasm(settings, settings.theme)
-        updateSettings(wasmSettings)
-        setIsWasmReady(true)
-      }).catch((err) => {
-        const error = err instanceof Error ? err : new Error(String(err))
-        setError(error)
-        onError?.(error)
-      })
+      loadBundledFonts()
+        .then(() => {
+          const wasmSettings = convertSettingsToWasm(settings, settings.theme)
+          updateSettings(wasmSettings)
+          setIsWasmReady(true)
+        })
+        .catch((err) => {
+          const error = err instanceof Error ? err : new Error(String(err))
+          setError(error)
+          onError?.(error)
+        })
     }
 
     return () => {
@@ -120,11 +124,9 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
 
     const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect
-      // Use device pixel ratio for crisp rendering
-      const dpr = window.devicePixelRatio || 1
       setDimensions({
-        width: Math.floor(width * dpr),
-        height: Math.floor(height * dpr),
+        width: Math.floor(width),
+        height: Math.floor(height),
       })
     })
 
@@ -132,10 +134,9 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
 
     // Initial dimensions
     const rect = container.getBoundingClientRect()
-    const dpr = window.devicePixelRatio || 1
     setDimensions({
-      width: Math.floor(rect.width * dpr),
-      height: Math.floor(rect.height * dpr),
+      width: Math.floor(rect.width),
+      height: Math.floor(rect.height),
     })
 
     return () => observer.disconnect()
@@ -150,14 +151,19 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
       updateSettings(wasmSettings)
 
       // Re-paginate if book is loaded
-      if (isPaginated && dimensions.width > 0 && dimensions.height > 0) {
+      if (isBookLoaded && dimensions.width > 0 && dimensions.height > 0) {
         const result = paginateBook(dimensions.width, dimensions.height)
         setTotalPages(result.totalPages)
+        useReaderStore.setState({ totalPages: result.totalPages })
+        setWasmPaginationMaps(result)
+        setIsPaginated(true)
       }
     } catch (err) {
       console.error('[WasmPageRenderer] Failed to update settings:', err)
     }
-  }, [settings, isWasmReady, isPaginated, dimensions])
+    // dimensions is read from the render triggered by a settings change; resize pagination
+    // is handled by the dedicated effect below.
+  }, [settings, isWasmReady, isBookLoaded, setWasmPaginationMaps])
 
   // Load book when content changes
   // NOTE: currentPageIndex is NOT in dependencies - we don't want to reload book on page navigation
@@ -169,33 +175,13 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
         // Unload previous book
         unloadBook()
         setIsPaginated(false)
-
-        // Reload fonts after unloadBook (WASM state may be cleared)
-        await loadBundledFonts(undefined, true)
+        setIsBookLoaded(false)
+        clearWasmPaginationMaps()
 
         // Load new book
         const result = loadBook(bookContent)
         console.log('[WasmPageRenderer] Book loaded:', result)
-
-        // Paginate if dimensions are known
-        if (dimensions.width > 0 && dimensions.height > 0) {
-          const paginationResult = paginateBook(dimensions.width, dimensions.height)
-          const newTotalPages = paginationResult?.totalPages ?? 0
-          setTotalPages(newTotalPages)
-          setIsPaginated(true)
-          
-          // Update store's totalPages so navigation works
-          useReaderStore.setState({ totalPages: newTotalPages })
-          
-          // Clamp currentPageIndex to valid range after pagination
-          const storeState = useReaderStore.getState()
-          const currentPage = storeState.currentPageIndex
-          if (newTotalPages > 0 && (currentPage >= newTotalPages || currentPage < 0)) {
-            const clampedPage = Math.max(0, Math.min(currentPage, newTotalPages - 1))
-            goToPage(clampedPage)
-          }
-          onPageChange?.(currentPage, newTotalPages)
-        }
+        setIsBookLoaded(true)
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err))
         setError(error)
@@ -204,24 +190,23 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     }
 
     loadBookAsync()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookContent, isWasmReady, dimensions])
+  }, [bookContent, isWasmReady])
 
   // Paginate when dimensions change (for resize events)
   // NOTE: This should ONLY run when isPaginated is already true (i.e., book was already loaded)
   // Initial pagination is handled by the book loading effect
   useEffect(() => {
-    // Only re-paginate if book was ALREADY paginated (prevents race condition with font loading)
-    if (!isWasmReady || !bookContent || dimensions.width === 0 || !isPaginated) return
+    if (!isWasmReady || !isBookLoaded || dimensions.width === 0 || dimensions.height === 0) return
 
     try {
       const result = paginateBook(dimensions.width, dimensions.height)
       const newTotalPages = result?.totalPages ?? 0
       setTotalPages(newTotalPages)
-      
+
       // Update store's totalPages so navigation works
       useReaderStore.setState({ totalPages: newTotalPages })
-      
+      setWasmPaginationMaps(result)
+
       // Clamp currentPageIndex to valid range after dimension-based pagination
       const storeState = useReaderStore.getState()
       const currentPage = storeState.currentPageIndex
@@ -233,8 +218,7 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     } catch (err) {
       console.error('[WasmPageRenderer] Pagination failed:', err)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dimensions, isWasmReady, bookContent, isPaginated])
+  }, [dimensions, isWasmReady, isBookLoaded])
 
   // Render current page
   useEffect(() => {
@@ -242,7 +226,12 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     if (dimensions.width === 0 || dimensions.height === 0) return
     // Guard against invalid page indices before rendering
     if (currentPageIndex < 0 || currentPageIndex >= totalPages || totalPages === 0) {
-      console.log('[WasmPageRenderer] Skipping render - invalid page index:', currentPageIndex, 'totalPages:', totalPages)
+      console.log(
+        '[WasmPageRenderer] Skipping render - invalid page index:',
+        currentPageIndex,
+        'totalPages:',
+        totalPages
+      )
       return
     }
 
@@ -258,14 +247,20 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     // Schedule render on next frame
     animationFrameRef.current = requestAnimationFrame(() => {
       try {
-        const pixels = renderPage(currentPageIndex, dimensions.width, dimensions.height)
-        const imageData = new ImageData(pixels, dimensions.width, dimensions.height)
+        const pixelRatio = window.devicePixelRatio || 1
+        const pixelWidth = Math.round(dimensions.width * pixelRatio)
+        const pixelHeight = Math.round(dimensions.height * pixelRatio)
+        const pixels = renderPage(currentPageIndex, dimensions.width, dimensions.height, pixelRatio)
+        const imageData = new ImageData(new Uint8ClampedArray(pixels), pixelWidth, pixelHeight)
         ctx.putImageData(imageData, 0, 0)
 
         // Pre-render adjacent pages in the background for smoother navigation
-        requestIdleCallback(() => {
-          prerenderPages(currentPageIndex, dimensions.width, dimensions.height, 2)
-        }, { timeout: 1000 })
+        requestIdleCallback(
+          () => {
+            prerenderPages(currentPageIndex, dimensions.width, dimensions.height, pixelRatio, 2)
+          },
+          { timeout: 1000 }
+        )
       } catch (err) {
         console.error('[WasmPageRenderer] Render failed:', err)
       }
@@ -276,7 +271,20 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
   useEffect(() => {
     if (!isPaginated || totalPages === 0) return
     onPageChange?.(currentPageIndex, totalPages)
-  }, [currentPageIndex, totalPages, isPaginated, onPageChange])
+    try {
+      const chapter = getPageChapter(currentPageIndex)
+      onChapterChange?.(chapter.chapterId, chapter.chapterTitle)
+    } catch {
+      // Pagination can be replaced between React effects; the next render retries.
+    }
+  }, [currentPageIndex, totalPages, isPaginated, onPageChange, onChapterChange])
+
+  useEffect(
+    () => () => {
+      clearWasmPaginationMaps()
+    },
+    [clearWasmPaginationMaps]
+  )
 
   // Keyboard navigation
   useEffect(() => {
@@ -319,20 +327,16 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
   }, [nextPage, previousPage, goToPage, totalPages])
 
   // Mouse event handlers for text selection
-  const getMousePosition = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const canvas = canvasRef.current
-      if (!canvas) return { x: 0, y: 0 }
+  const getMousePosition = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return { x: 0, y: 0 }
 
-      const rect = canvas.getBoundingClientRect()
-      const dpr = window.devicePixelRatio || 1
-      return {
-        x: (e.clientX - rect.left) * dpr,
-        y: (e.clientY - rect.top) * dpr,
-      }
-    },
-    []
-  )
+    const rect = canvas.getBoundingClientRect()
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    }
+  }, [])
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -359,20 +363,17 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
     [isSelecting, getMousePosition]
   )
 
-  const handleMouseUp = useCallback(
-    async (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (!isSelecting) return
+  const handleMouseUp = useCallback(async () => {
+    if (!isSelecting) return
 
-      setIsSelecting(false)
-      const selection = selectionEnd()
+    setIsSelecting(false)
+    const selection = selectionEnd()
 
-      if (selection?.text) {
-        setSelectedText(selection.text)
-        console.log('[WasmPageRenderer] Selected text:', selection.text)
-      }
-    },
-    [isSelecting]
-  )
+    if (selection?.text) {
+      setSelectedText(selection.text)
+      console.log('[WasmPageRenderer] Selected text:', selection.text)
+    }
+  }, [isSelecting])
 
   // Handle link clicks
   const handleCanvasClick = useCallback(
@@ -388,8 +389,8 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
         e.stopPropagation()
 
         // Determine if it's an internal link (starts with # or is relative)
-        const isInternal = link.startsWith('#') || 
-          (!link.startsWith('http://') && !link.startsWith('https://'))
+        const isInternal =
+          link.startsWith('#') || (!link.startsWith('http://') && !link.startsWith('https://'))
 
         if (onLinkClick) {
           onLinkClick(link, isInternal)
@@ -505,21 +506,16 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
       onClick={handlePageClick}
     >
       {/* Bookmark indicator */}
-      {hasBookmark && (
-        <div
-          className="bookmark-indicator"
-          title="Bookmarked page"
-        />
-      )}
+      {hasBookmark && <div className="bookmark-indicator" title="Bookmarked page" />}
 
       {/* Canvas for rendering */}
       <canvas
         ref={canvasRef}
-        width={dimensions.width}
-        height={dimensions.height}
+        width={Math.round(dimensions.width * dpr)}
+        height={Math.round(dimensions.height * dpr)}
         style={{
-          width: dimensions.width / dpr,
-          height: dimensions.height / dpr,
+          width: dimensions.width,
+          height: dimensions.height,
           cursor: isSelecting ? 'text' : 'default',
         }}
         className="block select-none"
@@ -563,4 +559,3 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
 }
 
 export default WasmPageRenderer
-

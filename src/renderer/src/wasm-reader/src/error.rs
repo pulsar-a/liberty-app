@@ -41,4 +41,3 @@ impl From<serde_wasm_bindgen::Error> for ReaderError {
         ReaderError::WasmSerializationError(err.to_string())
     }
 }
-

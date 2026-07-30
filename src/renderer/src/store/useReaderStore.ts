@@ -11,6 +11,25 @@ import {
 import { create } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
 
+interface WasmPageChapterLocation {
+  pageIndex: number
+  chapterId: string
+  chapterTitle: string
+}
+
+interface WasmChapterLocation {
+  chapterId: string
+  chapterTitle: string
+  firstPageIndex: number
+  pageCount: number
+}
+
+interface WasmAnchorLocation {
+  chapterId: string
+  anchorId: string
+  pageIndex: number
+}
+
 interface ReaderState {
   // Book data
   bookId: number | null
@@ -28,6 +47,9 @@ interface ReaderState {
   // Navigation state
   currentPageIndex: number
   totalPages: number
+  wasmPageChapterMap: WasmPageChapterLocation[]
+  wasmChapterPageMap: WasmChapterLocation[]
+  wasmAnchorPageMap: WasmAnchorLocation[]
 
   // UI state
   layoutMode: 'single' | 'two-column'
@@ -77,6 +99,12 @@ interface ReaderActions {
   nextPage: () => void
   previousPage: () => void
   goToChapter: (chapterId: string, anchorId?: string) => void
+  setWasmPaginationMaps: (maps: {
+    pageChapterMap: WasmPageChapterLocation[]
+    chapterPageMap: WasmChapterLocation[]
+    anchorPageMap: WasmAnchorLocation[]
+  }) => void
+  clearWasmPaginationMaps: () => void
 
   // Layout
   setLayoutMode: (mode: 'single' | 'two-column') => void
@@ -119,6 +147,9 @@ const initialState: ReaderState = {
   containerDimensions: null,
   currentPageIndex: 0,
   totalPages: 0,
+  wasmPageChapterMap: [],
+  wasmChapterPageMap: [],
+  wasmAnchorPageMap: [],
   layoutMode: 'single', // Two-column mode disabled - causes content overflow issues
   isLoading: false,
   error: null,
@@ -165,6 +196,9 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           useClientSidePagination: useClientSide,
           isPaginating: useClientSide, // Start paginating if using client-side
           totalPages: paginatedTotalPages,
+          wasmPageChapterMap: [],
+          wasmChapterPageMap: [],
+          wasmAnchorPageMap: [],
           currentPageIndex: pageIndex,
           lastSavedPage: isNewBook ? data.lastReadPage : currentState.lastSavedPage,
           isLoading: false,
@@ -176,7 +210,8 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
 
       setLoading: (loading) => set({ isLoading: loading }),
 
-      setLoadingProgress: (percent, stage) => set({ loadingProgress: percent, loadingStage: stage }),
+      setLoadingProgress: (percent, stage) =>
+        set({ loadingProgress: percent, loadingStage: stage }),
 
       setError: (error) => set({ error, isLoading: false, loadingProgress: 0, loadingStage: '' }),
 
@@ -200,7 +235,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
       setFittedContent: (content) => {
         const currentState = get()
         const isNewBook = currentState.fittedContent === null
-        
+
         // Restore page position when re-paginating (e.g., after font change)
         let pageIndex = currentState.currentPageIndex
         if (content.totalPages > 0) {
@@ -224,196 +259,250 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
 
       setContainerDimensions: (dimensions) => set({ containerDimensions: dimensions }),
 
-      setIsPaginating: (isPaginating) => set({ 
-        isPaginating,
-        loadingProgress: isPaginating ? 90 : 100,
-        loadingStage: isPaginating ? 'reader_loading_paginating' : '',
-      }),
+      setIsPaginating: (isPaginating) =>
+        set({
+          isPaginating,
+          loadingProgress: isPaginating ? 90 : 100,
+          loadingStage: isPaginating ? 'reader_loading_paginating' : '',
+        }),
 
-      clearFittedContent: () => set({ 
-        fittedContent: null, 
-        isPaginating: true,
-        loadingProgress: 90,
-        loadingStage: 'reader_loading_paginating',
-      }),
+      clearFittedContent: () =>
+        set({
+          fittedContent: null,
+          isPaginating: true,
+          loadingProgress: 90,
+          loadingStage: 'reader_loading_paginating',
+        }),
 
-    // Navigation
-    goToPage: (pageIndex) => {
-      const { totalPages, currentPageIndex } = get()
-      // FIX: Ensure we don't set invalid page indices when totalPages is 0
-      if (totalPages === 0) {
-        // When WASM handles pagination, store totalPages might be 0
-        // Just set the page index directly, but clamp to >= 0
-        const clampedIndex = Math.max(0, pageIndex)
+      // Navigation
+      goToPage: (pageIndex) => {
+        const { totalPages, currentPageIndex } = get()
+        // FIX: Ensure we don't set invalid page indices when totalPages is 0
+        if (totalPages === 0) {
+          // When WASM handles pagination, store totalPages might be 0
+          // Just set the page index directly, but clamp to >= 0
+          const clampedIndex = Math.max(0, pageIndex)
+          if (clampedIndex !== currentPageIndex) {
+            set({
+              currentPageIndex: clampedIndex,
+              progressDirty: true,
+            })
+          }
+          return
+        }
+        const clampedIndex = Math.max(0, Math.min(pageIndex, totalPages - 1))
+
         if (clampedIndex !== currentPageIndex) {
           set({
             currentPageIndex: clampedIndex,
             progressDirty: true,
           })
         }
-        return
-      }
-      const clampedIndex = Math.max(0, Math.min(pageIndex, totalPages - 1))
+      },
 
-      if (clampedIndex !== currentPageIndex) {
-        set({
-          currentPageIndex: clampedIndex,
-          progressDirty: true,
-        })
-      }
-    },
+      nextPage: () => {
+        const { currentPageIndex, totalPages, layoutMode, wasmPageChapterMap } = get()
+        // If totalPages is 0, we can't navigate properly
+        if (totalPages <= 0) return
+        const increment = wasmPageChapterMap.length > 0 ? 1 : layoutMode === 'two-column' ? 2 : 1
+        const nextIndex = Math.min(currentPageIndex + increment, totalPages - 1)
 
-    nextPage: () => {
-      const { currentPageIndex, totalPages, layoutMode } = get()
-      // If totalPages is 0, we can't navigate properly
-      if (totalPages <= 0) return
-      const increment = layoutMode === 'two-column' ? 2 : 1
-      const nextIndex = Math.min(currentPageIndex + increment, totalPages - 1)
-
-      if (nextIndex !== currentPageIndex && nextIndex >= 0) {
-        set({
-          currentPageIndex: nextIndex,
-          progressDirty: true,
-        })
-      }
-    },
-
-    previousPage: () => {
-      const { currentPageIndex, layoutMode } = get()
-      const decrement = layoutMode === 'two-column' ? 2 : 1
-      const prevIndex = Math.max(currentPageIndex - decrement, 0)
-
-      if (prevIndex !== currentPageIndex) {
-        set({
-          currentPageIndex: prevIndex,
-          progressDirty: true,
-        })
-      }
-    },
-
-    goToChapter: (chapterId, anchorId?: string) => {
-      const { fittedContent, paginatedContent, useClientSidePagination } = get()
-      
-      // Get pages from the appropriate source
-      const pages = useClientSidePagination && fittedContent 
-        ? fittedContent.pages 
-        : paginatedContent?.pages
-      
-      if (!pages) return
-
-      let targetPage = null
-
-      // If we have an anchor ID, search for the page containing that anchor
-      if (anchorId) {
-        targetPage = pages.find((p) => 
-          p.chapterId === chapterId && p.htmlContent.includes(`id="${anchorId}"`)
-        )
-        // Also try with single quotes and other formats
-        if (!targetPage) {
-          targetPage = pages.find((p) => 
-            p.chapterId === chapterId && (
-              p.htmlContent.includes(`id='${anchorId}'`) ||
-              p.htmlContent.includes(`name="${anchorId}"`) ||
-              p.htmlContent.includes(`name='${anchorId}'`)
-            )
-          )
+        if (nextIndex !== currentPageIndex && nextIndex >= 0) {
+          set({
+            currentPageIndex: nextIndex,
+            progressDirty: true,
+          })
         }
-      }
+      },
 
-      // Fall back to first page of chapter if anchor not found
-      if (!targetPage) {
-        targetPage = pages.find((p) => p.chapterId === chapterId)
-      }
-      
-      if (targetPage) {
+      previousPage: () => {
+        const { currentPageIndex, layoutMode, wasmPageChapterMap } = get()
+        const decrement = wasmPageChapterMap.length > 0 ? 1 : layoutMode === 'two-column' ? 2 : 1
+        const prevIndex = Math.max(currentPageIndex - decrement, 0)
+
+        if (prevIndex !== currentPageIndex) {
+          set({
+            currentPageIndex: prevIndex,
+            progressDirty: true,
+          })
+        }
+      },
+
+      goToChapter: (chapterId, anchorId?: string) => {
+        const {
+          fittedContent,
+          paginatedContent,
+          useClientSidePagination,
+          wasmChapterPageMap,
+          wasmAnchorPageMap,
+        } = get()
+
+        if (wasmChapterPageMap.length > 0) {
+          const anchorTarget = anchorId
+            ? wasmAnchorPageMap.find(
+                (entry) => entry.chapterId === chapterId && entry.anchorId === anchorId
+              )
+            : undefined
+          const chapterTarget = wasmChapterPageMap.find((entry) => entry.chapterId === chapterId)
+          const targetPageIndex = anchorTarget?.pageIndex ?? chapterTarget?.firstPageIndex
+
+          if (targetPageIndex !== undefined) {
+            set({ currentPageIndex: targetPageIndex, progressDirty: true })
+          }
+          return
+        }
+
+        // Get pages from the appropriate source
+        const pages =
+          useClientSidePagination && fittedContent ? fittedContent.pages : paginatedContent?.pages
+
+        if (!pages) return
+
+        let targetPage: BookPage | FittedPage | undefined
+
+        // If we have an anchor ID, search for the page containing that anchor
+        if (anchorId) {
+          targetPage = pages.find(
+            (p) => p.chapterId === chapterId && p.htmlContent.includes(`id="${anchorId}"`)
+          )
+          // Also try with single quotes and other formats
+          if (!targetPage) {
+            targetPage = pages.find(
+              (p) =>
+                p.chapterId === chapterId &&
+                (p.htmlContent.includes(`id='${anchorId}'`) ||
+                  p.htmlContent.includes(`name="${anchorId}"`) ||
+                  p.htmlContent.includes(`name='${anchorId}'`))
+            )
+          }
+        }
+
+        // Fall back to first page of chapter if anchor not found
+        if (!targetPage) {
+          targetPage = pages.find((p) => p.chapterId === chapterId)
+        }
+
+        if (targetPage) {
+          set({
+            currentPageIndex: targetPage.pageIndex,
+            progressDirty: true,
+          })
+        }
+      },
+
+      setWasmPaginationMaps: (maps) =>
         set({
-          currentPageIndex: targetPage.pageIndex,
-          progressDirty: true,
-        })
-      }
-    },
+          wasmPageChapterMap: maps.pageChapterMap,
+          wasmChapterPageMap: maps.chapterPageMap,
+          wasmAnchorPageMap: maps.anchorPageMap,
+        }),
 
-    // Layout
-    setLayoutMode: (mode) => set({ layoutMode: mode }),
+      clearWasmPaginationMaps: () =>
+        set({
+          wasmPageChapterMap: [],
+          wasmChapterPageMap: [],
+          wasmAnchorPageMap: [],
+        }),
 
-    // References
-    openReferencesPanel: () => set({ isReferencesPanelOpen: true }),
-    closeReferencesPanel: () => set({ isReferencesPanelOpen: false }),
-    toggleReferencesPanel: () =>
-      set((state) => ({ isReferencesPanelOpen: !state.isReferencesPanelOpen })),
+      // Layout
+      setLayoutMode: (mode) => set({ layoutMode: mode }),
 
-    // Bookmarks
-    setBookmarks: (bookmarks) => set({ bookmarks }),
+      // References
+      openReferencesPanel: () => set({ isReferencesPanelOpen: true }),
+      closeReferencesPanel: () => set({ isReferencesPanelOpen: false }),
+      toggleReferencesPanel: () =>
+        set((state) => ({ isReferencesPanelOpen: !state.isReferencesPanelOpen })),
 
-    addBookmarkToState: (bookmark) =>
-      set((state) => ({
-        bookmarks: [...state.bookmarks, bookmark].sort((a, b) => a.pageIndex - b.pageIndex),
-      })),
+      // Bookmarks
+      setBookmarks: (bookmarks) => set({ bookmarks }),
 
-    removeBookmarkFromState: (bookmarkId) =>
-      set((state) => ({
-        bookmarks: state.bookmarks.filter((b) => b.id !== bookmarkId),
-      })),
+      addBookmarkToState: (bookmark) =>
+        set((state) => ({
+          bookmarks: [...state.bookmarks, bookmark].sort((a, b) => a.pageIndex - b.pageIndex),
+        })),
 
-    // Sidebar
-    setSidebarTab: (tab) => set({ sidebarTab: tab }),
+      removeBookmarkFromState: (bookmarkId) =>
+        set((state) => ({
+          bookmarks: state.bookmarks.filter((b) => b.id !== bookmarkId),
+        })),
 
-    // Progress
-    markProgressDirty: () => set({ progressDirty: true }),
-    markProgressSaved: () =>
-      set((state) => ({
-        progressDirty: false,
-        lastSavedPage: state.currentPageIndex,
-      })),
+      // Sidebar
+      setSidebarTab: (tab) => set({ sidebarTab: tab }),
 
-    // Computed getters
-    getCurrentPage: () => {
-      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
-      
-      if (useClientSidePagination && fittedContent) {
-        return fittedContent.pages[currentPageIndex] || null
-      }
-      return paginatedContent?.pages[currentPageIndex] || null
-    },
+      // Progress
+      markProgressDirty: () => set({ progressDirty: true }),
+      markProgressSaved: () =>
+        set((state) => ({
+          progressDirty: false,
+          lastSavedPage: state.currentPageIndex,
+        })),
 
-    getCurrentPageReferences: () => {
-      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
-      
-      if (useClientSidePagination && fittedContent) {
-        return fittedContent.pages[currentPageIndex]?.references || []
-      }
-      return paginatedContent?.pages[currentPageIndex]?.references || []
-    },
+      // Computed getters
+      getCurrentPage: () => {
+        const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
 
-    getCurrentChapterId: () => {
-      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
-      
-      if (useClientSidePagination && fittedContent) {
-        return fittedContent.pages[currentPageIndex]?.chapterId || null
-      }
-      return paginatedContent?.pages[currentPageIndex]?.chapterId || null
-    },
+        if (useClientSidePagination && fittedContent) {
+          return fittedContent.pages[currentPageIndex] || null
+        }
+        return paginatedContent?.pages[currentPageIndex] || null
+      },
 
-    getCurrentChapterTitle: () => {
-      const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
-      
-      if (useClientSidePagination && fittedContent) {
-        return fittedContent.pages[currentPageIndex]?.chapterTitle || ''
-      }
-      return paginatedContent?.pages[currentPageIndex]?.chapterTitle || ''
-    },
+      getCurrentPageReferences: () => {
+        const { fittedContent, paginatedContent, currentPageIndex, useClientSidePagination } = get()
 
-    getProgressPercentage: () => {
-      const { currentPageIndex, totalPages } = get()
-      if (totalPages === 0) return 0
-      return Math.round(((currentPageIndex + 1) / totalPages) * 100)
-    },
+        if (useClientSidePagination && fittedContent) {
+          return fittedContent.pages[currentPageIndex]?.references || []
+        }
+        return paginatedContent?.pages[currentPageIndex]?.references || []
+      },
 
-    hasBookmarkOnCurrentPage: () => {
-      const { bookmarks, currentPageIndex } = get()
-      return bookmarks.some((b) => b.pageIndex === currentPageIndex)
-    },
-  })),
+      getCurrentChapterId: () => {
+        const {
+          fittedContent,
+          paginatedContent,
+          currentPageIndex,
+          useClientSidePagination,
+          wasmPageChapterMap,
+        } = get()
+
+        const wasmPage = wasmPageChapterMap.find((entry) => entry.pageIndex === currentPageIndex)
+        if (wasmPage) return wasmPage.chapterId
+
+        if (useClientSidePagination && fittedContent) {
+          return fittedContent.pages[currentPageIndex]?.chapterId || null
+        }
+        return paginatedContent?.pages[currentPageIndex]?.chapterId || null
+      },
+
+      getCurrentChapterTitle: () => {
+        const {
+          fittedContent,
+          paginatedContent,
+          currentPageIndex,
+          useClientSidePagination,
+          wasmPageChapterMap,
+        } = get()
+
+        const wasmPage = wasmPageChapterMap.find((entry) => entry.pageIndex === currentPageIndex)
+        if (wasmPage) return wasmPage.chapterTitle
+
+        if (useClientSidePagination && fittedContent) {
+          return fittedContent.pages[currentPageIndex]?.chapterTitle || ''
+        }
+        return paginatedContent?.pages[currentPageIndex]?.chapterTitle || ''
+      },
+
+      getProgressPercentage: () => {
+        const { currentPageIndex, totalPages } = get()
+        if (totalPages === 0) return 0
+        return Math.round(((currentPageIndex + 1) / totalPages) * 100)
+      },
+
+      hasBookmarkOnCurrentPage: () => {
+        const { bookmarks, currentPageIndex } = get()
+        return bookmarks.some((b) => b.pageIndex === currentPageIndex)
+      },
+    })),
     {
       name: 'liberty-reader-state',
       // Persist essential reading state for resume functionality
@@ -432,7 +521,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           // Remove layoutMode from old persisted state, force single-column
           delete state.layoutMode
         }
-        return state as ReaderState & ReaderActions
+        return state as unknown as ReaderState & ReaderActions
       },
     }
   )
@@ -453,5 +542,5 @@ export const useIsPaginating = () => useReaderStore((state) => state.isPaginatin
 export const useContainerDimensions = () => useReaderStore((state) => state.containerDimensions)
 export const useFittedContent = () => useReaderStore((state) => state.fittedContent)
 export const useBookContent = () => useReaderStore((state) => state.content)
-export const useUseClientSidePagination = () => useReaderStore((state) => state.useClientSidePagination)
-
+export const useUseClientSidePagination = () =>
+  useReaderStore((state) => state.useClientSidePagination)

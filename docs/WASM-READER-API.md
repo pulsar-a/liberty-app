@@ -134,7 +134,7 @@ async function loadBundledFonts(fonts?: FontToLoad[]): Promise<void>
 ```
 
 **Parameters:**
-- `fonts` - Optional array of fonts to load. Defaults to `DEFAULT_READER_FONTS` (Literata family)
+- `fonts` - Optional array of fonts to load. Defaults to the four Literata faces plus four matching Noto Sans fallback faces.
 
 **Default Fonts:**
 ```typescript
@@ -143,6 +143,10 @@ const DEFAULT_READER_FONTS: FontToLoad[] = [
   { name: 'Literata-Bold', url: '/fonts/reading/Literata_18pt-Bold.ttf' },
   { name: 'Literata-Italic', url: '/fonts/reading/Literata_18pt-Italic.ttf' },
   { name: 'Literata-BoldItalic', url: '/fonts/reading/Literata_18pt-BoldItalic.ttf' },
+  { name: 'Noto Sans', url: '/fonts/reading/NotoSans-Regular.ttf' },
+  { name: 'Noto Sans-Bold', url: '/fonts/reading/NotoSans-Bold.ttf' },
+  { name: 'Noto Sans-Italic', url: '/fonts/reading/NotoSans-Italic.ttf' },
+  { name: 'Noto Sans-BoldItalic', url: '/fonts/reading/NotoSans-BoldItalic.ttf' },
 ]
 ```
 
@@ -244,6 +248,9 @@ function paginateBook(width: number, height: number): WasmPaginationResult
 - `width` - Container width in pixels
 - `height` - Container height in pixels
 
+Both dimensions are logical CSS pixels. Device pixel ratio affects rendering
+resolution, not pagination.
+
 **Returns:**
 ```typescript
 interface WasmPaginationResult {
@@ -253,14 +260,25 @@ interface WasmPaginationResult {
     chapterId: string
     chapterTitle: string
   }>
+  chapterPageMap: Array<{
+    chapterId: string
+    chapterTitle: string
+    firstPageIndex: number
+    pageCount: number
+  }>
+  anchorPageMap: Array<{
+    chapterId: string
+    anchorId: string
+    pageIndex: number
+  }>
 }
 ```
 
 **Example:**
 ```typescript
-// Get canvas dimensions
-const width = canvas.clientWidth * window.devicePixelRatio
-const height = canvas.clientHeight * window.devicePixelRatio
+// Paginate with logical CSS dimensions
+const width = canvas.clientWidth
+const height = canvas.clientHeight
 
 const result = paginateBook(width, height)
 console.log(`Book has ${result.totalPages} pages`)
@@ -302,7 +320,7 @@ interface WasmPageChapter {
 
 ### Rendering
 
-#### `renderPage(pageIndex, width, height)`
+#### `renderPage(pageIndex, width, height, pixelRatio)`
 
 Render a page to a pixel buffer.
 
@@ -310,24 +328,29 @@ Render a page to a pixel buffer.
 function renderPage(
   pageIndex: number,
   width: number,
-  height: number
+  height: number,
+  pixelRatio: number
 ): Uint8ClampedArray
 ```
 
 **Parameters:**
 - `pageIndex` - Zero-based page index
-- `width` - Render width in pixels
-- `height` - Render height in pixels
+- `width` - Logical render width in CSS pixels
+- `height` - Logical render height in CSS pixels
+- `pixelRatio` - Output scale (for example, `window.devicePixelRatio`)
 
 **Returns:**
-- RGBA pixel buffer (4 bytes per pixel)
+- RGBA pixel buffer sized `(width × pixelRatio) × (height × pixelRatio)`
 
 **Example:**
 ```typescript
-const pixels = renderPage(currentPage, width, height)
+const pixelRatio = window.devicePixelRatio
+const pixels = renderPage(currentPage, width, height, pixelRatio)
+const physicalWidth = Math.round(width * pixelRatio)
+const physicalHeight = Math.round(height * pixelRatio)
 
 // Create ImageData and draw to canvas
-const imageData = new ImageData(pixels, width, height)
+const imageData = new ImageData(pixels, physicalWidth, physicalHeight)
 ctx.putImageData(imageData, 0, 0)
 ```
 
@@ -461,7 +484,7 @@ function getLinkAtPosition(
 
 ### Performance
 
-#### `prerenderPages(currentPage, width, height, range?)`
+#### `prerenderPages(currentPage, width, height, pixelRatio, range?)`
 
 Pre-render nearby pages for smoother navigation.
 
@@ -470,6 +493,7 @@ function prerenderPages(
   currentPage: number,
   width: number,
   height: number,
+  pixelRatio: number,
   range?: number  // Default: 2
 ): void
 ```
@@ -477,7 +501,7 @@ function prerenderPages(
 **Example:**
 ```typescript
 // Pre-render 2 pages before and after current
-prerenderPages(currentPage, width, height, 2)
+prerenderPages(currentPage, width, height, window.devicePixelRatio, 2)
 ```
 
 #### `getPaginationStats()`

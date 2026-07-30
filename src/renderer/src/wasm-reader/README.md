@@ -51,8 +51,13 @@ loadBook(bookContent)
 const { totalPages } = paginateBook(width, height)
 
 // Render
-const pixels = renderPage(0, width, height)
-const imageData = new ImageData(pixels, width, height)
+const pixelRatio = window.devicePixelRatio
+const pixels = renderPage(0, width, height, pixelRatio)
+const imageData = new ImageData(
+  pixels,
+  Math.round(width * pixelRatio),
+  Math.round(height * pixelRatio),
+)
 ctx.putImageData(imageData, 0, 0)
 ```
 
@@ -67,7 +72,7 @@ ctx.putImageData(imageData, 0, 0)
 - ✅ **Search** - Full-text search across all pages
 - ✅ **Theming** - Configurable colors, fonts, and layout
 - ✅ **Two-column layout** - Support for side-by-side columns
-- ✅ **Hyphenation** - Automatic word hyphenation
+- ⏳ **Hyphenation** - Reserved for a later layout phase
 
 ## Project Structure
 
@@ -78,16 +83,14 @@ src/
 ├── settings.rs         # ReaderSettings configuration
 ├── selection.rs        # Text selection state
 ├── fonts/
-│   ├── loader.rs       # Font loading and management
-│   └── metrics.rs      # Font measurement
+│   └── loader.rs       # Font loading and management
 ├── layout/
 │   ├── document.rs     # LayoutDocument, LayoutElement types
 │   └── html_parser.rs  # HTML → layout model conversion
 ├── pagination/
 │   └── paginator.rs    # Page breaking algorithm
 └── render/
-    ├── canvas.rs       # Main renderer
-    └── text.rs         # Glyph rendering
+    └── canvas.rs       # Indexed glyph rasterization and drawing
 ```
 
 ## API Overview
@@ -106,8 +109,8 @@ src/
 - `get_page_chapter(index)` - Get chapter info for a page
 
 ### Rendering
-- `render_page(index, width, height)` - Render to pixel buffer
-- `prerender_pages(current, width, height, range)` - Pre-render nearby pages
+- `render_page(index, width, height, pixel_ratio)` - Render to a DPR-scaled pixel buffer
+- `prerender_pages(current, width, height, pixel_ratio, range)` - Pre-render nearby pages
 - `clear_render_cache()` - Clear cached pages
 
 ### Search & Selection
