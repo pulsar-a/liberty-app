@@ -261,4 +261,22 @@ mod tests {
         // Now it should be limited by available space
         assert_eq!(settings.content_width(), 700.0);
     }
+
+    #[test]
+    fn layout_comparison_distinguishes_reflow_from_theme_changes() {
+        let settings = ReaderSettings::default();
+
+        let mut theme_change = settings.clone();
+        theme_change.background_color = Color::rgb(0, 0, 0);
+        theme_change.text_color = Color::rgb(255, 255, 255);
+        assert!(settings.layout_eq(&theme_change));
+
+        let mut font_change = settings.clone();
+        font_change.font_family = "Noto Sans".to_string();
+        assert!(!settings.layout_eq(&font_change));
+
+        let mut column_change = settings.clone();
+        column_change.columns = 2;
+        assert!(!settings.layout_eq(&column_change));
+    }
 }

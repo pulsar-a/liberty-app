@@ -2,7 +2,10 @@ import { BookReference, ContainerDimensions, FittingConfig } from '@app-types/re
 import { useNavigate } from '@tanstack/react-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MeasurementContainer, MeasurementContainerApi } from '../components/reader/MeasurementContainer'
+import {
+  MeasurementContainer,
+  MeasurementContainerApi,
+} from '../components/reader/MeasurementContainer'
 import { PageRenderer } from '../components/reader/PageRenderer'
 import { ReaderLoadingProgress } from '../components/reader/ReaderLoadingProgress'
 import { ReaderSidebar } from '../components/reader/ReaderSidebar'
@@ -24,7 +27,7 @@ export const ReaderView: React.FC = () => {
   const [highlightedRefId, setHighlightedRefId] = useState<string | undefined>()
   const [containerDimensions, setContainerDimensions] = useState<ContainerDimensions | null>(null)
   const [measurementReady, setMeasurementReady] = useState(false)
-  
+
   const progressSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const measurementRef = useRef<MeasurementContainerApi>(null)
   const paginationDebounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -56,7 +59,6 @@ export const ReaderView: React.FC = () => {
     currentPageIndex,
     totalPages,
     layoutMode,
-    setLayoutMode,
     progressDirty,
     getCurrentChapterId,
     bookmarks,
@@ -69,8 +71,8 @@ export const ReaderView: React.FC = () => {
 
   // Fetch book content with client-side pagination enabled
   const { data: bookContentData, isLoading: isContentLoading } = main.getBookContent.useQuery(
-    { 
-      bookId: bookIdNum, 
+    {
+      bookId: bookIdNum,
       paginationConfig: { mode: layoutMode },
       clientSidePagination: true, // Enable client-side pagination
     },
@@ -163,18 +165,21 @@ export const ReaderView: React.FC = () => {
   }, [bookmarksData, setBookmarks])
 
   // Create typography settings for fitting config
-  const typographySettings = useMemo(() => ({
-    fontFamily: settings.fontFamily,
-    fontSize: settings.fontSize,
-    lineHeight: settings.lineHeight,
-    contentPaddingX: settings.contentPaddingX,
-    contentPaddingY: settings.contentPaddingY,
-    maxContentWidth: settings.maxContentWidth,
-    textAlign: settings.textAlign,
-    hyphenation: settings.hyphenation,
-    paragraphSpacing: settings.paragraphSpacing,
-    paragraphIndent: settings.paragraphIndent,
-  }), [settings])
+  const typographySettings = useMemo(
+    () => ({
+      fontFamily: settings.fontFamily,
+      fontSize: settings.fontSize,
+      lineHeight: settings.lineHeight,
+      contentPaddingX: settings.contentPaddingX,
+      contentPaddingY: settings.contentPaddingY,
+      maxContentWidth: settings.maxContentWidth,
+      textAlign: settings.textAlign,
+      hyphenation: settings.hyphenation,
+      paragraphSpacing: settings.paragraphSpacing,
+      paragraphIndent: settings.paragraphIndent,
+    }),
+    [settings]
+  )
 
   // Track when measurement container is ready
   const handleMeasurementReady = useCallback(() => {
@@ -184,7 +189,14 @@ export const ReaderView: React.FC = () => {
   // Run content fitting when content, dimensions, or settings change
   useEffect(() => {
     const runPagination = async () => {
-      if (!content || !containerDimensions || !measurementReady || !measurementRef.current || !useClientSidePagination) {
+      if (
+        settings.engine !== 'html' ||
+        !content ||
+        !containerDimensions ||
+        !measurementReady ||
+        !measurementRef.current ||
+        !useClientSidePagination
+      ) {
         return
       }
 
@@ -206,15 +218,11 @@ export const ReaderView: React.FC = () => {
             layoutMode,
           }
 
-          const fitted = await contentFitter.fitContent(
-            content,
-            fittingConfig,
-            (progress) => {
-              // Update loading progress during pagination
-              const percent = 90 + Math.round(progress.percent * 0.1) // 90-100%
-              setLoadingProgress(percent, progress.phase)
-            }
-          )
+          const fitted = await contentFitter.fitContent(content, fittingConfig, (progress) => {
+            // Update loading progress during pagination
+            const percent = 90 + Math.round(progress.percent * 0.1) // 90-100%
+            setLoadingProgress(percent, progress.phase)
+          })
 
           setFittedContent(fitted)
         } catch (err) {
@@ -231,7 +239,19 @@ export const ReaderView: React.FC = () => {
         clearTimeout(paginationDebounceRef.current)
       }
     }
-  }, [content, containerDimensions, measurementReady, typographySettings, layoutMode, useClientSidePagination, setIsPaginating, setFittedContent, setLoadingProgress, setError])
+  }, [
+    content,
+    containerDimensions,
+    measurementReady,
+    typographySettings,
+    layoutMode,
+    useClientSidePagination,
+    settings.engine,
+    setIsPaginating,
+    setFittedContent,
+    setLoadingProgress,
+    setError,
+  ])
 
   // Clear fitted content when layout mode changes and reset measurement ready
   useEffect(() => {
@@ -263,7 +283,14 @@ export const ReaderView: React.FC = () => {
         clearTimeout(progressSaveTimeoutRef.current)
       }
     }
-  }, [progressDirty, currentPageIndex, totalPages, bookIdNum, updateProgressMutation, markProgressSaved])
+  }, [
+    progressDirty,
+    currentPageIndex,
+    totalPages,
+    bookIdNum,
+    updateProgressMutation,
+    markProgressSaved,
+  ])
 
   // Save progress on unmount
   useEffect(() => {
@@ -345,40 +372,13 @@ export const ReaderView: React.FC = () => {
     setContainerDimensions(dimensions)
   }, [])
 
-  // Handle layout mode change
-  const handleLayoutModeChange = useCallback((mode: 'single' | 'two-column') => {
-    setLayoutMode(mode)
-    // Clear fitted content to trigger re-pagination
-    clearFittedContent()
-  }, [setLayoutMode, clearFittedContent])
-
-  // WASM-specific handlers
-  const handlePageChange = useCallback((pageIndex: number, total: number) => {
-    // Page count is managed by WASM renderer
-  }, [])
-
-  const handleLinkClick = useCallback((href: string, isInternal: boolean) => {
-    if (isInternal && href.startsWith('#')) {
-      // Internal anchor - try to navigate to it
-      const anchor = href.substring(1)
-      // TODO: Navigate to anchor in book
-      console.log('[ReaderView] Navigate to anchor:', anchor)
-    } else if (!isInternal) {
-      // External link - open in browser
-      window.open(href, '_blank', 'noopener,noreferrer')
-    }
-  }, [])
-
-  const handleWasmError = useCallback((err: Error) => {
-    console.error('[ReaderView] WASM error:', err)
-    setError(err.message)
-  }, [setError])
-
   // Handle invalid book ID
   if (isNaN(bookIdNum)) {
     return (
       <ThreeSectionsLayout
-        sidebarTop={<div className="px-4 pt-2 text-lg font-semibold">{t('reader_title', 'Reader')}</div>}
+        sidebarTop={
+          <div className="px-4 pt-2 text-lg font-semibold">{t('reader_title', 'Reader')}</div>
+        }
         sidebar={<div />}
         content={
           <div className="flex h-full items-center justify-center">
@@ -401,7 +401,9 @@ export const ReaderView: React.FC = () => {
   if (isLoading) {
     return (
       <ThreeSectionsLayout
-        sidebarTop={<div className="px-4 pt-2 text-lg font-semibold">{t('reader_title', 'Reader')}</div>}
+        sidebarTop={
+          <div className="px-4 pt-2 text-lg font-semibold">{t('reader_title', 'Reader')}</div>
+        }
         sidebar={<div />}
         content={
           <div className="flex h-full items-center justify-center">
@@ -416,7 +418,9 @@ export const ReaderView: React.FC = () => {
   if (error) {
     return (
       <ThreeSectionsLayout
-        sidebarTop={<div className="px-4 pt-2 text-lg font-semibold">{t('reader_title', 'Reader')}</div>}
+        sidebarTop={
+          <div className="px-4 pt-2 text-lg font-semibold">{t('reader_title', 'Reader')}</div>
+        }
         sidebar={<div />}
         content={
           <div className="flex h-full items-center justify-center">
@@ -438,11 +442,9 @@ export const ReaderView: React.FC = () => {
   // Sidebar header with book info and layout toggle
   const sidebarTop = (
     <div className="px-4 pt-2">
-      <h1 className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-        {bookTitle}
-      </h1>
+      <h1 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{bookTitle}</h1>
       <p className="truncate text-xs text-gray-500 dark:text-gray-400">{bookAuthor}</p>
-      
+
       {/* Layout toggle - DISABLED: two-column mode causes content overflow issues with poems/blockquotes */}
     </div>
   )
@@ -451,10 +453,7 @@ export const ReaderView: React.FC = () => {
     <ThreeSectionsLayout
       sidebarTop={sidebarTop}
       sidebar={
-        <ReaderSidebar
-          onAddBookmark={handleAddBookmark}
-          onDeleteBookmark={handleDeleteBookmark}
-        />
+        <ReaderSidebar onAddBookmark={handleAddBookmark} onDeleteBookmark={handleDeleteBookmark} />
       }
       content={
         <div className="absolute inset-0 flex flex-col">
@@ -475,26 +474,24 @@ export const ReaderView: React.FC = () => {
             {settings.engine === 'wasm' ? (
               <WasmPageRenderer
                 bookContent={content}
-                onPageChange={handlePageChange}
-                onReferenceClick={handleReferenceClick}
-                onLinkClick={handleLinkClick}
-                onError={handleWasmError}
+                initialPage={bookContentData?.lastReadPage ?? 0}
+                initialTotalPages={bookContentData?.lastReadTotalPages ?? 0}
               />
             ) : (
               <>
                 {/* HTML-based renderer with DOM measurement */}
-                <PageRenderer 
-                  onReferenceClick={handleReferenceClick} 
+                <PageRenderer
+                  onReferenceClick={handleReferenceClick}
                   onRemoveBookmark={handleRemoveBookmarkByPage}
                   onDimensionsChange={handleDimensionsChange}
                 />
-                
+
                 {/* Show loading overlay while paginating */}
                 {isPaginating && !fittedContent && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10">
-                    <ReaderLoadingProgress 
-                      percent={loadingProgress} 
-                      stage={loadingStage || 'reader_loading_paginating'} 
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-gray-900/80">
+                    <ReaderLoadingProgress
+                      percent={loadingProgress}
+                      stage={loadingStage || 'reader_loading_paginating'}
                     />
                   </div>
                 )}

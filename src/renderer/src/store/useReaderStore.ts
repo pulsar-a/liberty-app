@@ -104,6 +104,15 @@ interface ReaderActions {
     chapterPageMap: WasmChapterLocation[]
     anchorPageMap: WasmAnchorLocation[]
   }) => void
+  applyWasmPagination: (
+    maps: {
+      totalPages: number
+      pageChapterMap: WasmPageChapterLocation[]
+      chapterPageMap: WasmChapterLocation[]
+      anchorPageMap: WasmAnchorLocation[]
+    },
+    pageIndex: number
+  ) => void
   clearWasmPaginationMaps: () => void
 
   // Layout
@@ -395,6 +404,18 @@ export const useReaderStore = create<ReaderState & ReaderActions>()(
           wasmPageChapterMap: maps.pageChapterMap,
           wasmChapterPageMap: maps.chapterPageMap,
           wasmAnchorPageMap: maps.anchorPageMap,
+        }),
+
+      applyWasmPagination: (maps, pageIndex) =>
+        set({
+          totalPages: maps.totalPages,
+          currentPageIndex: Math.min(Math.max(pageIndex, 0), Math.max(0, maps.totalPages - 1)),
+          wasmPageChapterMap: maps.pageChapterMap,
+          wasmChapterPageMap: maps.chapterPageMap,
+          wasmAnchorPageMap: maps.anchorPageMap,
+          isPaginating: false,
+          loadingProgress: 100,
+          loadingStage: '',
         }),
 
       clearWasmPaginationMaps: () =>

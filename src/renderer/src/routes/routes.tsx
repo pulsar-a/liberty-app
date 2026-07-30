@@ -8,6 +8,7 @@ import { SettingsReadingView } from '@/views/SettingsReadingView'
 import { SettingsView } from '@/views/SettingsView'
 import {
   createHashHistory,
+  redirect,
   createRootRoute,
   createRoute,
   createRouter,
@@ -18,7 +19,6 @@ import { LoadingSpinner } from '../components/LoadingSpinner'
 import { MyCollectionsView } from '../views/MyCollectionsView'
 import { ReaderView } from '../views/ReaderView'
 import { SearchView } from '../views/SearchView'
-import { WasmReaderView } from '../views/WasmReaderView'
 import { SettingsFilesView } from '../views/SettingsFilesView'
 
 declare module '@tanstack/react-router' {
@@ -119,12 +119,17 @@ export const readerRoute = createRoute({
   },
 })
 
-// WASM-based reader route (experimental)
+// Backward-compatible redirect for old experimental reader links.
 export const wasmReaderRoute = createRoute({
   getParentRoute: () => libraryLayoutRoute,
   path: '/reader-wasm/$bookId',
-  component: () => <WasmReaderView />,
-  pendingComponent: () => <LoadingSpinner size="lg" block full spacing="lg" />,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/reader/$bookId',
+      params: { bookId: params.bookId },
+      replace: true,
+    })
+  },
   staticData: {
     flyout: false,
   },

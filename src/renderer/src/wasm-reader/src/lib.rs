@@ -132,29 +132,10 @@ pub fn update_settings(settings_json: &str) -> Result<JsValue, JsError> {
             .renderer
             .update_settings(&state.settings, layout_changed);
 
-        // Only re-paginate if we have valid container dimensions and a document
-        if layout_changed
-            && state.settings.container_width > 0.0
-            && state.settings.container_height > 0.0
-        {
-            if let Some(ref doc) = state.document {
-                let document = doc.clone();
-                let settings = state.settings.clone();
-                let mut paginator = Paginator::new(&settings, &mut state.font_manager);
-                let paginated = paginator.paginate(&document);
-
-                let result = serde_json::json!({
-                    "totalPages": paginated.total_pages,
-                    "repaginated": true,
-                });
-                state.paginated = Some(paginated);
-                return Ok(serde_wasm_bindgen::to_value(&result)?);
-            }
-        }
-
         let result = serde_json::json!({
             "totalPages": state.paginated.as_ref().map(|p| p.total_pages).unwrap_or(0),
             "repaginated": false,
+            "layoutChanged": layout_changed,
         });
         Ok(serde_wasm_bindgen::to_value(&result)?)
     })

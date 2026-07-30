@@ -19,6 +19,11 @@ import {
   PageBoundary,
   PaginationConfig,
 } from '../../../types/reader.types'
+import {
+  attachTocTargets,
+  normalizeBookPath,
+  resolveBookHref,
+} from '../../../types/reader-navigation'
 
 // ============================================================================
 // Progress Stages
@@ -87,7 +92,11 @@ function sendError(error: string): void {
   parentPort?.postMessage(message)
 }
 
-function calculateProgress(stage: keyof typeof PROGRESS_RANGES, current: number, total: number): number {
+function calculateProgress(
+  stage: keyof typeof PROGRESS_RANGES,
+  current: number,
+  total: number
+): number {
   const range = PROGRESS_RANGES[stage]
   const stageProgress = total > 0 ? current / total : 0
   return range.start + (range.end - range.start) * stageProgress
@@ -139,9 +148,9 @@ class WorkerEpubParser {
   async extractContent(): Promise<BookContent> {
     // Stage: Opening (0-5%)
     sendProgress(PROGRESS_RANGES.OPENING.start, PROGRESS_STAGES.OPENING)
-    
+
     this.loadArchive()
-    
+
     sendProgress(2, PROGRESS_STAGES.OPENING)
 
     // Get container.xml to find OPF location
@@ -166,19 +175,19 @@ class WorkerEpubParser {
     }
 
     await this.parseOpf(opfXml)
-    
+
     sendProgress(PROGRESS_RANGES.OPENING.end, PROGRESS_STAGES.OPENING)
 
     // Stage: Chapters (5-70%)
     sendProgress(PROGRESS_RANGES.CHAPTERS.start, PROGRESS_STAGES.CHAPTERS)
-    
+
     const chapters = await this.extractChapters()
 
     // Extract references from chapters
     const references = this.extractReferences(chapters)
 
     // Build table of contents
-    const tableOfContents = await this.extractTableOfContents()
+    const tableOfContents = attachTocTargets(await this.extractTableOfContents(), chapters)
 
     return {
       bookId: this.bookId,
@@ -227,7 +236,7 @@ class WorkerEpubParser {
       if (manifestItem) {
         this.spine.push({
           id: idref,
-          href: manifestItem.href,
+          href: normalizeBookPath(manifestItem.href),
           order: order++,
         })
       }
@@ -281,7 +290,7 @@ class WorkerEpubParser {
         title,
         htmlContent,
         order: spineItem.order,
-        href: spineItem.href,
+        href: normalizeBookPath(spineItem.href),
       })
 
       // Report progress for chapters stage
@@ -373,13 +382,13 @@ class WorkerEpubParser {
     const ext = path.split('.').pop()?.toLowerCase() || ''
 
     const mimeTypes: Record<string, string> = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'bmp': 'image/bmp',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      bmp: 'image/bmp',
     }
 
     return mimeTypes[ext] || 'image/jpeg'
@@ -478,6 +487,7 @@ class WorkerEpubParser {
 
   private async extractNavToc(): Promise<TocEntry[]> {
     let navHref: string | null = null
+    let navBaseHref: string | null = null
 
     for (const [, item] of this.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
@@ -486,12 +496,13 @@ class WorkerEpubParser {
 
         if (content && content.includes('epub:type="toc"')) {
           navHref = fullPath
+          navBaseHref = item.href
           break
         }
       }
     }
 
-    if (!navHref) {
+    if (!navHref || !navBaseHref) {
       return []
     }
 
@@ -510,7 +521,7 @@ class WorkerEpubParser {
       if (epubType.includes('toc')) {
         const ol = nav.getElementsByTagName('ol')[0]
         if (ol) {
-          return this.parseNavList(ol, 0)
+          return this.parseNavList(ol, 0, navBaseHref)
         }
       }
     }
@@ -518,7 +529,7 @@ class WorkerEpubParser {
     return []
   }
 
-  private parseNavList(ol: Element, level: number): TocEntry[] {
+  private parseNavList(ol: Element, level: number, baseHref: string): TocEntry[] {
     const entries: TocEntry[] = []
     const items = ol.childNodes
 
@@ -527,10 +538,21 @@ class WorkerEpubParser {
       const li = items[i]
       if (li.nodeName !== 'li') continue
 
-      const link = (li as Element).getElementsByTagName('a')[0]
-      if (!link) continue
+      let link: Element | null = null
+      let nestedOl: Element | null = null
+      for (let childIndex = 0; childIndex < li.childNodes.length; childIndex++) {
+        const child = li.childNodes[childIndex] as Element
+        const childName = child.nodeName?.toLocaleLowerCase()
+        if (childName === 'a') link = child
+        if (childName === 'ol') nestedOl = child
+      }
 
-      const href = link.getAttribute('href') || ''
+      if (!link) {
+        if (nestedOl) entries.push(...this.parseNavList(nestedOl, level, baseHref))
+        continue
+      }
+
+      const href = resolveBookHref(baseHref, link.getAttribute('href') || '')
       const title = link.textContent?.trim() || ''
 
       const entry: TocEntry = {
@@ -541,9 +563,8 @@ class WorkerEpubParser {
         level,
       }
 
-      const nestedOl = (li as Element).getElementsByTagName('ol')[0]
       if (nestedOl) {
-        entry.children = this.parseNavList(nestedOl, level + 1)
+        entry.children = this.parseNavList(nestedOl, level + 1, baseHref)
       }
 
       entries.push(entry)
@@ -576,10 +597,10 @@ class WorkerEpubParser {
     const ncxData = await this.xmlParser.parseStringPromise(ncxContent)
     const navMap = ncxData?.ncx?.navMap?.[0]?.navPoint || []
 
-    return this.parseNcxNavPoints(navMap, 0)
+    return this.parseNcxNavPoints(navMap, 0, ncxHref)
   }
 
-  private parseNcxNavPoints(navPoints: unknown[], level: number): TocEntry[] {
+  private parseNcxNavPoints(navPoints: unknown[], level: number, baseHref: string): TocEntry[] {
     const entries: TocEntry[] = []
 
     let order = 0
@@ -591,7 +612,7 @@ class WorkerEpubParser {
       }
 
       const title = np.navLabel?.[0]?.text?.[0] || ''
-      const href = np.content?.[0]?.$?.src || ''
+      const href = resolveBookHref(baseHref, np.content?.[0]?.$?.src || '')
 
       const entry: TocEntry = {
         id: `toc-${level}-${order}`,
@@ -602,7 +623,7 @@ class WorkerEpubParser {
       }
 
       if (np.navPoint && np.navPoint.length > 0) {
-        entry.children = this.parseNcxNavPoints(np.navPoint, level + 1)
+        entry.children = this.parseNcxNavPoints(np.navPoint, level + 1, baseHref)
       }
 
       entries.push(entry)
@@ -779,10 +800,31 @@ class WorkerPaginationService {
 
   private extractSegments(node: Element, segments: string[]): void {
     const blockElements = new Set([
-      'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'blockquote', 'pre', 'ul', 'ol', 'li', 'table', 'tr',
-      'figure', 'figcaption', 'section', 'article', 'aside',
-      'header', 'footer', 'nav', 'hr', 'br',
+      'p',
+      'div',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'blockquote',
+      'pre',
+      'ul',
+      'ol',
+      'li',
+      'table',
+      'tr',
+      'figure',
+      'figcaption',
+      'section',
+      'article',
+      'aside',
+      'header',
+      'footer',
+      'nav',
+      'hr',
+      'br',
     ])
 
     for (let i = 0; i < node.childNodes.length; i++) {
@@ -866,7 +908,7 @@ async function main(): Promise<void> {
 
     // Send result
     sendResult(content, paginatedContent)
-    
+
     // Exit cleanly after sending result
     process.exit(0)
   } catch (error) {
@@ -876,4 +918,3 @@ async function main(): Promise<void> {
 }
 
 main()
-

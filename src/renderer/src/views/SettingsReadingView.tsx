@@ -3,10 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { PageTitle } from '../components/PageTitle'
 import { SettingsCard } from '../components/SettingsCard'
 import { SettingsRow } from '../components/SettingsRow'
-import {
-  ReaderEngine,
-  useReaderSettingsStore,
-} from '../store/useReaderSettingsStore'
+import { ReaderEngine, useReaderSettingsStore } from '../store/useReaderSettingsStore'
 
 export const SettingsReadingView: React.FC = () => {
   const { t } = useTranslation()
@@ -14,21 +11,21 @@ export const SettingsReadingView: React.FC = () => {
 
   const engines: { id: ReaderEngine; name: string; description: string; badge?: string }[] = [
     {
-      id: 'html',
-      name: t('settings_reading_engine_html_name', 'HTML'),
+      id: 'wasm',
+      name: t('settings_reading_engine_wasm_name', 'WASM Reader'),
       description: t(
-        'settings_reading_engine_html_description',
-        'Traditional browser-based rendering. Compatible with all features.'
+        'settings_reading_engine_wasm_description',
+        'The standard reader with deterministic layout and native app integration.'
       ),
     },
     {
-      id: 'wasm',
-      name: t('settings_reading_engine_wasm_name', 'WASM Canvas'),
+      id: 'html',
+      name: t('settings_reading_engine_html_name', 'HTML Reader'),
       description: t(
-        'settings_reading_engine_wasm_description',
-        'Deterministic canvas-based rendering. Faster and more consistent pagination.'
+        'settings_reading_engine_html_description',
+        'Legacy browser-based rendering retained as a compatibility fallback.'
       ),
-      badge: t('settings_reading_engine_experimental', 'Experimental'),
+      badge: t('settings_reading_engine_legacy', 'Legacy'),
     },
   ]
 
@@ -104,4 +101,3 @@ export const SettingsReadingView: React.FC = () => {
     </main>
   )
 }
-

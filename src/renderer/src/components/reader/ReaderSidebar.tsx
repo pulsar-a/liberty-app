@@ -1,4 +1,5 @@
 import { Bookmark, TocEntry } from '@app-types/reader.types'
+import { resolveTocTarget } from '@app-types/reader-navigation'
 import {
   faBookmark,
   faBookOpen,
@@ -34,9 +35,11 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
     goToChapter,
     goToPage,
     hasBookmarkOnCurrentPage,
+    getCurrentChapterId,
   } = useReaderStore()
 
   const tableOfContents = content?.tableOfContents || []
+  const currentChapterId = getCurrentChapterId()
 
   return (
     <div className={clsx('flex h-full flex-col', className)}>
@@ -80,26 +83,14 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
         {sidebarTab === 'contents' ? (
           <TableOfContents
             entries={tableOfContents}
-            onNavigate={(href) => {
-              // Parse href to extract file path and anchor
-              const hashIndex = href.indexOf('#')
-              const hrefWithoutFragment = hashIndex >= 0 ? href.substring(0, hashIndex) : href
-              const anchorId = hashIndex >= 0 ? href.substring(hashIndex + 1) : undefined
-              
-              // Find chapter by href - handle various href formats
-              const chapter = content?.chapters.find((c) => {
-                // Match by exact href
-                if (c.href === href || c.href === hrefWithoutFragment) return true
-                // Match by href containing chapter href (for relative paths)
-                if (hrefWithoutFragment && c.href.endsWith(hrefWithoutFragment)) return true
-                if (hrefWithoutFragment && hrefWithoutFragment.endsWith(c.href)) return true
-                // Match by id
-                if (hrefWithoutFragment && (href.includes(c.id) || c.id.includes(hrefWithoutFragment))) return true
-                return false
-              })
-              
-              if (chapter) {
-                goToChapter(chapter.id, anchorId)
+            currentChapterId={currentChapterId}
+            onNavigate={(entry) => {
+              if (!content) return
+              const target = resolveTocTarget(entry, content.chapters)
+              if (target) {
+                goToChapter(target.chapterId, target.anchorId)
+              } else {
+                console.warn('[ReaderSidebar] Could not resolve TOC target:', entry.href)
               }
             }}
           />
@@ -124,10 +115,15 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
 
 interface TableOfContentsProps {
   entries: TocEntry[]
-  onNavigate: (href: string) => void
+  currentChapterId: string | null
+  onNavigate: (entry: TocEntry) => void
 }
 
-const TableOfContents: React.FC<TableOfContentsProps> = ({ entries, onNavigate }) => {
+const TableOfContents: React.FC<TableOfContentsProps> = ({
+  entries,
+  currentChapterId,
+  onNavigate,
+}) => {
   const { t } = useTranslation()
 
   if (entries.length === 0) {
@@ -142,7 +138,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ entries, onNavigate }
     <nav className="p-2">
       <ul className="space-y-1">
         {entries.map((entry) => (
-          <TocEntryItem key={entry.id} entry={entry} onNavigate={onNavigate} />
+          <TocEntryItem
+            key={entry.id}
+            entry={entry}
+            currentChapterId={currentChapterId}
+            onNavigate={onNavigate}
+          />
         ))}
       </ul>
     </nav>
@@ -151,10 +152,11 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ entries, onNavigate }
 
 interface TocEntryItemProps {
   entry: TocEntry
-  onNavigate: (href: string) => void
+  currentChapterId: string | null
+  onNavigate: (entry: TocEntry) => void
 }
 
-const TocEntryItem: React.FC<TocEntryItemProps> = ({ entry, onNavigate }) => {
+const TocEntryItem: React.FC<TocEntryItemProps> = ({ entry, currentChapterId, onNavigate }) => {
   const [isExpanded, setIsExpanded] = useState(true)
   const hasChildren = entry.children && entry.children.length > 0
 
@@ -173,9 +175,12 @@ const TocEntryItem: React.FC<TocEntryItemProps> = ({ entry, onNavigate }) => {
           </button>
         )}
         <button
-          onClick={() => onNavigate(entry.href)}
+          onClick={() => onNavigate(entry)}
+          aria-current={entry.chapterId === currentChapterId ? 'location' : undefined}
           className={clsx(
             'flex-1 rounded px-2 py-1.5 text-left text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/30',
+            entry.chapterId === currentChapterId &&
+              'bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300',
             !hasChildren && 'ml-5'
           )}
           style={{ paddingLeft: hasChildren ? undefined : `${entry.level * 0.75 + 0.5}rem` }}
@@ -187,7 +192,12 @@ const TocEntryItem: React.FC<TocEntryItemProps> = ({ entry, onNavigate }) => {
       {hasChildren && isExpanded && (
         <ul className="ml-4 mt-1 space-y-1 border-l border-gray-200 pl-2 dark:border-gray-700">
           {entry.children!.map((child) => (
-            <TocEntryItem key={child.id} entry={child} onNavigate={onNavigate} />
+            <TocEntryItem
+              key={child.id}
+              entry={child}
+              currentChapterId={currentChapterId}
+              onNavigate={onNavigate}
+            />
           ))}
         </ul>
       )}
@@ -324,4 +334,3 @@ const BookmarkItem: React.FC<BookmarkItemProps> = ({
     </li>
   )
 }
-

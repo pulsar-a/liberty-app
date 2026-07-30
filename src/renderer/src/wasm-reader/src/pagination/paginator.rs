@@ -8,9 +8,28 @@ use crate::layout::{LayoutChapter, LayoutDocument, LayoutElement, SpanStyle, Tex
 use crate::settings::{Color, ReaderSettings, TextAlign};
 
 #[derive(Debug, Clone)]
+pub enum IndexedColor {
+    Text,
+    Heading,
+    Link,
+    Explicit(Color),
+}
+
+impl IndexedColor {
+    pub fn resolve(&self, settings: &ReaderSettings) -> Color {
+        match self {
+            Self::Text => settings.text_color,
+            Self::Heading => settings.heading_color,
+            Self::Link => settings.link_color,
+            Self::Explicit(color) => *color,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct IndexedGlyph {
     pub glyph: LayoutGlyph,
-    pub color: Color,
+    pub color: IndexedColor,
     pub underline: bool,
     pub strikethrough: bool,
     #[allow(dead_code)]
@@ -294,7 +313,7 @@ impl<'a> Paginator<'a> {
                     indent + quote_padding,
                     quote_depth,
                     self.settings.text_align,
-                    &self.settings.text_color,
+                    IndexedColor::Text,
                 );
                 self.push_text_block(lines, false, pending_anchors, blocks);
             }
@@ -309,7 +328,7 @@ impl<'a> Paginator<'a> {
                     quote_padding,
                     quote_depth,
                     TextAlign::Left,
-                    &self.settings.heading_color,
+                    IndexedColor::Heading,
                 );
                 self.push_text_block(lines, true, pending_anchors, blocks);
             }
@@ -361,7 +380,7 @@ impl<'a> Paginator<'a> {
                         list_indent,
                         quote_depth,
                         self.settings.text_align,
-                        &self.settings.text_color,
+                        IndexedColor::Text,
                     );
                     self.push_text_block(lines, false, pending_anchors, blocks);
                 }
@@ -411,7 +430,7 @@ impl<'a> Paginator<'a> {
                         0.0,
                         quote_depth,
                         TextAlign::Center,
-                        &self.settings.text_color,
+                        IndexedColor::Text,
                     );
                     self.push_text_block(lines, false, pending_anchors, blocks);
                 }
@@ -435,7 +454,7 @@ impl<'a> Paginator<'a> {
                     0.0,
                     quote_depth,
                     TextAlign::Left,
-                    &self.settings.text_color,
+                    IndexedColor::Text,
                 );
                 self.push_text_block(lines, false, pending_anchors, blocks);
             }
@@ -455,7 +474,7 @@ impl<'a> Paginator<'a> {
                         0.0,
                         quote_depth,
                         TextAlign::Left,
-                        &self.settings.text_color,
+                        IndexedColor::Text,
                     );
                     self.push_text_block(lines, false, pending_anchors, blocks);
                 }
@@ -469,7 +488,7 @@ impl<'a> Paginator<'a> {
                     0.0,
                     quote_depth,
                     self.settings.text_align,
-                    &self.settings.text_color,
+                    IndexedColor::Text,
                 );
                 self.push_text_block(lines, false, pending_anchors, blocks);
             }
@@ -502,7 +521,7 @@ impl<'a> Paginator<'a> {
         x_offset: f32,
         quote_depth: u8,
         align: TextAlign,
-        default_color: &Color,
+        default_color: IndexedColor,
     ) -> Vec<IndexedLine> {
         let line_height = font_size * self.settings.line_height;
         let metrics = Metrics::new(font_size, line_height);
@@ -578,12 +597,14 @@ impl<'a> Paginator<'a> {
                     let style = styles.get(glyph.metadata).cloned().unwrap_or_default();
                     let color = style
                         .color_override
-                        .map(|rgba| Color::new(rgba[0], rgba[1], rgba[2], rgba[3]))
+                        .map(|rgba| {
+                            IndexedColor::Explicit(Color::new(rgba[0], rgba[1], rgba[2], rgba[3]))
+                        })
                         .unwrap_or_else(|| {
                             if style.link.is_some() {
-                                self.settings.link_color
+                                IndexedColor::Link
                             } else {
-                                *default_color
+                                default_color.clone()
                             }
                         });
                     IndexedGlyph {
@@ -776,6 +797,25 @@ fn collect_span_anchors(spans: &[TextSpan], anchors: &mut Vec<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn semantic_glyph_colors_resolve_against_current_theme() {
+        let mut settings = ReaderSettings::default();
+        let body = IndexedColor::Text;
+        let heading = IndexedColor::Heading;
+        let link = IndexedColor::Link;
+
+        settings.text_color = Color::rgb(10, 20, 30);
+        settings.heading_color = Color::rgb(40, 50, 60);
+        settings.link_color = Color::rgb(70, 80, 90);
+
+        assert_eq!(body.resolve(&settings), settings.text_color);
+        assert_eq!(heading.resolve(&settings), settings.heading_color);
+        assert_eq!(link.resolve(&settings), settings.link_color);
+
+        settings.text_color = Color::rgb(230, 230, 230);
+        assert_eq!(body.resolve(&settings), settings.text_color);
+    }
 
     fn load_test_fonts(font_manager: &mut FontManager) {
         font_manager

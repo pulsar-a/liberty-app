@@ -160,10 +160,19 @@
     "settings_reading_engine_card_description": "Choose the rendering engine for displaying book content",
     "settings_reading_engine_label": "Rendering Engine",
     "settings_reading_engine_description": "Select how book content is rendered on screen",
-    "settings_reading_engine_html_name": "HTML",
-    "settings_reading_engine_html_description": "Traditional browser-based rendering. Compatible with all features.",
-    "settings_reading_engine_wasm_name": "WASM Canvas",
-    "settings_reading_engine_wasm_description": "Deterministic canvas-based rendering. Faster and more consistent pagination.",
-    "settings_reading_engine_experimental": "Experimental"
+    "settings_reading_engine_html_name": "HTML Reader",
+    "settings_reading_engine_html_description": "Legacy browser-based rendering retained as a compatibility fallback.",
+    "settings_reading_engine_wasm_name": "WASM Reader",
+    "settings_reading_engine_wasm_description": "The standard reader with deterministic layout and native app integration.",
+    "settings_reading_engine_legacy": "Legacy",
+    "reader_updating_layout": "Updating layout…",
+    "reader_loading_slow_retry": "Taking longer than expected — restart reader",
+    "reader_wasm_error_title": "Reader could not continue",
+    "reader_retry": "Restart Reader",
+    "reader_use_legacy": "Use Legacy Reader",
+    "reader_previous_page": "Previous page",
+    "reader_next_page": "Next page",
+    "reader_wasm_offscreen_unsupported": "This system cannot start the WASM reader.",
+    "reader_wasm_error": "The WASM reader stopped unexpectedly."
   }
 }

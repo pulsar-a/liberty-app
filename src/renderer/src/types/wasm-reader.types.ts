@@ -97,6 +97,7 @@ export interface WasmPaginationResult {
 export interface WasmSettingsUpdateResult {
   totalPages: number
   repaginated: boolean
+  layoutChanged: boolean
 }
 
 /**

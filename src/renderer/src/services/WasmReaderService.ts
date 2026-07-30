@@ -16,7 +16,7 @@ import {
   WASM_THEME_COLORS,
   WasmThemeName,
 } from '../types/wasm-reader.types'
-import { ReaderSettings, ReaderTheme } from '../store/useReaderSettingsStore'
+import type { ReaderSettings, ReaderTheme } from '../store/useReaderSettingsStore'
 
 /**
  * Selection result
@@ -197,7 +197,7 @@ export async function loadCustomFont(name: string, url: string): Promise<void> {
 }
 
 // WASM-supported fonts (fonts that are bundled and loaded into WASM)
-const WASM_SUPPORTED_FONTS = ['Literata']
+const WASM_SUPPORTED_FONTS = ['Literata', 'Noto Sans']
 
 /**
  * Map a font family to a WASM-supported font
@@ -239,7 +239,8 @@ export function convertSettingsToWasm(
     textAlign: settings.textAlign,
     paragraphIndent: settings.paragraphIndent * settings.fontSize * baseSize,
     paragraphSpacing: settings.paragraphSpacing * settings.fontSize * baseSize,
-    maxContentWidth: settings.maxContentWidth * baseSize,
+    maxContentWidth:
+      settings.maxContentWidth >= 100 ? 0 : settings.maxContentWidth * baseSize,
 
     // Column layout
     columns: settings.columns,

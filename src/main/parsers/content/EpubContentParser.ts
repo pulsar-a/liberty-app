@@ -2,12 +2,12 @@ import fs from 'fs'
 import NodeZip from 'node-zip'
 import xml2js from 'xml2js'
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom'
+import { BookChapter, BookContent, BookReference, TocEntry } from '../../../../types/reader.types'
 import {
-  BookChapter,
-  BookContent,
-  BookReference,
-  TocEntry,
-} from '../../../../types/reader.types'
+  attachTocTargets,
+  normalizeBookPath,
+  resolveBookHref,
+} from '../../../../types/reader-navigation'
 import { logger } from '../../utils/logger'
 import { AbstractContentParser, ContentParserOptions } from './AbstractContentParser'
 
@@ -82,7 +82,7 @@ export class EpubContentParser extends AbstractContentParser {
     const references = this.extractReferences(chapters)
 
     // Build table of contents
-    const tableOfContents = await this.extractTableOfContents()
+    const tableOfContents = attachTocTargets(await this.extractTableOfContents(), chapters)
 
     return {
       bookId: this.bookId,
@@ -132,7 +132,7 @@ export class EpubContentParser extends AbstractContentParser {
       if (manifestItem) {
         this.spine.push({
           id: idref,
-          href: manifestItem.href,
+          href: normalizeBookPath(manifestItem.href),
           order: order++,
         })
       }
@@ -182,7 +182,7 @@ export class EpubContentParser extends AbstractContentParser {
         title,
         htmlContent,
         order: spineItem.order,
-        href: spineItem.href,
+        href: normalizeBookPath(spineItem.href),
       })
     }
 
@@ -282,13 +282,13 @@ export class EpubContentParser extends AbstractContentParser {
     const ext = path.split('.').pop()?.toLowerCase() || ''
 
     const mimeTypes: Record<string, string> = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'bmp': 'image/bmp',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      bmp: 'image/bmp',
     }
 
     return mimeTypes[ext] || 'image/jpeg'
@@ -405,6 +405,7 @@ export class EpubContentParser extends AbstractContentParser {
   private async extractNavToc(): Promise<TocEntry[]> {
     // Find NAV document in manifest
     let navHref: string | null = null
+    let navBaseHref: string | null = null
 
     for (const [, item] of this.manifest) {
       if (item.mediaType === 'application/xhtml+xml') {
@@ -413,12 +414,13 @@ export class EpubContentParser extends AbstractContentParser {
 
         if (content && content.includes('epub:type="toc"')) {
           navHref = fullPath
+          navBaseHref = item.href
           break
         }
       }
     }
 
-    if (!navHref) {
+    if (!navHref || !navBaseHref) {
       return []
     }
 
@@ -437,7 +439,7 @@ export class EpubContentParser extends AbstractContentParser {
       if (epubType.includes('toc')) {
         const ol = nav.getElementsByTagName('ol')[0]
         if (ol) {
-          return this.parseNavList(ol, 0)
+          return this.parseNavList(ol, 0, navBaseHref)
         }
       }
     }
@@ -445,7 +447,7 @@ export class EpubContentParser extends AbstractContentParser {
     return []
   }
 
-  private parseNavList(ol: Element, level: number): TocEntry[] {
+  private parseNavList(ol: Element, level: number, baseHref: string): TocEntry[] {
     const entries: TocEntry[] = []
     const items = ol.childNodes
 
@@ -454,10 +456,21 @@ export class EpubContentParser extends AbstractContentParser {
       const li = items[i]
       if (li.nodeName !== 'li') continue
 
-      const link = (li as Element).getElementsByTagName('a')[0]
-      if (!link) continue
+      let link: Element | null = null
+      let nestedOl: Element | null = null
+      for (let childIndex = 0; childIndex < li.childNodes.length; childIndex++) {
+        const child = li.childNodes[childIndex] as Element
+        const childName = child.nodeName?.toLocaleLowerCase()
+        if (childName === 'a') link = child
+        if (childName === 'ol') nestedOl = child
+      }
 
-      const href = link.getAttribute('href') || ''
+      if (!link) {
+        if (nestedOl) entries.push(...this.parseNavList(nestedOl, level, baseHref))
+        continue
+      }
+
+      const href = resolveBookHref(baseHref, link.getAttribute('href') || '')
       const title = link.textContent?.trim() || ''
 
       const entry: TocEntry = {
@@ -469,9 +482,8 @@ export class EpubContentParser extends AbstractContentParser {
       }
 
       // Check for nested ol
-      const nestedOl = (li as Element).getElementsByTagName('ol')[0]
       if (nestedOl) {
-        entry.children = this.parseNavList(nestedOl, level + 1)
+        entry.children = this.parseNavList(nestedOl, level + 1, baseHref)
       }
 
       entries.push(entry)
@@ -505,10 +517,10 @@ export class EpubContentParser extends AbstractContentParser {
     const ncxData = await this.xmlParser.parseStringPromise(ncxContent)
     const navMap = ncxData?.ncx?.navMap?.[0]?.navPoint || []
 
-    return this.parseNcxNavPoints(navMap, 0)
+    return this.parseNcxNavPoints(navMap, 0, ncxHref)
   }
 
-  private parseNcxNavPoints(navPoints: unknown[], level: number): TocEntry[] {
+  private parseNcxNavPoints(navPoints: unknown[], level: number, baseHref: string): TocEntry[] {
     const entries: TocEntry[] = []
 
     let order = 0
@@ -520,7 +532,7 @@ export class EpubContentParser extends AbstractContentParser {
       }
 
       const title = np.navLabel?.[0]?.text?.[0] || ''
-      const href = np.content?.[0]?.$?.src || ''
+      const href = resolveBookHref(baseHref, np.content?.[0]?.$?.src || '')
 
       const entry: TocEntry = {
         id: `toc-${level}-${order}`,
@@ -532,7 +544,7 @@ export class EpubContentParser extends AbstractContentParser {
 
       // Check for nested navPoints
       if (np.navPoint && np.navPoint.length > 0) {
-        entry.children = this.parseNcxNavPoints(np.navPoint, level + 1)
+        entry.children = this.parseNcxNavPoints(np.navPoint, level + 1, baseHref)
       }
 
       entries.push(entry)
@@ -555,4 +567,3 @@ export class EpubContentParser extends AbstractContentParser {
     return ['epub']
   }
 }
-

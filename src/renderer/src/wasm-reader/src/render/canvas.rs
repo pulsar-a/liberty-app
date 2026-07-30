@@ -32,7 +32,8 @@ impl Renderer {
         Self {
             swash_cache: SwashCache::new(),
             page_cache: HashMap::new(),
-            max_cache_size: 5,
+            // Current page plus one neighbor in each direction.
+            max_cache_size: 3,
             layout_generation: 0,
             paint_generation: 0,
         }
@@ -191,14 +192,15 @@ impl Renderer {
         }
 
         for indexed in &line.glyphs {
+            let color = indexed.color.resolve(settings);
             let physical = indexed
                 .glyph
                 .physical((line_x * scale, baseline_y * scale), scale);
             let base_color = CosmicColor::rgba(
-                indexed.color.r,
-                indexed.color.g,
-                indexed.color.b,
-                indexed.color.a,
+                color.r,
+                color.g,
+                color.b,
+                color.a,
             );
 
             self.swash_cache.with_pixels(
@@ -226,7 +228,7 @@ impl Renderer {
                     decoration_y * scale,
                     indexed.glyph.w.max(1.0) * scale,
                     scale.max(1.0),
-                    &indexed.color,
+                    &color,
                 );
             }
         }

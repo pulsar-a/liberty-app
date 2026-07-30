@@ -9,7 +9,10 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/main/index.ts'),
-          'workers/epub-parser.worker': resolve(__dirname, 'src/main/workers/epub-parser.worker.ts'),
+          'workers/epub-parser.worker': resolve(
+            __dirname,
+            'src/main/workers/epub-parser.worker.ts'
+          ),
         },
       },
     },
@@ -18,6 +21,9 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin(), bytecodePlugin()],
   },
   renderer: {
+    worker: {
+      format: 'es',
+    },
     resolve: {
       alias: {
         '@': resolve('src/renderer/src'),

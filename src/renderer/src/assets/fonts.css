@@ -22,7 +22,6 @@
   src: url('./fonts/RedHatDisplay-BoldItalic.ttf');
 }
 
-
 @font-face {
   font-family: 'Montserrat';
   src: url('./fonts/Montserrat-Regular.ttf');
@@ -70,4 +69,28 @@
   font-style: italic;
   font-weight: bold;
   src: url('./fonts/reading/Literata_18pt-BoldItalic.ttf');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('./fonts/reading/NotoSans-Regular.ttf');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-weight: bold;
+  src: url('./fonts/reading/NotoSans-Bold.ttf');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: italic;
+  src: url('./fonts/reading/NotoSans-Italic.ttf');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: italic;
+  font-weight: bold;
+  src: url('./fonts/reading/NotoSans-BoldItalic.ttf');
 }

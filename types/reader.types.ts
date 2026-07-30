@@ -11,6 +11,10 @@ export interface TocEntry {
   id: string
   title: string
   href: string
+  /** Canonical spine chapter resolved while parsing the EPUB. */
+  chapterId?: string
+  /** Decoded fragment within the target chapter, when present. */
+  anchorId?: string
   order: number
   level: number
   children?: TocEntry[]
@@ -171,6 +175,8 @@ export interface GetBookContentResponse {
   content: BookContent
   paginatedContent: PaginatedContent | null
   lastReadPage: number
+  /** Page count associated with lastReadPage, used to restore progress after reflow. */
+  lastReadTotalPages: number
   /** If true, pagination was skipped and client should handle it */
   clientSidePagination?: boolean
 }
@@ -203,13 +209,7 @@ export type ReaderThemePreset = 'warm' | 'cool' | 'sepia' | 'white' | 'night'
 /**
  * Font family options for the reader
  */
-export type ReaderFontFamily =
-  | 'Georgia'
-  | 'Merriweather'
-  | 'Lora'
-  | 'Crimson Text'
-  | 'Source Serif Pro'
-  | 'system-ui'
+export type ReaderFontFamily = 'Literata' | 'Noto Sans'
 
 /**
  * Reader typography and layout settings used for content fitting
@@ -341,4 +341,3 @@ export type FittingProgressCallback = (progress: {
   totalChapters?: number
   currentChapterIndex?: number
 }) => void
-

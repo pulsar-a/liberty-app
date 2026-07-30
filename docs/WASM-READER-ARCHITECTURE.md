@@ -86,13 +86,13 @@ The existing Liberty reader uses HTML/CSS rendering with DOM-based measurement f
 6. WASM: Return page count to React
        │
        ▼
-7. React: Display page controls, request page render
+7. React: Display page controls, request page render from the reader worker
        │
        ▼
 8. WASM: Render requested page → pixel buffer
        │
        ▼
-9. React: Draw buffer to canvas
+9. Worker: Draw the buffer to the transferred OffscreenCanvas
 ```
 
 ### Settings Change Flow
@@ -101,22 +101,22 @@ The existing Liberty reader uses HTML/CSS rendering with DOM-based measurement f
 1. User changes font size/theme/etc in React UI
        │
        ▼
-2. React calls wasmReader.updateSettings(newSettings)
+2. React sends a revisioned settings command to the reader worker
        │
        ▼
-3. WASM: Re-paginate book with new settings
+3. WASM: Classify the update as layout-affecting or paint-only
        │
        ▼
-4. WASM: Return new page count, adjusted current page
+4. Worker: Re-paginate once when layout changed and preserve the current chapter position
        │
        ▼
-5. React: Update UI, request current page render
+5. Worker: Return pagination maps atomically; React updates navigation state
        │
        ▼
 6. WASM: Render page with new settings → pixel buffer
        │
        ▼
-7. React: Draw to canvas
+7. Worker: Draw to the transferred OffscreenCanvas
 ```
 
 ---

@@ -32,8 +32,8 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
     setMaxContentWidth,
     setColumns,
   } = useReaderSettingsStore()
-  
-  const { layoutMode, setLayoutMode, clearFittedContent } = useReaderStore()
+
+  const { setLayoutMode } = useReaderStore()
 
   // Handle layout change - update both layoutMode (for HTML renderer) and columns (for WASM renderer)
   const handleLayoutChange = (mode: 'single' | 'two-column') => {
@@ -41,19 +41,16 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
     // Also update the columns setting for WASM renderer
     const columns: ReaderColumns = mode === 'two-column' ? 2 : 1
     setColumns(columns)
-    clearFittedContent()
   }
 
   const handleFontSizeChange = (delta: number) => {
     const newSize = Math.round((settings.fontSize + delta) * 1000) / 1000
     setFontSize(newSize)
-    clearFittedContent() // Trigger re-pagination with new font size
   }
 
   const handleLineHeightChange = (delta: number) => {
     const newHeight = Math.round((settings.lineHeight + delta) * 10) / 10
     setLineHeight(newHeight)
-    clearFittedContent() // Trigger re-pagination with new line height
   }
 
   const handlePaddingChange = (delta: number) => {
@@ -61,13 +58,11 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
     const newPaddingY = Math.round((settings.contentPaddingY + delta * 0.8) * 10) / 10 // Y padding slightly less
     setContentPaddingX(newPaddingX)
     setContentPaddingY(newPaddingY)
-    clearFittedContent() // Trigger re-pagination with new margins
   }
 
   const handleWidthChange = (delta: number) => {
     const newWidth = Math.round((settings.maxContentWidth + delta) * 10) / 10
     setMaxContentWidth(newWidth)
-    clearFittedContent() // Trigger re-pagination with new width
   }
 
   return (
@@ -83,156 +78,160 @@ export const ReaderSettingsDrawer: React.FC<ReaderSettingsDrawerProps> = ({ open
         leaveTo="translate-y-full"
       >
         <div className="pointer-events-none fixed bottom-7 left-[calc(15rem+14rem)] right-0 z-50">
-          <div className="pointer-events-auto rounded-t-xl border-t border-x border-gray-300 bg-white shadow-2xl dark:border-gray-700 dark:bg-bright-gray-900">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {t('reader_settings_title', 'Reader Settings')}
-                </h3>
-                <button
-                  onClick={onClose}
-                  className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
-                </button>
-              </div>
+          <div className="pointer-events-auto rounded-t-xl border-x border-t border-gray-300 bg-white shadow-2xl dark:border-gray-700 dark:bg-bright-gray-900">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                {t('reader_settings_title', 'Reader Settings')}
+              </h3>
+              <button
+                onClick={onClose}
+                className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              >
+                <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
+              </button>
+            </div>
 
-              {/* Content */}
-              <div className="px-5 py-4">
-                <div className="flex flex-wrap gap-6">
-                  {/* Font Selection */}
-                  <div className="min-w-[200px] flex-1">
-                    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      {t('reader_settings_font', 'Font')}
-                    </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {READER_FONTS.map((font) => (
-                        <FontButton
-                          key={font.id}
-                          fontId={font.id}
-                          fontName={font.name}
-                          isActive={settings.fontFamily === font.id}
-                          onClick={() => setFontFamily(font.id)}
-                        />
-                      ))}
-                    </div>
+            {/* Content */}
+            <div className="px-5 py-4">
+              <div className="flex flex-wrap gap-6">
+                {/* Font Selection */}
+                <div className="min-w-[200px] flex-1">
+                  <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t('reader_settings_font', 'Font')}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {READER_FONTS.map((font) => (
+                      <FontButton
+                        key={font.id}
+                        fontId={font.id}
+                        fontName={font.name}
+                        isActive={settings.fontFamily === font.id}
+                        onClick={() => setFontFamily(font.id)}
+                      />
+                    ))}
                   </div>
+                </div>
 
-                  {/* Theme Selection */}
-                  <div className="min-w-[200px]">
-                    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      {t('reader_settings_theme', 'Theme')}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {READER_THEMES.map((theme) => (
-                        <ThemeSwatch
-                          key={theme.id}
-                          theme={theme}
-                          isActive={settings.theme === theme.id}
-                          onClick={() => setTheme(theme.id)}
-                        />
-                      ))}
-                    </div>
+                {/* Theme Selection */}
+                <div className="min-w-[200px]">
+                  <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t('reader_settings_theme', 'Theme')}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {READER_THEMES.map((theme) => (
+                      <ThemeSwatch
+                        key={theme.id}
+                        theme={theme}
+                        isActive={settings.theme === theme.id}
+                        onClick={() => setTheme(theme.id)}
+                      />
+                    ))}
                   </div>
+                </div>
 
-                  {/* Typography Controls - responsive grid */}
-                  <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:gap-6">
-                    {/* Font Size */}
-                    <div className="min-w-[100px]">
-                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {t('reader_settings_size', 'Size')}
-                      </label>
-                      <StepperControl
-                        value={`${Math.round(settings.fontSize * 16)}px`}
-                        onDecrement={() => handleFontSizeChange(-0.125)}
-                        onIncrement={() => handleFontSizeChange(0.125)}
-                        decrementDisabled={settings.fontSize <= 0.75}
-                        incrementDisabled={settings.fontSize >= 2}
-                      />
-                    </div>
-
-                    {/* Line Height */}
-                    <div className="min-w-[100px]">
-                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {t('reader_settings_spacing', 'Spacing')}
-                      </label>
-                      <StepperControl
-                        value={settings.lineHeight.toFixed(1)}
-                        onDecrement={() => handleLineHeightChange(-0.1)}
-                        onIncrement={() => handleLineHeightChange(0.1)}
-                        decrementDisabled={settings.lineHeight <= 1.2}
-                        incrementDisabled={settings.lineHeight >= 3}
-                      />
-                    </div>
-
-                    {/* Padding */}
-                    <div className="min-w-[100px]">
-                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {t('reader_settings_margins', 'Margins')}
-                      </label>
-                      <StepperControl
-                        value={`${Math.round(settings.contentPaddingX * 16)}px`}
-                        onDecrement={() => handlePaddingChange(-1)}
-                        onIncrement={() => handlePaddingChange(1)}
-                        decrementDisabled={settings.contentPaddingX <= 0}
-                        incrementDisabled={settings.contentPaddingX >= 8}
-                      />
-                    </div>
-
-                    {/* Max Width */}
-                    <div className="min-w-[100px]">
-                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {t('reader_settings_width', 'Width')}
-                      </label>
-                      <StepperControl
-                        value={settings.maxContentWidth >= 100 ? 'Full' : `${Math.round(settings.maxContentWidth * 16)}px`}
-                        onDecrement={() => handleWidthChange(-4)}
-                        onIncrement={() => handleWidthChange(4)}
-                        decrementDisabled={settings.maxContentWidth <= 30}
-                        incrementDisabled={settings.maxContentWidth >= 100}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Layout */}
+                {/* Typography Controls - responsive grid */}
+                <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:gap-6">
+                  {/* Font Size */}
                   <div className="min-w-[100px]">
                     <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      {t('reader_settings_layout', 'Layout')}
+                      {t('reader_settings_size', 'Size')}
                     </label>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleLayoutChange('single')}
-                        className={clsx(
-                          'flex h-8 w-10 items-center justify-center rounded-md transition-colors',
-                          layoutMode === 'single'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                        )}
-                        title={t('reader_settings_single_column', 'Single column')}
-                      >
-                        <FontAwesomeIcon icon={faFileAlt} className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleLayoutChange('two-column')}
-                        className={clsx(
-                          'flex h-8 w-10 items-center justify-center rounded-md transition-colors',
-                          layoutMode === 'two-column'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                        )}
-                        title={t('reader_settings_two_columns', 'Two columns')}
-                      >
-                        <FontAwesomeIcon icon={faColumns} className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <StepperControl
+                      value={`${Math.round(settings.fontSize * 16)}px`}
+                      onDecrement={() => handleFontSizeChange(-0.125)}
+                      onIncrement={() => handleFontSizeChange(0.125)}
+                      decrementDisabled={settings.fontSize <= 0.75}
+                      incrementDisabled={settings.fontSize >= 2}
+                    />
+                  </div>
+
+                  {/* Line Height */}
+                  <div className="min-w-[100px]">
+                    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {t('reader_settings_spacing', 'Spacing')}
+                    </label>
+                    <StepperControl
+                      value={settings.lineHeight.toFixed(1)}
+                      onDecrement={() => handleLineHeightChange(-0.1)}
+                      onIncrement={() => handleLineHeightChange(0.1)}
+                      decrementDisabled={settings.lineHeight <= 1.2}
+                      incrementDisabled={settings.lineHeight >= 3}
+                    />
+                  </div>
+
+                  {/* Padding */}
+                  <div className="min-w-[100px]">
+                    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {t('reader_settings_margins', 'Margins')}
+                    </label>
+                    <StepperControl
+                      value={`${Math.round(settings.contentPaddingX * 16)}px`}
+                      onDecrement={() => handlePaddingChange(-1)}
+                      onIncrement={() => handlePaddingChange(1)}
+                      decrementDisabled={settings.contentPaddingX <= 0}
+                      incrementDisabled={settings.contentPaddingX >= 8}
+                    />
+                  </div>
+
+                  {/* Max Width */}
+                  <div className="min-w-[100px]">
+                    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {t('reader_settings_width', 'Width')}
+                    </label>
+                    <StepperControl
+                      value={
+                        settings.maxContentWidth >= 100
+                          ? 'Full'
+                          : `${Math.round(settings.maxContentWidth * 16)}px`
+                      }
+                      onDecrement={() => handleWidthChange(-4)}
+                      onIncrement={() => handleWidthChange(4)}
+                      decrementDisabled={settings.maxContentWidth <= 30}
+                      incrementDisabled={settings.maxContentWidth >= 100}
+                    />
+                  </div>
+                </div>
+
+                {/* Layout */}
+                <div className="min-w-[100px]">
+                  <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t('reader_settings_layout', 'Layout')}
+                  </label>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleLayoutChange('single')}
+                      className={clsx(
+                        'flex h-8 w-10 items-center justify-center rounded-md transition-colors',
+                        settings.columns === 1
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                      )}
+                      title={t('reader_settings_single_column', 'Single column')}
+                    >
+                      <FontAwesomeIcon icon={faFileAlt} className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLayoutChange('two-column')}
+                      className={clsx(
+                        'flex h-8 w-10 items-center justify-center rounded-md transition-colors',
+                        settings.columns === 2
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                      )}
+                      title={t('reader_settings_two_columns', 'Two columns')}
+                    >
+                      <FontAwesomeIcon icon={faColumns} className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </Transition.Child>
+        </div>
+      </Transition.Child>
     </Transition>
   )
 }
@@ -256,7 +255,7 @@ const FontButton: React.FC<FontButtonProps> = ({ fontId, fontName, isActive, onC
           ? 'bg-indigo-600 text-white shadow-sm'
           : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
       )}
-      style={{ fontFamily: fontId === 'system-ui' ? 'system-ui' : `"${fontId}", serif` }}
+      style={{ fontFamily: `"${fontId}", ${fontId === 'Noto Sans' ? 'sans-serif' : 'serif'}` }}
     >
       {fontName}
     </button>
@@ -284,10 +283,7 @@ const ThemeSwatch: React.FC<ThemeSwatchProps> = ({ theme, isActive, onClick }) =
       style={{ backgroundColor: theme.backgroundColor }}
       title={theme.name}
     >
-      <span
-        className="text-xs font-bold"
-        style={{ color: theme.textColor }}
-      >
+      <span className="text-xs font-bold" style={{ color: theme.textColor }}>
         Aa
       </span>
     </button>
@@ -325,7 +321,7 @@ const StepperControl: React.FC<StepperControlProps> = ({
       >
         <FontAwesomeIcon icon={faMinus} className="h-3 w-3" />
       </button>
-      <span className="min-w-[2.75rem] text-center text-xs font-medium text-gray-900 sm:min-w-[3.5rem] sm:text-sm dark:text-white">
+      <span className="min-w-[2.75rem] text-center text-xs font-medium text-gray-900 dark:text-white sm:min-w-[3.5rem] sm:text-sm">
         {value}
       </span>
       <button
@@ -344,4 +340,3 @@ const StepperControl: React.FC<StepperControlProps> = ({
     </div>
   )
 }
-

@@ -286,7 +286,9 @@ console.log(`Book has ${result.totalPages} pages`)
 
 #### `updateSettings(settings)`
 
-Update reader settings and trigger re-pagination.
+Update reader settings and report whether layout-affecting values changed. The worker owns
+pagination and calls `paginateBook` exactly once when `layoutChanged` is true. Paint-only changes,
+such as a theme switch, only require rendering the current page again.
 
 ```typescript
 function updateSettings(settings: WasmReaderSettings): WasmSettingsUpdateResult
@@ -297,6 +299,7 @@ function updateSettings(settings: WasmReaderSettings): WasmSettingsUpdateResult
 interface WasmSettingsUpdateResult {
   totalPages: number
   repaginated: boolean
+  layoutChanged: boolean
 }
 ```
 

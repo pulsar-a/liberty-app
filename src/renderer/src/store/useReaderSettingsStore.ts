@@ -1,17 +1,20 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { ReaderFontFamily } from '@app-types/reader.types'
+
+export type { ReaderFontFamily } from '@app-types/reader.types'
 
 /**
  * Reader theme presets
  */
-export type ReaderTheme = 
-  | 'light'              // Clean white
-  | 'warm'               // Warm beige
-  | 'sepia'              // Classic sepia
-  | 'dark'               // Dark mode
-  | 'night'              // Night mode (lower contrast for night reading)
+export type ReaderTheme =
+  | 'light' // Clean white
+  | 'warm' // Warm beige
+  | 'sepia' // Classic sepia
+  | 'dark' // Dark mode
+  | 'night' // Night mode (lower contrast for night reading)
   | 'high-contrast-light' // High contrast light
-  | 'high-contrast-dark'  // High contrast dark
+  | 'high-contrast-dark' // High contrast dark
 
 /**
  * Theme configuration for visual display
@@ -39,26 +42,12 @@ export const READER_THEMES: ReaderThemeConfig[] = [
 /**
  * Font family options for the reader
  */
-export type ReaderFontFamily = 
-  | 'Literata'      // Bundled for WASM reader
-  | 'Georgia'
-  | 'Merriweather'
-  | 'Lora'
-  | 'Crimson Text'
-  | 'Source Serif Pro'
-  | 'system-ui'
-
 /**
  * Available font families for the reader
  */
 export const READER_FONTS: { id: ReaderFontFamily; name: string }[] = [
   { id: 'Literata', name: 'Literata' },
-  { id: 'Georgia', name: 'Georgia' },
-  { id: 'Merriweather', name: 'Merriweather' },
-  { id: 'Lora', name: 'Lora' },
-  { id: 'Crimson Text', name: 'Crimson Text' },
-  { id: 'Source Serif Pro', name: 'Source Serif' },
-  { id: 'system-ui', name: 'System' },
+  { id: 'Noto Sans', name: 'Noto Sans' },
 ]
 
 /**
@@ -84,17 +73,17 @@ export interface ReaderSettings {
   fontFamily: ReaderFontFamily
   fontSize: number // in rem (e.g., 1.125)
   lineHeight: number // unitless (e.g., 1.8)
-  
+
   // Layout
   contentPaddingX: number // in rem
   contentPaddingY: number // in rem
   maxContentWidth: number // in rem
   columns: ReaderColumns // 1 or 2 columns
   columnGap: number // gap between columns in rem (only used when columns = 2)
-  
+
   // Theme
   theme: ReaderTheme
-  
+
   // Advanced
   textAlign: 'left' | 'justify'
   hyphenation: boolean
@@ -125,16 +114,16 @@ interface ReaderSettingsActions {
   setParagraphSpacing: (spacing: number) => void
   setParagraphIndent: (indent: number) => void
   setEngine: (engine: ReaderEngine) => void
-  
+
   // Bulk update
   updateSettings: (settings: Partial<ReaderSettings>) => void
-  
+
   // Reset to defaults
   resetSettings: () => void
-  
+
   // Get CSS variables object for applying to DOM
   getCssVariables: () => Record<string, string>
-  
+
   // Get settings in pixel values (for WASM reader)
   getPixelValues: () => {
     fontSizePx: number
@@ -161,7 +150,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   hyphenation: true,
   paragraphSpacing: 1.25, // em
   paragraphIndent: 1.5, // em
-  engine: 'html', // Default to HTML; WASM is experimental
+  engine: 'wasm',
 }
 
 export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSettingsActions>()(
@@ -186,17 +175,26 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
 
       setContentPaddingX: (contentPaddingX) =>
         set((state) => ({
-          settings: { ...state.settings, contentPaddingX: Math.max(0, Math.min(8, contentPaddingX)) },
+          settings: {
+            ...state.settings,
+            contentPaddingX: Math.max(0, Math.min(8, contentPaddingX)),
+          },
         })),
 
       setContentPaddingY: (contentPaddingY) =>
         set((state) => ({
-          settings: { ...state.settings, contentPaddingY: Math.max(0, Math.min(8, contentPaddingY)) },
+          settings: {
+            ...state.settings,
+            contentPaddingY: Math.max(0, Math.min(8, contentPaddingY)),
+          },
         })),
 
       setMaxContentWidth: (maxContentWidth) =>
         set((state) => ({
-          settings: { ...state.settings, maxContentWidth: Math.max(30, Math.min(100, maxContentWidth)) },
+          settings: {
+            ...state.settings,
+            maxContentWidth: Math.max(30, Math.min(100, maxContentWidth)),
+          },
         })),
 
       setColumns: (columns) =>
@@ -226,12 +224,18 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
 
       setParagraphSpacing: (paragraphSpacing) =>
         set((state) => ({
-          settings: { ...state.settings, paragraphSpacing: Math.max(0, Math.min(3, paragraphSpacing)) },
+          settings: {
+            ...state.settings,
+            paragraphSpacing: Math.max(0, Math.min(3, paragraphSpacing)),
+          },
         })),
 
       setParagraphIndent: (paragraphIndent) =>
         set((state) => ({
-          settings: { ...state.settings, paragraphIndent: Math.max(0, Math.min(4, paragraphIndent)) },
+          settings: {
+            ...state.settings,
+            paragraphIndent: Math.max(0, Math.min(4, paragraphIndent)),
+          },
         })),
 
       setEngine: (engine) =>
@@ -244,8 +248,7 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
           settings: { ...state.settings, ...newSettings },
         })),
 
-      resetSettings: () =>
-        set({ settings: { ...DEFAULT_SETTINGS } }),
+      resetSettings: () => set({ settings: { ...DEFAULT_SETTINGS } }),
 
       getCssVariables: () => {
         const { settings } = get()
@@ -255,7 +258,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
           '--page-line-height': `${settings.lineHeight}`,
           '--page-padding-x': `${settings.contentPaddingX}rem`,
           '--page-padding-y': `${settings.contentPaddingY}rem`,
-          '--page-max-width': settings.maxContentWidth >= 100 ? 'none' : `${settings.maxContentWidth}rem`,
+          '--page-max-width':
+            settings.maxContentWidth >= 100 ? 'none' : `${settings.maxContentWidth}rem`,
           '--page-columns': `${settings.columns}`,
           '--page-column-gap': `${settings.columnGap}rem`,
           '--page-text-align': settings.textAlign,
@@ -282,18 +286,35 @@ export const useReaderSettingsStore = create<ReaderSettingsState & ReaderSetting
     }),
     {
       name: 'liberty-reader-settings',
+      version: 1,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as { settings?: Partial<ReaderSettings> }
+        if (version < 1 && state.settings) {
+          state.settings.engine = 'wasm'
+          if (
+            state.settings.fontFamily !== 'Literata' &&
+            state.settings.fontFamily !== 'Noto Sans'
+          ) {
+            state.settings.fontFamily = 'Literata'
+          }
+        }
+        return state as ReaderSettingsState & ReaderSettingsActions
+      },
     }
   )
 )
 
 // Selector hooks for optimized re-renders
-export const useReaderFontFamily = () => useReaderSettingsStore((state) => state.settings.fontFamily)
+export const useReaderFontFamily = () =>
+  useReaderSettingsStore((state) => state.settings.fontFamily)
 export const useReaderFontSize = () => useReaderSettingsStore((state) => state.settings.fontSize)
-export const useReaderLineHeight = () => useReaderSettingsStore((state) => state.settings.lineHeight)
+export const useReaderLineHeight = () =>
+  useReaderSettingsStore((state) => state.settings.lineHeight)
 export const useReaderTheme = () => useReaderSettingsStore((state) => state.settings.theme)
 export const useReaderColumns = () => useReaderSettingsStore((state) => state.settings.columns)
 export const useReaderEngine = () => useReaderSettingsStore((state) => state.settings.engine)
-export const useReaderCssVariables = () => useReaderSettingsStore((state) => state.getCssVariables())
+export const useReaderCssVariables = () =>
+  useReaderSettingsStore((state) => state.getCssVariables())
 export const useReaderPixelValues = () => useReaderSettingsStore((state) => state.getPixelValues())
 
 /**
@@ -309,4 +330,3 @@ export function remToPx(rem: number): number {
 export function emToPx(em: number, fontSizePx: number): number {
   return em * fontSizePx
 }
-

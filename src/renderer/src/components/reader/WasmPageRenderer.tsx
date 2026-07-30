@@ -1,295 +1,335 @@
-/**
- * WASM-based Page Renderer
- * Renders book pages using the Rust/WASM canvas renderer
- */
-
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { BookContent } from '@app-types/reader.types'
 import { clsx } from 'clsx'
-import { BookContent, BookReference } from '@app-types/reader.types'
-import { useReaderSettingsStore } from '../../store/useReaderSettingsStore'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { convertSettingsToWasm } from '../../services/WasmReaderService'
+import { ReaderSettings, useReaderSettingsStore } from '../../store/useReaderSettingsStore'
 import { useReaderStore } from '../../store/useReaderStore'
 import {
-  initWasmReader,
-  loadBundledFonts,
-  convertSettingsToWasm,
-  updateSettings,
-  loadBook,
-  paginateBook,
-  renderPage,
-  getPageChapter,
-  unloadBook,
-  isInitialized,
-  selectionStart,
-  selectionUpdate,
-  selectionEnd,
-  selectionClear,
-  getLinkAtPosition,
-  prerenderPages,
-} from '../../services/WasmReaderService'
+  WasmReaderStage,
+  WasmReaderWorkerCommand,
+  WasmReaderWorkerEvent,
+} from '../../types/wasm-reader-worker.types'
+import { ReaderLoadingProgress } from './ReaderLoadingProgress'
 import '../../assets/reader-theme.css'
 
 interface WasmPageRendererProps {
   className?: string
   bookContent: BookContent | null
-  onPageChange?: (pageIndex: number, totalPages: number) => void
-  onChapterChange?: (chapterId: string, chapterTitle: string) => void
-  onReferenceClick?: (reference: BookReference) => void
-  onLinkClick?: (href: string, isInternal: boolean) => void
-  onError?: (error: Error) => void
+  initialPage?: number
+  initialTotalPages?: number
+}
+
+function layoutSettingsKey(settings: ReaderSettings): string {
+  return JSON.stringify({
+    fontFamily: settings.fontFamily,
+    fontSize: settings.fontSize,
+    lineHeight: settings.lineHeight,
+    contentPaddingX: settings.contentPaddingX,
+    contentPaddingY: settings.contentPaddingY,
+    maxContentWidth: settings.maxContentWidth,
+    columns: settings.columns,
+    columnGap: settings.columnGap,
+    textAlign: settings.textAlign,
+    hyphenation: settings.hyphenation,
+    paragraphSpacing: settings.paragraphSpacing,
+    paragraphIndent: settings.paragraphIndent,
+  })
 }
 
 export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
   className,
   bookContent,
-  onPageChange,
-  onChapterChange,
-  onLinkClick,
-  onError,
+  initialPage = 0,
+  initialTotalPages = 0,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { t } = useTranslation()
+  const canvasHostRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const animationFrameRef = useRef<number | null>(null)
+  const workerRef = useRef<Worker | null>(null)
+  const requestIdRef = useRef(0)
+  const latestStructuralRequestRef = useRef(0)
+  const latestRenderRequestRef = useRef(0)
+  const lastRequestedPageRef = useRef(-1)
+  const settingsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const previousLayoutKeyRef = useRef<string | null>(null)
+  const previousThemeRef = useRef<string | null>(null)
+  const settingsRef = useRef<ReaderSettings | null>(null)
 
+  const [canvasKey, setCanvasKey] = useState(0)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [isWasmReady, setIsWasmReady] = useState(false)
-  const [isBookLoaded, setIsBookLoaded] = useState(false)
+  const [stage, setStage] = useState<WasmReaderStage>('initializing')
+  const [hasRenderedPage, setHasRenderedPage] = useState(false)
   const [isPaginated, setIsPaginated] = useState(false)
-  const [totalPages, setTotalPages] = useState(0)
-  const [error, setError] = useState<Error | null>(null)
-  const [isSelecting, setIsSelecting] = useState(false)
-  const [selectedText, setSelectedText] = useState<string | null>(null)
+  const [isSlow, setIsSlow] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const { settings, setEngine } = useReaderSettingsStore()
+  settingsRef.current = settings
 
   const {
     currentPageIndex,
-    goToPage,
+    totalPages,
     nextPage,
     previousPage,
+    goToPage,
     bookmarks,
-    setWasmPaginationMaps,
+    applyWasmPagination,
     clearWasmPaginationMaps,
   } = useReaderStore()
 
-  const { settings } = useReaderSettingsStore()
+  const nextRequestId = useCallback(() => {
+    requestIdRef.current += 1
+    return requestIdRef.current
+  }, [])
 
-  // Initialize WASM module
+  const postCommand = useCallback((command: WasmReaderWorkerCommand, transfer?: Transferable[]) => {
+    workerRef.current?.postMessage(command, transfer || [])
+  }, [])
+
+  const armSlowFeedback = useCallback(() => {
+    if (slowTimerRef.current) clearTimeout(slowTimerRef.current)
+    setIsSlow(false)
+    slowTimerRef.current = setTimeout(() => setIsSlow(true), 4000)
+  }, [])
+
+  const clearSlowFeedback = useCallback(() => {
+    if (slowTimerRef.current) {
+      clearTimeout(slowTimerRef.current)
+      slowTimerRef.current = null
+    }
+    setIsSlow(false)
+  }, [])
+
+  const restartReader = useCallback(() => {
+    workerRef.current?.terminate()
+    workerRef.current = null
+    clearWasmPaginationMaps()
+    setError(null)
+    setHasRenderedPage(false)
+    setIsPaginated(false)
+    setStage('initializing')
+    lastRequestedPageRef.current = -1
+    previousLayoutKeyRef.current = null
+    previousThemeRef.current = null
+    setCanvasKey((key) => key + 1)
+  }, [clearWasmPaginationMaps])
+
+  // A reader session owns one worker and one transferred canvas.
   useEffect(() => {
-    const initWasm = async () => {
-      try {
-        await initWasmReader()
-        await loadBundledFonts()
+    const canvasHost = canvasHostRef.current
+    if (!canvasHost) return
 
-        // Apply initial settings BEFORE marking as ready
-        const wasmSettings = convertSettingsToWasm(settings, settings.theme)
-        updateSettings(wasmSettings)
-        console.log('[WasmPageRenderer] Initial settings applied')
+    const canvasElement = document.createElement('canvas')
+    canvasElement.className = 'block h-full w-full select-none'
+    canvasHost.appendChild(canvasElement)
 
-        setIsWasmReady(true)
-        console.log('[WasmPageRenderer] WASM module ready')
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err))
-        setError(error)
-        onError?.(error)
+    if (!('transferControlToOffscreen' in canvasElement)) {
+      setError(t('reader_wasm_offscreen_unsupported', 'This system cannot start the WASM reader.'))
+      return () => canvasElement.remove()
+    }
+
+    const worker = new Worker(new URL('../../workers/wasm-reader.worker.ts', import.meta.url), {
+      type: 'module',
+    })
+    workerRef.current = worker
+
+    worker.onmessage = (event: MessageEvent<WasmReaderWorkerEvent>) => {
+      const message = event.data
+
+      if (message.type === 'status') {
+        if (message.stage === 'ready' && message.requestId < latestRenderRequestRef.current) {
+          return
+        }
+        setStage(message.stage)
+        if (
+          message.stage === 'initializing' ||
+          message.stage === 'fonts' ||
+          message.stage === 'opening' ||
+          message.stage === 'paginating' ||
+          message.stage === 'reflowing'
+        ) {
+          armSlowFeedback()
+        }
+        return
+      }
+
+      if (message.type === 'pagination') {
+        if (message.requestId < latestStructuralRequestRef.current) return
+        applyWasmPagination(message.result, message.pageIndex)
+        setIsPaginated(message.result.totalPages > 0)
+        if (message.result.totalPages > 0) {
+          const renderRequestId = nextRequestId()
+          latestRenderRequestRef.current = renderRequestId
+          lastRequestedPageRef.current = message.pageIndex
+          postCommand({
+            type: 'render-page',
+            requestId: renderRequestId,
+            pageIndex: message.pageIndex,
+          })
+        }
+        return
+      }
+
+      if (message.type === 'rendered') {
+        if (message.requestId < latestRenderRequestRef.current) return
+        setHasRenderedPage(true)
+        setStage('ready')
+        clearSlowFeedback()
+        return
+      }
+
+      if (message.type === 'error') {
+        setError(message.message)
+        clearSlowFeedback()
       }
     }
 
-    if (!isInitialized()) {
-      initWasm()
-    } else {
-      // Module already initialized, but ensure fonts are loaded and settings applied
-      loadBundledFonts()
-        .then(() => {
-          const wasmSettings = convertSettingsToWasm(settings, settings.theme)
-          updateSettings(wasmSettings)
-          setIsWasmReady(true)
-        })
-        .catch((err) => {
-          const error = err instanceof Error ? err : new Error(String(err))
-          setError(error)
-          onError?.(error)
-        })
+    worker.onerror = (event) => {
+      setError(event.message || t('reader_wasm_error', 'The WASM reader stopped unexpectedly.'))
+      clearSlowFeedback()
     }
+
+    const offscreen = canvasElement.transferControlToOffscreen()
+    const requestId = nextRequestId()
+    postCommand(
+      {
+        type: 'initialize',
+        requestId,
+        canvas: offscreen,
+        settings: convertSettingsToWasm(settingsRef.current!, settingsRef.current!.theme),
+      },
+      [offscreen]
+    )
 
     return () => {
-      // Cleanup on unmount
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
+      if (settingsTimerRef.current) clearTimeout(settingsTimerRef.current)
+      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
+      if (slowTimerRef.current) clearTimeout(slowTimerRef.current)
+      worker.terminate()
+      if (workerRef.current === worker) workerRef.current = null
+      canvasElement.remove()
     }
-  }, [onError, settings])
+  }, [
+    canvasKey,
+    applyWasmPagination,
+    armSlowFeedback,
+    clearSlowFeedback,
+    nextRequestId,
+    postCommand,
+    t,
+  ])
 
-  // Track container size
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const observer = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect
+    const updateDimensions = (width: number, height: number) => {
       setDimensions({
-        width: Math.floor(width),
-        height: Math.floor(height),
+        width: Math.max(0, Math.floor(width)),
+        height: Math.max(0, Math.floor(height)),
       })
-    })
+    }
 
+    const observer = new ResizeObserver(([entry]) => {
+      updateDimensions(entry.contentRect.width, entry.contentRect.height)
+    })
     observer.observe(container)
 
-    // Initial dimensions
     const rect = container.getBoundingClientRect()
-    setDimensions({
-      width: Math.floor(rect.width),
-      height: Math.floor(rect.height),
-    })
-
+    updateDimensions(rect.width, rect.height)
     return () => observer.disconnect()
-  }, [])
+  }, [canvasKey])
 
-  // Update settings when they change
   useEffect(() => {
-    if (!isWasmReady) return
+    if (!bookContent || !workerRef.current) return
+    setHasRenderedPage(false)
+    setIsPaginated(false)
+    lastRequestedPageRef.current = -1
+    const requestId = nextRequestId()
+    latestStructuralRequestRef.current = requestId
+    postCommand({
+      type: 'load-book',
+      requestId,
+      content: bookContent,
+      resumePage: initialPage,
+      resumeTotalPages: initialTotalPages,
+    })
+  }, [bookContent, canvasKey, initialPage, initialTotalPages, nextRequestId, postCommand])
 
-    try {
-      const wasmSettings = convertSettingsToWasm(settings, settings.theme)
-      updateSettings(wasmSettings)
+  useEffect(() => {
+    if (!workerRef.current || dimensions.width <= 0 || dimensions.height <= 0) return
+    if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
+    if (hasRenderedPage) setStage('reflowing')
 
-      // Re-paginate if book is loaded
-      if (isBookLoaded && dimensions.width > 0 && dimensions.height > 0) {
-        const result = paginateBook(dimensions.width, dimensions.height)
-        setTotalPages(result.totalPages)
-        useReaderStore.setState({ totalPages: result.totalPages })
-        setWasmPaginationMaps(result)
-        setIsPaginated(true)
-      }
-    } catch (err) {
-      console.error('[WasmPageRenderer] Failed to update settings:', err)
+    resizeTimerRef.current = setTimeout(() => {
+      const requestId = nextRequestId()
+      latestStructuralRequestRef.current = requestId
+      armSlowFeedback()
+      postCommand({
+        type: 'resize',
+        requestId,
+        width: dimensions.width,
+        height: dimensions.height,
+        pixelRatio: window.devicePixelRatio || 1,
+      })
+    }, 100)
+
+    return () => {
+      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
     }
-    // dimensions is read from the render triggered by a settings change; resize pagination
-    // is handled by the dedicated effect below.
-  }, [settings, isWasmReady, isBookLoaded, setWasmPaginationMaps])
+  }, [dimensions, canvasKey, hasRenderedPage, armSlowFeedback, nextRequestId, postCommand])
 
-  // Load book when content changes
-  // NOTE: currentPageIndex is NOT in dependencies - we don't want to reload book on page navigation
   useEffect(() => {
-    if (!isWasmReady || !bookContent) return
+    if (!workerRef.current) return
 
-    const loadBookAsync = async () => {
-      try {
-        // Unload previous book
-        unloadBook()
-        setIsPaginated(false)
-        setIsBookLoaded(false)
-        clearWasmPaginationMaps()
+    const layoutKey = layoutSettingsKey(settings)
+    const previousLayoutKey = previousLayoutKeyRef.current
+    const previousTheme = previousThemeRef.current
+    previousLayoutKeyRef.current = layoutKey
+    previousThemeRef.current = settings.theme
 
-        // Load new book
-        const result = loadBook(bookContent)
-        console.log('[WasmPageRenderer] Book loaded:', result)
-        setIsBookLoaded(true)
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err))
-        setError(error)
-        onError?.(error)
-      }
+    // Initialization already receives the current settings.
+    if (previousLayoutKey === null) return
+
+    const sendSettings = (structural: boolean) => {
+      const requestId = nextRequestId()
+      if (structural) latestStructuralRequestRef.current = requestId
+      postCommand({
+        type: 'update-settings',
+        requestId,
+        settings: convertSettingsToWasm(settings, settings.theme),
+      })
     }
 
-    loadBookAsync()
-  }, [bookContent, isWasmReady])
-
-  // Paginate when dimensions change (for resize events)
-  // NOTE: This should ONLY run when isPaginated is already true (i.e., book was already loaded)
-  // Initial pagination is handled by the book loading effect
-  useEffect(() => {
-    if (!isWasmReady || !isBookLoaded || dimensions.width === 0 || dimensions.height === 0) return
-
-    try {
-      const result = paginateBook(dimensions.width, dimensions.height)
-      const newTotalPages = result?.totalPages ?? 0
-      setTotalPages(newTotalPages)
-
-      // Update store's totalPages so navigation works
-      useReaderStore.setState({ totalPages: newTotalPages })
-      setWasmPaginationMaps(result)
-
-      // Clamp currentPageIndex to valid range after dimension-based pagination
-      const storeState = useReaderStore.getState()
-      const currentPage = storeState.currentPageIndex
-      if (newTotalPages > 0 && (currentPage >= newTotalPages || currentPage < 0)) {
-        const clampedPage = Math.max(0, Math.min(currentPage, newTotalPages - 1))
-        goToPage(clampedPage)
-      }
-      onPageChange?.(currentPage, newTotalPages)
-    } catch (err) {
-      console.error('[WasmPageRenderer] Pagination failed:', err)
-    }
-  }, [dimensions, isWasmReady, isBookLoaded])
-
-  // Render current page
-  useEffect(() => {
-    if (!isWasmReady || !isPaginated || !canvasRef.current) return
-    if (dimensions.width === 0 || dimensions.height === 0) return
-    // Guard against invalid page indices before rendering
-    if (currentPageIndex < 0 || currentPageIndex >= totalPages || totalPages === 0) {
-      console.log(
-        '[WasmPageRenderer] Skipping render - invalid page index:',
-        currentPageIndex,
-        'totalPages:',
-        totalPages
-      )
+    if (layoutKey === previousLayoutKey && settings.theme !== previousTheme) {
+      sendSettings(false)
       return
     }
 
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (settingsTimerRef.current) clearTimeout(settingsTimerRef.current)
+    setStage('reflowing')
+    armSlowFeedback()
+    settingsTimerRef.current = setTimeout(() => sendSettings(true), 150)
 
-    // Cancel any pending render
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current)
+    return () => {
+      if (settingsTimerRef.current) clearTimeout(settingsTimerRef.current)
     }
+  }, [settings, canvasKey, armSlowFeedback, nextRequestId, postCommand])
 
-    // Schedule render on next frame
-    animationFrameRef.current = requestAnimationFrame(() => {
-      try {
-        const pixelRatio = window.devicePixelRatio || 1
-        const pixelWidth = Math.round(dimensions.width * pixelRatio)
-        const pixelHeight = Math.round(dimensions.height * pixelRatio)
-        const pixels = renderPage(currentPageIndex, dimensions.width, dimensions.height, pixelRatio)
-        const imageData = new ImageData(new Uint8ClampedArray(pixels), pixelWidth, pixelHeight)
-        ctx.putImageData(imageData, 0, 0)
-
-        // Pre-render adjacent pages in the background for smoother navigation
-        requestIdleCallback(
-          () => {
-            prerenderPages(currentPageIndex, dimensions.width, dimensions.height, pixelRatio, 2)
-          },
-          { timeout: 1000 }
-        )
-      } catch (err) {
-        console.error('[WasmPageRenderer] Render failed:', err)
-      }
-    })
-  }, [currentPageIndex, dimensions, isWasmReady, isPaginated, totalPages, settings.columns])
-
-  // Notify about page/chapter changes
   useEffect(() => {
-    if (!isPaginated || totalPages === 0) return
-    onPageChange?.(currentPageIndex, totalPages)
-    try {
-      const chapter = getPageChapter(currentPageIndex)
-      onChapterChange?.(chapter.chapterId, chapter.chapterTitle)
-    } catch {
-      // Pagination can be replaced between React effects; the next render retries.
-    }
-  }, [currentPageIndex, totalPages, isPaginated, onPageChange, onChapterChange])
+    if (!workerRef.current || !isPaginated || totalPages <= 0) return
+    if (lastRequestedPageRef.current === currentPageIndex) return
+    const requestId = nextRequestId()
+    latestRenderRequestRef.current = requestId
+    lastRequestedPageRef.current = currentPageIndex
+    postCommand({ type: 'render-page', requestId, pageIndex: currentPageIndex })
+  }, [currentPageIndex, isPaginated, totalPages, canvasKey, nextRequestId, postCommand])
 
-  useEffect(
-    () => () => {
-      clearWasmPaginationMaps()
-    },
-    [clearWasmPaginationMaps]
-  )
-
-  // Keyboard navigation
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle if user is typing in an input
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA'
@@ -297,263 +337,140 @@ export const WasmPageRenderer: React.FC<WasmPageRendererProps> = ({
         return
       }
 
-      switch (e.key) {
-        case 'ArrowRight':
-        case 'PageDown':
-        case ' ':
-          e.preventDefault()
-          nextPage()
-          break
-        case 'ArrowLeft':
-        case 'PageUp':
-          e.preventDefault()
-          previousPage()
-          break
-        case 'Home':
-          e.preventDefault()
-          goToPage(0)
-          break
-        case 'End':
-          e.preventDefault()
-          if (totalPages > 0) {
-            goToPage(totalPages - 1)
-          }
-          break
+      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
+        event.preventDefault()
+        nextPage()
+      } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+        event.preventDefault()
+        previousPage()
+      } else if (event.key === 'Home') {
+        event.preventDefault()
+        goToPage(0)
+      } else if (event.key === 'End' && totalPages > 0) {
+        event.preventDefault()
+        goToPage(totalPages - 1)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [nextPage, previousPage, goToPage, totalPages])
+  }, [goToPage, nextPage, previousPage, totalPages])
 
-  // Mouse event handlers for text selection
-  const getMousePosition = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
-
-    const rect = canvas.getBoundingClientRect()
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    }
-  }, [])
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (e.button !== 0) return // Only left click
-
-      const { x, y } = getMousePosition(e)
-      selectionStart(x, y)
-      setIsSelecting(true)
-      setSelectedText(null)
-    },
-    [getMousePosition]
-  )
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (!isSelecting) return
-
-      const { x, y } = getMousePosition(e)
-      selectionUpdate(x, y)
-
-      // Optionally trigger re-render with selection highlight
-      // For now, we'll handle this in the render loop
-    },
-    [isSelecting, getMousePosition]
-  )
-
-  const handleMouseUp = useCallback(async () => {
-    if (!isSelecting) return
-
-    setIsSelecting(false)
-    const selection = selectionEnd()
-
-    if (selection?.text) {
-      setSelectedText(selection.text)
-      console.log('[WasmPageRenderer] Selected text:', selection.text)
-    }
-  }, [isSelecting])
-
-  // Handle link clicks
-  const handleCanvasClick = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      // If we have a selection, don't handle as link click
-      if (selectedText) return
-
-      const { x, y } = getMousePosition(e)
-      const link = getLinkAtPosition(currentPageIndex, x, y)
-
-      if (link) {
-        e.preventDefault()
-        e.stopPropagation()
-
-        // Determine if it's an internal link (starts with # or is relative)
-        const isInternal =
-          link.startsWith('#') || (!link.startsWith('http://') && !link.startsWith('https://'))
-
-        if (onLinkClick) {
-          onLinkClick(link, isInternal)
-        } else if (!isInternal) {
-          // Default behavior for external links: open in browser
-          window.open(link, '_blank', 'noopener,noreferrer')
-        } else if (isInternal && link.startsWith('#')) {
-          // Internal anchor link - navigate to chapter/anchor
-          const anchor = link.substring(1)
-          // TODO: Navigate to anchor
-          console.log('[WasmPageRenderer] Internal link:', anchor)
-        }
-      }
-    },
-    [currentPageIndex, selectedText, getMousePosition, onLinkClick]
-  )
-
-  // Copy selected text to clipboard
-  const handleCopy = useCallback(
-    async (e: ClipboardEvent) => {
-      if (selectedText) {
-        e.preventDefault()
-        await navigator.clipboard.writeText(selectedText)
-      }
-    },
-    [selectedText]
-  )
-
-  useEffect(() => {
-    document.addEventListener('copy', handleCopy)
-    return () => document.removeEventListener('copy', handleCopy)
-  }, [handleCopy])
-
-  // Click navigation (click on left/right side of page)
   const handlePageClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      // Don't navigate if we just finished selecting
-      if (selectedText) {
-        selectionClear()
-        setSelectedText(null)
-        return
-      }
-
+    (event: React.MouseEvent<HTMLDivElement>) => {
       const container = containerRef.current
-      if (!container) return
-
-      // Don't navigate if clicking on a link or interactive element
-      const target = e.target as HTMLElement
-      if (target.closest('a') || target.closest('button')) return
-
+      if (!container || stage !== 'ready') return
       const rect = container.getBoundingClientRect()
-      const clickX = e.clientX - rect.left
-      const containerWidth = rect.width
-
-      // Click on left 35% goes back, right 35% goes forward, middle does nothing
-      if (clickX < containerWidth * 0.35) {
-        previousPage()
-      } else if (clickX > containerWidth * 0.65) {
-        nextPage()
-      }
+      const clickX = event.clientX - rect.left
+      if (clickX < rect.width * 0.35) previousPage()
+      else if (clickX > rect.width * 0.65) nextPage()
     },
-    [nextPage, previousPage, selectedText]
+    [nextPage, previousPage, stage]
   )
 
-  // Check if current page has a bookmark
-  const hasBookmark = bookmarks.some((b) => b.pageIndex === currentPageIndex)
-
-  // Loading state
-  if (!isWasmReady) {
-    return (
-      <div
-        ref={containerRef}
-        className={clsx('flex h-full w-full items-center justify-center', className)}
-      >
-        <div className="text-gray-500">Initializing reader...</div>
-      </div>
-    )
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div
-        ref={containerRef}
-        className={clsx('flex h-full w-full items-center justify-center', className)}
-      >
-        <div className="text-center text-red-500">
-          <p className="font-medium">Reader Error</p>
-          <p className="text-sm">{error.message}</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Empty state
-  if (!bookContent) {
-    return (
-      <div
-        ref={containerRef}
-        className={clsx('flex h-full w-full items-center justify-center', className)}
-      >
-        <div className="text-gray-500">No book loaded</div>
-      </div>
-    )
-  }
-
-  const dpr = window.devicePixelRatio || 1
+  const hasBookmark = bookmarks.some((bookmark) => bookmark.pageIndex === currentPageIndex)
+  const showReflow = hasRenderedPage && stage !== 'ready' && !error
 
   return (
     <div
       ref={containerRef}
-      className={clsx('relative h-full w-full cursor-default', className)}
+      className={clsx('relative h-full w-full cursor-default overflow-hidden', className)}
       onClick={handlePageClick}
     >
-      {/* Bookmark indicator */}
       {hasBookmark && <div className="bookmark-indicator" title="Bookmarked page" />}
 
-      {/* Canvas for rendering */}
-      <canvas
-        ref={canvasRef}
-        width={Math.round(dimensions.width * dpr)}
-        height={Math.round(dimensions.height * dpr)}
-        style={{
-          width: dimensions.width,
-          height: dimensions.height,
-          cursor: isSelecting ? 'text' : 'default',
-        }}
-        className="block select-none"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onClick={handleCanvasClick}
-      />
+      <div ref={canvasHostRef} className="h-full w-full" />
 
-      {/* Navigation zones */}
-      <div
-        className="page-nav-zone page-nav-zone--prev"
-        onClick={(e) => {
-          e.stopPropagation()
-          previousPage()
-        }}
-        role="button"
-        aria-label="Previous page"
-      >
-        <span className="page-nav-hint">‹</span>
-      </div>
-      <div
-        className="page-nav-zone page-nav-zone--next"
-        onClick={(e) => {
-          e.stopPropagation()
-          nextPage()
-        }}
-        role="button"
-        aria-label="Next page"
-      >
-        <span className="page-nav-hint">›</span>
-      </div>
+      {!hasRenderedPage && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
+          <ReaderLoadingProgress
+            percent={stage === 'fonts' ? 30 : stage === 'opening' ? 55 : 85}
+            stage={
+              stage === 'opening'
+                ? 'reader_loading_opening'
+                : stage === 'paginating'
+                  ? 'reader_loading_paginating'
+                  : 'reader_loading'
+            }
+          />
+        </div>
+      )}
 
-      {/* Page number */}
-      <div className="pointer-events-none absolute bottom-4 left-0 right-0 text-center text-sm text-gray-400">
-        {isPaginated ? `${currentPageIndex + 1} / ${totalPages}` : 'Loading...'}
-      </div>
+      {showReflow && (
+        <div className="pointer-events-none absolute right-4 top-4 rounded-full bg-black/65 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm">
+          {t('reader_updating_layout', 'Updating layout…')}
+        </div>
+      )}
+
+      {isSlow && !error && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            restartReader()
+          }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 rounded-md bg-gray-900/80 px-3 py-2 text-xs text-white shadow-lg"
+        >
+          {t('reader_loading_slow_retry', 'Taking longer than expected — restart reader')}
+        </button>
+      )}
+
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/95 p-6 dark:bg-gray-900/95">
+          <div className="max-w-md text-center">
+            <p className="font-medium text-red-600 dark:text-red-400">
+              {t('reader_wasm_error_title', 'Reader could not continue')}
+            </p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{error}</p>
+            <div className="mt-4 flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={restartReader}
+                className="rounded-md bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-500"
+              >
+                {t('reader_retry', 'Restart Reader')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEngine('html')}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                {t('reader_use_legacy', 'Use Legacy Reader')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {hasRenderedPage && !error && (
+        <>
+          <button
+            type="button"
+            className="page-nav-zone page-nav-zone--prev"
+            onClick={(event) => {
+              event.stopPropagation()
+              previousPage()
+            }}
+            aria-label={t('reader_previous_page', 'Previous page')}
+          >
+            <span className="page-nav-hint">‹</span>
+          </button>
+          <button
+            type="button"
+            className="page-nav-zone page-nav-zone--next"
+            onClick={(event) => {
+              event.stopPropagation()
+              nextPage()
+            }}
+            aria-label={t('reader_next_page', 'Next page')}
+          >
+            <span className="page-nav-hint">›</span>
+          </button>
+          <div className="pointer-events-none absolute bottom-4 left-0 right-0 text-center text-sm text-gray-400">
+            {currentPageIndex + 1} / {totalPages}
+          </div>
+        </>
+      )}
     </div>
   )
 }
